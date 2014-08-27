@@ -218,8 +218,9 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
                 trueIcon: "switch_on.png",
                 falseIcon: "switch_off.png"
         },{
-                text: _("Name"),
+                text: _("Backup name"),
                 sortable: true,
+                width: 150,
                 dataIndex: "name",
                 stateId: "name"
         },{
@@ -228,14 +229,20 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
                 dataIndex: "running",
                 stateId: "running"
         },{
-                text: _("Shared folder"),
+                text: _("Last completed"),
                 sortable: true,
-                dataIndex: "sourcefoldername",//sharedfoldername
+                width: 200,
+                dataIndex: "lastcompleted",
+                stateId: "lastcompleted"
+        },{
+                text: _("Backup source"),
+                sortable: true,
+                dataIndex: "sourcefoldername",
                 stateId: "sourcefoldername"
         },{
                 text: _("Backup target"),
                 sortable: true,
-                dataIndex: "targetfoldername",//fsuuid
+                dataIndex: "targetfoldername",
                 stateId: "targetfoldername"
         },{
                 text: _("Schedule"),
@@ -256,6 +263,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
                                                 { name: "enable", type: "boolean" },
                                                 { name: "name", type: "string" },
                                                 { name: "running", type: "string" },
+                                                { name: "lastcompleted", type: "string" },
                                                 { name: "targetfoldername", type: "string" },
                                                 { name: "sourcefoldername", type: "string" },
                                                 { name: "schedule", type: "string" }

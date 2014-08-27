@@ -172,8 +172,27 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
                                 $objectv['targetfoldername'] = $sfobject['name'];
                         }
                         
-                        // Get job status.
-                        $objectv['running'] = "Not implemented yet";//file_exists(sprintf("/var/run/sync-%s", $objectv['fsuuid']));//!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        // Get last job status
+                        $objectv['running'] = "N/A";
+                        $objectv['lastcompleted'] = "N/A";
+                        if(file_exists(sprintf("/var/run/sbackup-%s", $objectv['uuid']))){$objectv['running'] = "Running";}
+                        if($objectv['running'] == "N/A" && file_exists(sprintf("/var/lib/openmediavault/sbackup.d/laststatus-%s", $objectv['uuid']))){
+                        	$txt_file    = file_get_contents(sprintf("/var/lib/openmediavault/sbackup.d/laststatus-%s", $objectv['uuid']));
+													$rows        = explode("|", $txt_file);
+                        	if($rows[2] == "0"){
+                        		$objectv['running'] = "Completed";
+                        	}else{
+                        		$objectv['running'] = "Error:".$rows[2];
+                        	}
+                        	$objectv['lastcompleted'] = date('r', $rows[1]);
+                        }
+                        
+                        // Get last completed job
+                        if($objectv['lastcompleted'] != "N/A" && file_exists(sprintf("/var/lib/openmediavault/sbackup.d/lastcompleted-%s", $objectv['uuid']))){
+                        	$txt_file           = file_get_contents(sprintf("/var/lib/openmediavault/sbackup.d/lastcompleted-%s", $objectv['uuid']));
+													$rows               = explode("|", $txt_file);
+													$objectv['lastcompleted'] = date('r', $rows[1]);
+                        }
                         // Modify result object.
                         $objectv['enable'] = boolval($objectv['enable']);
                         $wdays = array('Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Daily');
