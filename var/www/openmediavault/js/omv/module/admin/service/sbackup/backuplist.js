@@ -136,7 +136,12 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
                         editable: false,
                         triggerAction: "all",
                         value: "00"
-                }];
+                },{
+                        xtype: "checkbox",
+                        name: "savelog",
+                        fieldLabel: _("Save backup log"),
+                        checked: true
+                },];
         }
 });
 
@@ -247,6 +252,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
         },{
                 text: _("Schedule"),
                 sortable: true,
+                width: 120,
                 dataIndex: "schedule",
                 stateId: "schedule"
         }],

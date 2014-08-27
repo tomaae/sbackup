@@ -184,14 +184,14 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
                         	}else{
                         		$objectv['running'] = "Error:".$rows[2];
                         	}
-                        	$objectv['lastcompleted'] = date('r', $rows[1]);
+                        	if($rows[1])$objectv['lastcompleted'] = date('r', $rows[1]);
                         }
                         
                         // Get last completed job
                         if($objectv['lastcompleted'] != "N/A" && file_exists(sprintf("/var/lib/openmediavault/sbackup.d/lastcompleted-%s", $objectv['uuid']))){
                         	$txt_file           = file_get_contents(sprintf("/var/lib/openmediavault/sbackup.d/lastcompleted-%s", $objectv['uuid']));
 													$rows               = explode("|", $txt_file);
-													$objectv['lastcompleted'] = date('r', $rows[1]);
+													if($rows[1])$objectv['lastcompleted'] = date('r', $rows[1]);
                         }
                         // Modify result object.
                         $objectv['enable'] = boolval($objectv['enable']);
@@ -262,7 +262,8 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
                                   "sharedfoldertarget":{'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
                                   "wday":{"type":"string"},
                                   "hour":{"type":"string"},
-                                  "minute":{"type":"string"}
+                                  "minute":{"type":"string"},
+                                  "savelog":{"type":"boolean"}
                           }
                   }');
                 // Prepare the configuration object.
@@ -275,7 +276,8 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
                         "sharedfoldertarget" => $params['sharedfoldertarget'],
                         "wday" => $params['wday'],
                         "hour" => $params['hour'],
-                        "minute" => $params['minute']
+                        "minute" => $params['minute'],
+                        "savelog" => $params['savelog']
                 );
                 // Set the configuration object.
                 $success = FALSE;
