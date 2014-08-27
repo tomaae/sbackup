@@ -1,3 +1,6 @@
+/**
+* Backup modal
+*/
 Ext.define("OMV.module.admin.service.sbackup.backup", {
         extend: "OMV.workspace.window.Form",
         requires: [
@@ -141,60 +144,155 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
                         name: "savelog",
                         fieldLabel: _("Save backup log"),
                         checked: true
-                },];
+                }];
         }
 });
 
-//Ext.define("OMV.module.admin.service.sbackup.backuplist", { // Define a new class
-//	extend: "OMV.workspace.form.Panel", // What is the base type of this class
-//	uses: [
-//          "OMV.module.admin.service.sbackup.backup"
-//        ],
-//  hidePagingToolbar: false,
-//	rpcService: "SBackup", // Remote Procedure Call
-//	rpcGetMethod: "getbackuplist", // Remote Procedure Call
-//	rpcSetMethod: "setbackuplist", // Remote Procedure Call
-//	
-//  onAddButton: function() {
-//        var me = this;
-//        var record = me.getSelected();
-//        Ext.create("OMV.module.admin.service.sbackup.backup", {
-//                title: _("Add backup job"),
-//                uuid: OMV.UUID_UNDEFINED,
-//                listeners: {
-//                        scope: me,
-//                        submit: function() {
-//                                this.doReload();
-//                        }
-//                }
-//        }).show();
-//  },
-//  
-//	getFormItems: function() { // Generic function for this class that initializes the GUI
-//		return [{
-//			xtype: "fieldset", // Type of the item
-//			title: _("Backup list"), // Text that is shown on the top edge of the fieldset
-//			fieldDefaults: {
-//				labelSeparator: ""
-//			},
-//			items: [{ // These items are inside the fieldset item defined above
-//				xtype: "checkbox", // Type of the item
-//				name: "enable", // Individual name of the item
-//				fieldLabel: _("Enable"), // Text that is shown next to the checkbox. Keep this under 15 characters
-//				checked: false // Default value if no settings have been applied yet, Try to change this to true
-//			},
-//			{
-//				xtype: "numberfield", // Type of the item
-//				name: "numberfield1", // Individual name of the item
-//				fieldLabel: "Number", // Text that is shown next to the number field. Keep this under 15 characters
-//				minValue: 0, // Self explanatory
-//				allowDecimals: false, // Self explanatory
-//				allowBlank: true // Self explanatory
-//			}]
-//		}];
-//	}
-//});
+/**
+* Restore modal
+*/
+Ext.define("OMV.module.admin.service.sbackup.restore", {
+        extend: "OMV.window.Window",
+        uses: [
+                "OMV.Rpc",
+                "OMV.grid.Privileges",
+                "OMV.tree.Folder",
+                "OMV.util.Format",
+                "OMV.form.CompositeField",
+                "OMV.form.field.UnixFilePermComboBox"
+        ],
 
+        readOnly: false,
+
+        title: _("Modify shared folder ACL"),
+        width: 700,
+        height: 520,
+        layout: "border",
+        modal: true,
+        buttonAlign: "center",
+        border: false,
+
+        initComponent: function() {
+                var me = this;
+                me.tp = Ext.create("OMV.tree.Folder", {
+                        //region: "west",
+                        title: _("Directory"),
+                        split: false,
+                        width: 700,
+                        collapsible: false,
+                        uuid: me.sharedfoldertarget,
+                        type: "sharedfolder",
+                        rootVisible: true,
+                        root: {
+                        				text: me.sourcefoldername,
+                                name: "sbackup_"+me.uuid
+                        }
+                });
+                Ext.apply(me, {
+                        buttons: [{
+                                text: _("Apply"),
+                                handler: me.onApplyButton,
+                                scope: me,
+                                disabled: me.readOnly
+                        },{
+                                text: _("Close"),
+                                handler: me.close,
+                                scope: me
+                        }],
+                        items: [ me.tp ]
+                });
+                me.callParent(arguments);
+       }//,
+////
+////        /**
+////         * @method onApplyButton
+////         * Method that is called when the 'Apply' button is pressed.
+////         */
+////        onApplyButton: function() {
+////                var me = this;
+////                var node = me.tp.getSelectionModel().getSelection()[0];
+////                var records = me.gp.store.getRange();
+////                // Prepare RPC parameters.
+////                var options = me.fp.getValues();
+////                var users = [];
+////                var groups = [];
+////                Ext.Array.each(records, function(record) {
+////                        // Only process users/groups with at least one selected
+////                        // permission. Users without a selected permission wont
+////                        // be submitted and will be removed from the ACL when the
+////                        // checkbox 'Replace all existing permissions' is selected.
+////                        if((true === record.get("deny")) ||
+////                          (true === record.get("readonly")) ||
+////                          (true === record.get("writeable"))) {
+////                                var object = {
+////                                        "name": record.get("name"),
+////                                        "perms": 0 // No access
+////                                }
+////                                if(true === record.get("readonly"))
+////                                        object.perms = 5;
+////                                else if(true === record.get("writeable"))
+////                                        object.perms = 7;
+////                                switch(record.get("type")) {
+////                                case "user":
+////                                        users.push(object);
+////                                        break;
+////                                case "group":
+////                                        groups.push(object);
+////                                        break;
+////                                }
+////                        }
+////                });
+////                // Use the execute dialog to execute the RPC because it might
+////                // take some time depending on how much files/dirs must be
+////                // processed.
+////                Ext.create("OMV.window.Execute", {
+////                        title: _("Updating ACL settings"),
+////                        width: 350,
+////                        rpcService: "ShareMgmt",
+////                        rpcMethod: "setFileACL",
+////                        rpcParams: {
+////                                uuid: me.uuid,
+////                                file: me.tp.getPathFromNode(node),
+////                                recursive: options.recursive,
+////                                replace: options.replace,
+////                                userperms: options.userperms,
+////                                groupperms: options.groupperms,
+////                                otherperms: options.otherperms,
+////                                users: users,
+////                                groups: groups
+////                        },
+////                        hideStartButton: true,
+////                        hideStopButton: true,
+////                        hideCloseButton: true,
+////                        progress: true,
+////                        listeners: {
+////                                scope: me,
+////                                start: function(wnd) {
+////                                        wnd.show();
+////                                },
+////                                finish: function(wnd) {
+////                                        var value = wnd.getValue();
+////                                        wnd.close();
+////                                        if (value.length > 0) {
+////                                                OMV.MessageBox.error(null, value);
+////                                        } else {
+////                                                // Commit all changes to hide the red corners in
+////                                                // the grid cells.
+////                                                this.gp.getStore().commitChanges();
+////                                        }
+////                                },
+////                                exception: function(wnd, response) {
+////                                        wnd.close();
+////                                        OMV.MessageBox.error(null, response);
+////                                }
+////                        }
+////                }).start();
+////        }
+});
+
+/**
+* backuplist
+*/
 Ext.define("OMV.module.admin.service.sbackup.backuplist", {
         extend: "OMV.workspace.grid.Panel",
         requires: [
@@ -266,6 +364,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
                                         idProperty: "uuid",
                                         fields: [
                                                 { name: "uuid", type: "string" },
+                                                { name: "sharedfoldertarget", type: "string" },
                                                 { name: "enable", type: "boolean" },
                                                 { name: "name", type: "string" },
                                                 { name: "running", type: "string" },
@@ -292,41 +391,55 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
                 me.callParent(arguments);
         },
 
-//        getTopToolbarItems: function() {
-//                var me = this;
-//                var items = me.callParent(arguments);
-//                // Add 'Run' button to top toolbar
-//                Ext.Array.insert(items, 2, [{
-//                        id: me.getId() + "-run",
-//                        xtype: "button",
-//                        text: _("Run"),
-//                        icon: "images/play.png",
-//                        iconCls: Ext.baseCSSPrefix + "btn-icon-16x16",
-//                        handler: Ext.Function.bind(me.onRunButton, me, [ me ]),
-//                        scope: me,
-//                        disabled: true
-//                }]);
-//                return items;
-//        },
+        getTopToolbarItems: function() {
+                var me = this;
+                var items = me.callParent(arguments);
+                // Add 'Run' button to top toolbar
+                Ext.Array.insert(items, 2, [{
+                        id: me.getId() + "-run",
+                        xtype: "button",
+                        text: _("Run"),
+                        icon: "images/play.png",
+                        iconCls: Ext.baseCSSPrefix + "btn-icon-16x16",
+                        handler: Ext.Function.bind(me.onRunButton, me, [ me ]),
+                        scope: me,
+                        disabled: true
+                },{
+                        id: me.getId() + "-restore",
+                        xtype: "button",
+                        text: _("Restore"),
+                        icon: "images/ftp.png",
+                        iconCls: Ext.baseCSSPrefix + "btn-icon-16x16",
+                        handler: Ext.Function.bind(me.onRestoreButton, me, [ me ]),
+                        scope: me,
+                        disabled: true
+                }]);
+                return items;
+        },
 
-//        onSelectionChange: function(model, records) {
-//                var me = this;
-//                me.callParent(arguments);
-//                // Process additional buttons.
-//                var tbarRunCtrl = me.queryById(me.getId() + "-run");
-//                if(records.length <= 0)
-//                        tbarRunCtrl.disable();
-//                else if(records.length == 1)
-//                        tbarRunCtrl.enable();
-//                else
-//                        tbarRunCtrl.disable();
-//        },
+        onSelectionChange: function(model, records) {
+                var me = this;
+                me.callParent(arguments);
+                // Process additional buttons.
+                var tbarRunCtrl = me.queryById(me.getId() + "-run");
+                if(records.length <= 0)
+                        tbarRunCtrl.disable();
+                else if(records.length == 1)
+                        tbarRunCtrl.enable();
+                else
+                        tbarRunCtrl.disable();
+                var tbarRestoreCtrl = me.queryById(me.getId() + "-restore");
+                if(records.length > 0 && records[0].data.lastcompleted != "N/A")
+                        tbarRestoreCtrl.enable();
+                else
+                        tbarRestoreCtrl.disable();
+        },
 
         onAddButton: function() {
                 var me = this;
                 var record = me.getSelected();
                 Ext.create("OMV.module.admin.service.sbackup.backup", {
-                        title: _("Add backup job"),
+                        title: _("Add backup"),
                         uuid: OMV.UUID_UNDEFINED,
                         listeners: {
                                 scope: me,
@@ -341,7 +454,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
                 var me = this;
                 var record = me.getSelected();
                 Ext.create("OMV.module.admin.service.sbackup.backup", {
-                        title: _("Edit backup job"),
+                        title: _("Edit backup"),
                         uuid: record.get("uuid"),
                         listeners: {
                                 scope: me,
@@ -365,7 +478,24 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
                                 }
                         }
                 });
-        }//,
+        },
+       
+       onRestoreButton: function() {
+                var me = this;
+                var record = me.getSelected();
+                Ext.create("OMV.module.admin.service.sbackup.restore", {
+                        title: _("Restore from backup"),
+                        uuid: record.get("uuid"),
+                        sharedfoldertarget: record.get("sharedfoldertarget"),
+                        sourcefoldername: record.get("sourcefoldername"),
+                        listeners: {
+                                scope: me,
+                                submit: function() {
+                                        this.doReload();
+                                }
+                        }
+                }).show();
+        },//,
 //
 //        onRunButton: function() {
 //                var me = this;

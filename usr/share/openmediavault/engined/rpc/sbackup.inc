@@ -1,100 +1,4 @@
 <?php
-//class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
-//	public function getName() { return "SBackup";} // RPC Service name. Same as in .js files
-//	/* Initialize the RPC service. Different methods of the RPC service are declared here*/
-//	public function initialize() {
-//		$this->registerMethod("getbackuplist"); // Method name. Same as in .js files
-//		$this->registerMethod("setbackuplist"); // Method name. Same as in .js files
-//	}
-//	public function getbackuplist($params, $context) {
-//		// Reference to the global declaration of the variable $xmlConfig (Needed always)
-//		global $xmlConfig;
-//		// Validate the RPC caller context.
-//		// This is used to check that only the admin can use this function
-//		// Extra security as usermanagement is also done in the web interface
-//		$this->validateMethodContext($context, array("role" => OMV_ROLE_ADMINISTRATOR));
-//		// The $context contains the fields username and role
-//		// Role can also be "OMV_ROLE_USER" or "OMV_ROLE_EVERYONE" (user and admin)
-//		// Get the configuration object.
-//		$xpath = "//services/sbackup"; // Structure of the xml schema
-//		$object = $xmlConfig->get($xpath); // Read data from the xmlConfig file
-//		// If no data is found then create an error
-//		if(is_null($object)) {
-//			throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,$xpath);
-//		}
-//		// Modify the result object. (Change characters to values)
-//		$object['enable'] = boolval($object['enable']);
-//		$object['numberfield1'] = intval($object['numberfield1']);
-//		return $object;
-//	}
-//	//*****************************************************************
-//	//*****************************************************************
-//	//*****************************************************************
-//	public function setbackuplist($params, $context) {
-//		// Check comments from getSettings
-//		global $xmlConfig;
-//		$this->validateMethodContext($context, array("role" => OMV_ROLE_ADMINISTRATOR));
-//		// Validate the parameters of the RPC service method.
-//		// Parameters are a JSON schema
-//		// Possible types:
-//		// boolean (only checks if variable is boolean)
-//		// integer (same as number but with checking that value is integer)
-//		// number
-//		// minimum (<)
-//		// maximum (>)
-//		// exclusiveMinimum (<=)
-//		// exclusiveMaximum (>=)
-//		// enum (enumeration, multiple enum definitions can be made)
-//		// maxDecimal (type is float and amount of decimals <=)
-//		// string
-//		// minLength (string cannot be shorter than this)
-//		// maxLength (string cannot be longer than this)
-//		// format (in the source most of the format checks are commented out)
-//		// regex (pattern)
-//		// uri (Requires the URL to contain a query string)
-//		// email (Requires the input be validated as an email)
-//		// ip-address (Requires the input be validated as an IPV4 address)
-//		// ipv6 (Requires the input be validated as an IPV6 address)
-//		// enum (enumeration)
-//		// array (array items are checked like regular variable types)
-//		// items (an array must have items)
-//		// minItems (an array must have more items than this)
-//		// maxItems (an array must have less items than this)
-//		// object (see below how to use)
-//		// null (has to be null)
-//		// any (Always returns valid)
-//		$this->validateMethodParams($params, '{
-//		"type":"object",
-//		"properties":{
-//		"enable":{"type":"boolean"},
-//		"numberfield1":{"type":"integer","minimum":1,"maximum":65535}
-//		}
-//		}'
-//		);
-//		// Get the existing configuration object.
-//		$xpath = "//services/sbackup"; // Structure of the xml schema
-//		$oldObject = $xmlConfig->get($xpath); // Read data from the xmlConfig file
-//		// If no data is found then create an error
-//		if(is_null($oldObject)) {
-//			throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,$xpath);
-//		}
-//		// Update the configuration object.
-//		$object = array(
-//		"enable" => array_boolval($params, 'enable'),
-//		"numberfield1" => $params['numberfield1'],
-//		);
-//		// Update the xmlConfig file. If it fails then generate an error
-//		if(FALSE === $xmlConfig->replace("//services/sbackup", $object)) {
-//			throw new OMVException(OMVErrorMsg::E_CONFIG_SET_OBJECT_FAILED);
-//		}
-//		// Notify configuration changes.
-//		$dispatcher = &OMVNotifyDispatcher::getInstance();
-//		$dispatcher->notify(OMV_NOTIFY_MODIFY, "org.openmediavault.services.sbackup", $object);
-//		// Return the configuration object.
-//		return $object;
-//	}
-//}
-
 require_once("openmediavault/object.inc");
 require_once("openmediavault/config.inc");
 require_once("openmediavault/error.inc");
@@ -118,22 +22,13 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
                 $this->registerMethod("get");
                 $this->registerMethod("set");
                 $this->registerMethod("delete");
+                $this->registerMethod("showLog");
                 //$this->registerMethod("execute");
         }
 
         /**
-         * Get list of USB backup job configuration objects.
-         * @param data An array containing the following fields:
-         *   \em start The index where to start.
-         *   \em limit The number of objects to process.
-         *   \em sortfield The name of the column used to sort.
-         *   \em sortdir The sort direction, ASC or DESC.
-         * @return An array containing the requested objects. The field \em total
-         *   contains the total number of objects, \em data contains the object
-         *   array. An exception will be thrown in case of an error.
-         * @throw E_CONFIG_GET_OBJECT_FAILED
+         * getHistory
          */
-         
         public function getHistory($params, $context) {
                 global $xmlConfig;
                 // Validate the RPC caller context.
@@ -171,6 +66,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
     								if($rows[5] != ""){$objects[$i]['backupsize'] = $rows[5];}else{$objects[$i]['backupsize'] = "N/A";}
     								if(file_exists("/var/log/sbackup/sessionlogs/".$objects[$i]['name']."_".$objects[$i]['uuid']."_".$rows[2].".log")){
     									$objects[$i]['haslog'] = "yes";
+    									$objects[$i]['fileid'] = $objects[$i]['name']."_".$objects[$i]['uuid']."_".$rows[2];
     								}else{
     									$objects[$i]['haslog'] = "no";
     								}
@@ -181,7 +77,10 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
                 return $this->applyFilter($objects, $params['start'],
                   $params['limit'], $params['sortfield'], $params['sortdir']);
         }
-         
+        
+        /**
+         * getList
+         */
         public function getList($params, $context) {
                 global $xmlConfig;
                 // Validate the RPC caller context.
@@ -226,8 +125,8 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
                         $objectv['running'] = "N/A";
                         $objectv['lastcompleted'] = "N/A";
                         if(file_exists(sprintf("/var/run/sbackup-%s", $objectv['uuid']))){$objectv['running'] = "Running";}
-                        if($objectv['running'] == "N/A" && file_exists(sprintf("/var/lib/openmediavault/sbackup.d/laststatus-%s", $objectv['uuid']))){
-                        	$txt_file    = file_get_contents(sprintf("/var/lib/openmediavault/sbackup.d/laststatus-%s", $objectv['uuid']));
+                        if($objectv['running'] == "N/A" && file_exists(sprintf("/var/log/sbackup/sessionstatus/laststatus-%s", $objectv['uuid']))){
+                        	$txt_file    = file_get_contents(sprintf("/var/log/sbackup/sessionstatus/laststatus-%s", $objectv['uuid']));
 													$rows        = explode("|", $txt_file);
                         	if($rows[2] == "0"){
                         		$objectv['running'] = "Completed";
@@ -238,8 +137,8 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
                         }
                         
                         // Get last completed job
-                        if($objectv['lastcompleted'] != "N/A" && file_exists(sprintf("/var/lib/openmediavault/sbackup.d/lastcompleted-%s", $objectv['uuid']))){
-                        	$txt_file           = file_get_contents(sprintf("/var/lib/openmediavault/sbackup.d/lastcompleted-%s", $objectv['uuid']));
+                        if($objectv['lastcompleted'] != "N/A" && file_exists(sprintf("/var/log/sbackup/sessionstatus/lastcompleted-%s", $objectv['uuid']))){
+                        	$txt_file           = file_get_contents(sprintf("/var/log/sbackup/sessionstatus/lastcompleted-%s", $objectv['uuid']));
 													$rows               = explode("|", $txt_file);
 													if($rows[1])$objectv['lastcompleted'] = date('r', $rows[1]);
                         }
@@ -255,12 +154,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
         }
 
         /**
-         * Get a USB backup job configuration object.
-         * @param params An array containing the following fields:
-         *   \em uuid The UUID of the configuration object.
-         * @param context The context of the caller.
-         * @return The requested configuration object.
-         * @throw E_CONFIG_GET_OBJECT_FAILED
+         * get
          */
         function get($params, $context) {
                 global $xmlConfig;
@@ -289,12 +183,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
         }
 
         /**
-         * Set a USB backup job configuration object.
-         * @param params The method parameters.
-         * @param context The context of the caller.
-         * @return The stored configuration object.
-         * @throw E_CONFIG_OBJECT_UNIQUENESS
-         * @throw E_CONFIG_SET_OBJECT_FAILED
+         * set
          */
         function set($params, $context) {
                 global $xmlConfig;
@@ -354,11 +243,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
         }
 
         /**
-         * Delete a backup job configuration object.
-         * @param params An array containing the following fields:
-         *   \em uuid The UUID of the configuration object.
-         * @param context The context of the caller.
-         * @return The deleted configuration object.
+         * delete
          */
         public function delete($params, $context) {
                 // Validate the RPC caller context.
@@ -430,6 +315,41 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 //                        exit(1);
 //                }
 //        }
+
+        /**
+         * showLog
+         */
+        public function showLog($params, $context) {
+                // Validate the RPC caller context.
+                $this->validateMethodContext($context, array(
+                          "role" => OMV_ROLE_ADMINISTRATOR
+                  ));
+              if(file_exists("/var/log/sbackup/sessionlogs/".$params['fileid'].".log")){
+                // Create a background process.
+                $bgStatusFilename = $this->createBgProcStatus();
+                $pid = $this->fork();
+                if($pid > 0) { // Parent process.
+                        $this->initializeBgProcStatus($bgStatusFilename, $pid);
+                        return $bgStatusFilename;
+                }
+                // Child process.
+                try {
+                        $bgOutputFilename = $this->createBgProcOutput();
+                        $this->updateBgProcStatus($bgStatusFilename, "outputfilename",
+                          $bgOutputFilename);
+                        // Execute the backup script.
+                        $cmd = "/bin/cat";
+                        $cmdArgs = array("/var/log/sbackup/sessionlogs/".$params['fileid'].".log");
+                        if(FALSE === $this->execve($cmd, $cmdArgs, $bgOutputFilename)) {
+                                throw new OMVException(OMVErrorMsg::E_EXEC_FAILED,
+                                  $cmd." ".implode(" ", $cmdArgs), "");
+                        }
+                } catch(Exception $e) {
+                        $this->finalizeBgProcStatus($bgStatusFilename, "", $e);
+                        exit(1);
+                }
+              }
+        }
 }
 
 // Register the RPC service.

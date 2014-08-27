@@ -9,6 +9,9 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
         ],
 
         hidePagingToolbar: false,
+        hideAddButton: true,
+        hideEditButton: true,
+        hideDeleteButton: true,
         stateful: true,
         stateId: "693bddb2-7765-11e2-8c62-00221568ca71",
         columns: [{
@@ -54,8 +57,9 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
                         store: Ext.create("OMV.data.Store", {
                                 autoLoad: true,
                                 model: OMV.data.Model.createImplicit({
-                                        idProperty: "id",
+                                        idProperty: "fileid",
                                         fields: [
+                                        				{ name: "fileid", type: "string" },
                                         				{ name: "id", type: "string" },
                                                 { name: "uuid", type: "string" },
                                                 { name: "name", type: "string" },
@@ -82,25 +86,57 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
                 });
                 me.callParent(arguments);
         },
+        
+        getTopToolbarItems: function() {
+                var me = this;
+                var items = me.callParent(arguments);
+                // Add 'Log' button to top toolbar
+                Ext.Array.insert(items, 2, [{
+                        id: me.getId() + "-log",
+                        xtype: "button",
+                        text: _("Log"),
+                        icon: "images/logs.png",
+                        iconCls: Ext.baseCSSPrefix + "btn-icon-16x16",
+                        handler: Ext.Function.bind(me.onShowlog, me, [ me ]),
+                        scope: me,
+                        disabled: true
+                }]);
+                return items;
+        },
 
-//        onRunButton: function() {
-//                var me = this;
-//                var record = me.getSelected();
-//                Ext.create("OMV.window.Execute", {
-//                        title: _("Execute backup job"),
-//                        rpcService: "sbackup",
-//                        rpcMethod: "execute",
-//                        rpcParams: {
-//                                uuid: record.get("uuid")
-//                        },
-//                        listeners: {
-//                                scope: me,
-//                                exception: function(wnd, error) {
-//                                        OMV.MessageBox.error(null, error);
-//                                }
-//                        }
-//                }).show();
-//        }
+        onSelectionChange: function(model, records) {
+                var me = this;
+                me.callParent(arguments);
+                // Process additional buttons.
+                var tbarRunCtrl = me.queryById(me.getId() + "-log");
+                if(records.length > 0 && records[0].data.haslog == "yes")
+                        tbarRunCtrl.enable();
+                else
+                        tbarRunCtrl.disable();
+        },
+
+        
+
+        onShowlog: function() {
+                var me = this;
+                var record = me.getSelected();
+                Ext.create("OMV.window.Execute", {
+                        title: _("Backup session log"),
+                        //hideStartButton: true,
+                        hideStopButton: true,
+                        rpcService: "sbackup",
+                        rpcMethod: "showLog",
+                        rpcParams: {
+                                fileid: record.get("fileid")
+                        },
+                        listeners: {
+                                scope: me,
+                                exception: function(wnd, error) {
+                                        OMV.MessageBox.error(null, error);
+                                }
+                        }
+                }).show();
+        }
 });
 
 // Register the class that is defined above
