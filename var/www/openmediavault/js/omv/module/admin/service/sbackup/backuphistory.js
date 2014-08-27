@@ -1,0 +1,113 @@
+Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
+        extend: "OMV.workspace.grid.Panel",
+        requires: [
+                "OMV.Rpc",
+                "OMV.data.Store",
+                "OMV.data.Model",
+                "OMV.data.proxy.Rpc",
+                "OMV.window.Execute"
+        ],
+
+        hidePagingToolbar: false,
+        stateful: true,
+        stateId: "693bddb2-7765-11e2-8c62-00221568ca71",
+        columns: [{
+                text: _("Backup name"),
+                sortable: true,
+                width: 150,
+                dataIndex: "name",
+                stateId: "name"
+        },{
+                text: _("Status"),
+                sortable: true,
+                width: 150,
+                dataIndex: "running",
+                stateId: "running"
+        },{
+                text: _("Start time"),
+                sortable: true,
+                width: 200,
+                dataIndex: "starttime",
+                stateId: "starttime"
+        },{
+                text: _("End time"),
+                sortable: true,
+                width: 200,
+                dataIndex: "endtime",
+                stateId: "endtime"
+        },{
+                text: _("Size"),
+                sortable: true,
+                dataIndex: "backupsize",
+                stateId: "backupsize"
+        },{
+                text: _("Log"),
+                sortable: true,
+                width: 30,
+                dataIndex: "haslog",
+                stateId: "haslog"
+        }],
+
+        initComponent: function() {
+                var me = this;
+                Ext.apply(me, {
+                        store: Ext.create("OMV.data.Store", {
+                                autoLoad: true,
+                                model: OMV.data.Model.createImplicit({
+                                        idProperty: "id",
+                                        fields: [
+                                        				{ name: "id", type: "string" },
+                                                { name: "uuid", type: "string" },
+                                                { name: "name", type: "string" },
+                                                { name: "running", type: "string" },
+                                                { name: "starttime", type: "string" },
+                                                { name: "endtime", type: "string" },
+                                                { name: "backupsize", type: "string" },
+                                                { name: "haslog", type: "string" }
+                                        ]
+                                }),
+                                proxy: {
+                                        type: "rpc",
+                                        rpcData: {
+                                                service: "sbackup",
+                                                method: "getHistory"
+                                        }
+                                },
+                                remoteSort: true,
+                                sorters: [{
+                                        direction: "DESC",
+                                        property: "id"
+                                }]
+                        })
+                });
+                me.callParent(arguments);
+        },
+
+//        onRunButton: function() {
+//                var me = this;
+//                var record = me.getSelected();
+//                Ext.create("OMV.window.Execute", {
+//                        title: _("Execute backup job"),
+//                        rpcService: "sbackup",
+//                        rpcMethod: "execute",
+//                        rpcParams: {
+//                                uuid: record.get("uuid")
+//                        },
+//                        listeners: {
+//                                scope: me,
+//                                exception: function(wnd, error) {
+//                                        OMV.MessageBox.error(null, error);
+//                                }
+//                        }
+//                }).show();
+//        }
+});
+
+// Register the class that is defined above
+OMV.WorkspaceManager.registerPanel({
+	id: "backuphistory", //Individual id
+	path: "/service/sbackup", // Parent folder in the navigation view
+	text: _("Backup history"), // Text to show on the tab , Shown only if multiple form panels
+	position: 20, // Horizontal position of this tab. Use when you have multiple tabs
+	className: "OMV.module.admin.service.sbackup.backuphistory" // Same class name as defined above
+});

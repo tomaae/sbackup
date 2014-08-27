@@ -113,6 +113,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
          * Initialize the RPC service.
          */
         public function initialize() {
+                $this->registerMethod("getHistory");
                 $this->registerMethod("getList");
                 $this->registerMethod("get");
                 $this->registerMethod("set");
@@ -132,6 +133,55 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
          *   array. An exception will be thrown in case of an error.
          * @throw E_CONFIG_GET_OBJECT_FAILED
          */
+         
+        public function getHistory($params, $context) {
+                global $xmlConfig;
+                // Validate the RPC caller context.
+                $this->validateMethodContext($context, array(
+                          "role" => OMV_ROLE_ADMINISTRATOR
+                  ));
+                // Validate the parameters of the RPC service method.
+                $this->validateMethodParams($params, '{
+                          "type":"object",
+                          "properties":{
+                                  "start":{"type":"integer"},
+                                  "limit":{'.$GLOBALS['OMV_JSONSCHEMA_COUNTFIELD'].'},
+                                  "sortfield":{'.$GLOBALS['OMV_JSONSCHEMA_SORTFIELD'].'},
+                                  "sortdir":{'.$GLOBALS['OMV_JSONSCHEMA_SORTDIR'].'}
+                          }
+                  }');
+                  
+        	 			if(file_exists("/var/log/sbackup/backup.log")){
+        	 				$i=0;
+        	 				$txt_file = file_get_contents("/var/log/sbackup/backup.log");
+        	 				$lines    = explode("\n", $txt_file);
+        	 				foreach($lines as $line){
+        	 					if(!$line)continue;
+    								$rows = explode("|", $line);
+    								$objects[$i]['id'] = $i;
+    								$objects[$i]['uuid'] = $rows[1];
+    								if($rows[0]){$objects[$i]['name'] = $rows[0];}else{$objects[$i]['name'] = "N/A";}
+                  	if($rows[4] == "0"){
+                  		$objects[$i]['running'] = "Completed";
+                  	}else{
+                  		$objects[$i]['running'] = "Error:".$rows[4];
+                  	}
+    								if($rows[2]){$objects[$i]['starttime'] = date('r', $rows[2]);}else{$objects[$i]['starttime'] = "N/A";}
+    								if($rows[3]){$objects[$i]['endtime'] = date('r', $rows[3]);}else{$objects[$i]['endtime'] = "N/A";}
+    								if($rows[5] != ""){$objects[$i]['backupsize'] = $rows[5];}else{$objects[$i]['backupsize'] = "N/A";}
+    								if(file_exists("/var/log/sbackup/sessionlogs/".$objects[$i]['name']."_".$objects[$i]['uuid']."_".$rows[2].".log")){
+    									$objects[$i]['haslog'] = "yes";
+    								}else{
+    									$objects[$i]['haslog'] = "no";
+    								}
+    								$i++;
+    							}
+                }
+                // Filter the result.
+                return $this->applyFilter($objects, $params['start'],
+                  $params['limit'], $params['sortfield'], $params['sortdir']);
+        }
+         
         public function getList($params, $context) {
                 global $xmlConfig;
                 // Validate the RPC caller context.
@@ -198,6 +248,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
                         $wdays = array('Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Daily');
                         $objectv['schedule'] = $wdays[$objectv['wday']]." ".$objectv['hour'].":".$objectv['minute'];
                 }
+                
                 // Filter the result.
                 return $this->applyFilter($objects, $params['start'],
                   $params['limit'], $params['sortfield'], $params['sortdir']);

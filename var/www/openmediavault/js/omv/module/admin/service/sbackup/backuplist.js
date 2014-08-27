@@ -210,7 +210,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 
         hidePagingToolbar: false,
         stateful: true,
-        stateId: "693bddb2-7765-11e2-8c62-00221568ca88",
+        stateId: "693bddb2-7765-11e2-8c62-00221568ca70",
         columns: [{
                 xtype: "booleaniconcolumn",
                 text: _("Enabled"),
@@ -285,7 +285,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
                                 remoteSort: true,
                                 sorters: [{
                                         direction: "ASC",
-                                        property: "sourcefoldername"
+                                        property: "name"
                                 }]
                         })
                 });
