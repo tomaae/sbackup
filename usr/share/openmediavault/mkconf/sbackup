@@ -115,6 +115,7 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
       -o " -rlHpEAXogt --delete " \
       -o " \"" ${GET_SOURCE_PATH} -o "\"" -o " \"" ${GET_TARGET_DEST} -o "\" 2>&1)" -n \
       -o " SB_ECODE=\$(echo \$?)" -n \
+      -o " sleep 10" -n \
     	${OMV_CONFIG_FILE} | xmlstarlet unesc > "${OMV_SBACKUP_SCRIPTS_DIR}/script-${uuid}"
     chmod ${OMV_SBACKUP_SCRIPTS_MASK} "${OMV_SBACKUP_SCRIPTS_DIR}/script-${uuid}"
     

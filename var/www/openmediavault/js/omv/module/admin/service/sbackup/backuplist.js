@@ -190,6 +190,7 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
 			title: _("Directory"),
 			split: false,
 			width: 700,
+			height: 400,
 			collapsible: false,
 			uuid: me.sharedfoldertarget,
 			type: "sharedfolder",
@@ -199,9 +200,32 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
 				name: "sbackup_"+me.uuid
 			}
 		});
+
+    me.fp = Ext.create("OMV.form.Panel", {
+    	title: _("Options"),
+    	region: "south",
+    	split: true,
+    	collapsible: false,
+    	bodyPadding: "5 5 0",
+    	border: true,
+    	items: [{
+    		xtype: "checkbox",
+    		name: "deleteold",
+    		fieldLabel: _("Delete source"),
+    		checked: false,
+    		boxLabel: _("Delete all data from source")
+    	},{
+    		xtype: "checkbox",
+    		name: "savelog",
+    		fieldLabel: _("Log"),
+    		checked: true,
+    		boxLabel: _("Save restore log")
+    	}]
+    });
+		
 		Ext.apply(me, {
 			buttons: [{
-				text: _("Apply"),
+				text: _("Run restore"),
 				handler: me.onApplyButton,
 				scope: me,
 				disabled: me.readOnly
@@ -210,95 +234,43 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
 				handler: me.close,
 				scope: me
 			}],
-			items: [ me.tp ]
+			items: [ me.tp, me.fp ]
 		});
 		me.callParent(arguments);
-	}//,
-	////
-	////        /**
-	////         * @method onApplyButton
-	////         * Method that is called when the 'Apply' button is pressed.
-	////         */
-	////        onApplyButton: function() {
-	////                var me = this;
-	////                var node = me.tp.getSelectionModel().getSelection()[0];
-	////                var records = me.gp.store.getRange();
-	////                // Prepare RPC parameters.
-	////                var options = me.fp.getValues();
-	////                var users = [];
-	////                var groups = [];
-	////                Ext.Array.each(records, function(record) {
-	////                        // Only process users/groups with at least one selected
-	////                        // permission. Users without a selected permission wont
-	////                        // be submitted and will be removed from the ACL when the
-	////                        // checkbox 'Replace all existing permissions' is selected.
-	////                        if((true === record.get("deny")) ||
-	////                          (true === record.get("readonly")) ||
-	////                          (true === record.get("writeable"))) {
-	////                                var object = {
-	////                                        "name": record.get("name"),
-	////                                        "perms": 0 // No access
-	////                                }
-	////                                if(true === record.get("readonly"))
-	////                                        object.perms = 5;
-	////                                else if(true === record.get("writeable"))
-	////                                        object.perms = 7;
-	////                                switch(record.get("type")) {
-	////                                case "user":
-	////                                        users.push(object);
-	////                                        break;
-	////                                case "group":
-	////                                        groups.push(object);
-	////                                        break;
-	////                                }
-	////                        }
-	////                });
-	////                // Use the execute dialog to execute the RPC because it might
-	////                // take some time depending on how much files/dirs must be
-	////                // processed.
-	////                Ext.create("OMV.window.Execute", {
-	////                        title: _("Updating ACL settings"),
-	////                        width: 350,
-	////                        rpcService: "ShareMgmt",
-	////                        rpcMethod: "setFileACL",
-	////                        rpcParams: {
-	////                                uuid: me.uuid,
-	////                                file: me.tp.getPathFromNode(node),
-	////                                recursive: options.recursive,
-	////                                replace: options.replace,
-	////                                userperms: options.userperms,
-	////                                groupperms: options.groupperms,
-	////                                otherperms: options.otherperms,
-	////                                users: users,
-	////                                groups: groups
-	////                        },
-	////                        hideStartButton: true,
-	////                        hideStopButton: true,
-	////                        hideCloseButton: true,
-	////                        progress: true,
-	////                        listeners: {
-	////                                scope: me,
-	////                                start: function(wnd) {
-	////                                        wnd.show();
-	////                                },
-	////                                finish: function(wnd) {
-	////                                        var value = wnd.getValue();
-	////                                        wnd.close();
-	////                                        if (value.length > 0) {
-	////                                                OMV.MessageBox.error(null, value);
-	////                                        } else {
-	////                                                // Commit all changes to hide the red corners in
-	////                                                // the grid cells.
-	////                                                this.gp.getStore().commitChanges();
-	////                                        }
-	////                                },
-	////                                exception: function(wnd, response) {
-	////                                        wnd.close();
-	////                                        OMV.MessageBox.error(null, response);
-	////                                }
-	////                        }
-	////                }).start();
-	////        }
+	},
+	
+  onApplyButton: function() {
+  	var me = this;
+  	var node = me.tp.getSelectionModel().getSelection()[0];
+  	var options = me.fp.getValues();
+  
+  	var dir = "",dirnode = node
+  	while(dirnode.data.root == false){
+  		dir = dirnode.data.name+"/"+dir
+  		dirnode = dirnode.parentNode
+  	}
+  	// Execute RPC
+  	OMV.Rpc.request({
+  		scope: me,
+  		callback: function(id, success, response) {
+  			//var now = new Date().getTime();
+  			//while(new Date().getTime() < now + 1500){ /* do nothing */ }
+  			//this.parent.doReload();
+  			this.close();
+  		},
+  		relayErrors: false,
+  		rpcData: {
+  			service: "sbackup",
+  			method: "runRestore",
+  			params: {
+  				uuid: me.uuid,
+  				dir: dir,
+  				deleteold: options.deleteold,
+  				savelog: options.savelog
+  			}
+  		}
+  	});
+	}
 });
 
 /**
@@ -451,6 +423,10 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 				tbarRestoreCtrl.enable();
 				else
 					tbarRestoreCtrl.disable();
+		if(records.length > 0 && (records[0].data.running == "Running" || records[0].data.running == "Restoring")){
+			tbarRunCtrl.disable();
+			tbarRestoreCtrl.disable();
+		}
 	},
 
 	onAddButton: function() {
