@@ -131,7 +131,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
                         	if($rows[2] == "0"){
                         		$objectv['running'] = "Completed";
                         	}else{
-                        		$objectv['running'] = "Error:".$rows[2];
+                        		if($rows[2] != "")$objectv['running'] = "Error:".$rows[2];
                         	}
                         	if($rows[1])$objectv['lastcompleted'] = date('r', $rows[1]);
                         }
