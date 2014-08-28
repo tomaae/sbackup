@@ -78,7 +78,7 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
       -o "  RSPERF=\$(echo \${line}|awk '/^total size is / {print \$7}')" -n \
 			-o "  done" -n \
 			-o "  SB_TIMEEND=\$(date +\"%s\")" -n \
-			-o "  echo \"" -v "name" -o "|" -v "uuid" -o "|\${SB_TIMESTART}|\${SB_TIMEEND}|\${SB_ECODE}|\${RSSIZE}|\${RSPERF}|rsync|"  -o "\" >> \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
+			-o "  echo \"" -v "name" -o "|" -v "uuid" -o "|\${SB_TIMESTART}|\${SB_TIMEEND}|\${SB_ECODE}|\${RSSIZE}|\${RSPERF}|rsync|backup|"  -o "\" >> \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
 			-o "  echo \"\${SB_TIMESTART}|\${SB_TIMEEND}|\${SB_ECODE}|\${RSSIZE}|\${RSPERF}|rsync|"  -o "\" > \"" -o ${OMV_SBACKUP_STATDIR} -o "/laststatus-" -v "uuid" -o "\"" -n \
 			-o "  if [ \"\${SB_ECODE}\" = \"0\" ]; then" -n \
 			-o "    echo \"\${SB_TIMESTART}|\${SB_TIMEEND}|\${SB_ECODE}|\${RSSIZE}|\${RSPERF}|rsync|"  -o "\" > \"" -o ${OMV_SBACKUP_STATDIR} -o "/lastcompleted-" -v "uuid" -o "\"" -n \
@@ -95,13 +95,13 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
       -o "# Check if all filesystems are mounted." -n \
       -o "if ! omv_is_mounted \"" ${GET_SOURCE_MNT} -o "\" ; then" -n \
       -o "    echo \"Source storage device not mounted!\"" -n \
-      -o "    echo \"" -v "name" -o "|" -v "uuid" -o "|\${SB_TIMESTART}||Source not mounted|||rsync|"  -o "\" >> \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
+      -o "    echo \"" -v "name" -o "|" -v "uuid" -o "|\${SB_TIMESTART}||Source not mounted|||rsync|backup|"  -o "\" >> \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
       -o "    echo \"\${SB_TIMESTART}||Source not mounted|||rsync|"  -o "\" > \"" -o ${OMV_SBACKUP_STATDIR} -o "/laststatus-" -v "uuid" -o "\"" -n \
       -o "    exit 1" -n \
       -o "fi" -n \
       -o "if ! omv_is_mounted \"" ${GET_TARGET_MNT} -o "\" ; then" -n \
       -o "    echo \"Target storage device not mounted!\"" -n \
-      -o "    echo \"" -v "name" -o "|" -v "uuid" -o "|\${SB_TIMESTART}||Target not mounted|||rsync|"  -o "\" >> \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
+      -o "    echo \"" -v "name" -o "|" -v "uuid" -o "|\${SB_TIMESTART}||Target not mounted|||rsync|backup|"  -o "\" >> \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
       -o "    echo \"\${SB_TIMESTART}||Target not mounted|||rsync|"  -o "\" > \"" -o ${OMV_SBACKUP_STATDIR} -o "/laststatus-" -v "uuid" -o "\"" -n \
       -o "    exit 1" -n \
       -o "fi" -n \
@@ -128,7 +128,7 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
       ${OMV_CONFIG_FILE} | xmlstarlet unesc >> "${OMV_SBACKUP_CRONFILE}"
         
     ##Recreate laststatus&lastcompleted
-  	cat ${OMV_SBACKUP_LOGFILE}|grep "|${uuid}|"|awk -F'|' '{print $3"|"$4"|"$5"|"$6"|"$7"|"$8"|"}'|tail -1 > "${OMV_SBACKUP_STATDIR}/laststatus-${uuid}"
-  	cat ${OMV_SBACKUP_LOGFILE}|grep "|${uuid}|"|awk -F'|' '{if ($5 == "0") print $3"|"$4"|"$5"|"$6"|"$7"|"$8"|"}'|tail -1 > "${OMV_SBACKUP_STATDIR}/lastcompleted-${uuid}"
+  	cat ${OMV_SBACKUP_LOGFILE}|grep "|${uuid}|"|grep -v "|restore|"|awk -F'|' '{print $3"|"$4"|"$5"|"$6"|"$7"|"$8"|"}'|tail -1 > "${OMV_SBACKUP_STATDIR}/laststatus-${uuid}"
+  	cat ${OMV_SBACKUP_LOGFILE}|grep "|${uuid}|"|grep -v "|restore|"|awk -F'|' '{if ($5 == "0") print $3"|"$4"|"$5"|"$6"|"$7"|"$8"|"}'|tail -1 > "${OMV_SBACKUP_STATDIR}/lastcompleted-${uuid}"
          
 done

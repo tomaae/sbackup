@@ -71,8 +71,12 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 					$objects[$i]['haslog'] = "no";
 				}
 				if($rows[6]){$objects[$i]['backupperf'] = $rows[6];}else{$objects[$i]['backupperf'] = "N/A";}
-				$objects[$i]['btype'] = "N/A";
+				$objects[$i]['btype'] = "Single version";#"N/A";
 				if($rows[7] == "rsync")$objects[$i]['btype'] = "Single version";
+				$objects[$i]['sessiontype'] = "Backup";#"N/A";
+				if($rows[8] == "backup")$objects[$i]['sessiontype'] = "Backup";
+				if($rows[8] == "restore")$objects[$i]['sessiontype'] = "Restore";
+				
 				$i++;
 			}
 		}

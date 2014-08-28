@@ -21,6 +21,12 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
 		dataIndex: "id",
 		stateId: "id"
 	},{
+		text: _("Type"),
+		sortable: true,
+		width: 90,
+		dataIndex: "sessiontype",
+		stateId: "sessiontype"
+	},{
 		text: _("Backup name"),
 		sortable: true,
 		width: 150,
@@ -79,6 +85,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
 					{ name: "fileid", type: "string" },
 					{ name: "id", type: "string" },
 					{ name: "uuid", type: "string" },
+					{ name: "sessiontype", type: "string" },
 					{ name: "name", type: "string" },
 					{ name: "running", type: "string" },
 					{ name: "starttime", type: "string" },
