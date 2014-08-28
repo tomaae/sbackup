@@ -50,7 +50,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
 		dataIndex: "backupsize",
 		stateId: "backupsize"
 	},{
-		text: _("Perf"),
+		text: _("Performance"),
 		sortable: true,
 		dataIndex: "backupperf",
 		stateId: "backupperf"
@@ -61,9 +61,9 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
 		dataIndex: "haslog",
 		stateId: "haslog"
 	},{
-		text: _("Backup type"),
+		text: _("Backup scheme"),
 		sortable: true,
-		width: 90,
+		width: 100,
 		dataIndex: "btype",
 		stateId: "btype"
 	}],
@@ -113,7 +113,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
 		Ext.Array.insert(items, 2, [{
 			id: me.getId() + "-log",
 			xtype: "button",
-			text: _("Log"),
+			text: _("Session log"),
 			icon: "images/logs.png",
 			iconCls: Ext.baseCSSPrefix + "btn-icon-16x16",
 			handler: Ext.Function.bind(me.onShowlog, me, [ me ]),

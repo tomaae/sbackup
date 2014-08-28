@@ -71,7 +71,8 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 					$objects[$i]['haslog'] = "no";
 				}
 				if($rows[6]){$objects[$i]['backupperf'] = $rows[6];}else{$objects[$i]['backupperf'] = "N/A";}
-				if($rows[7] == "rsync")$objects[$i]['btype'] = "Rsync";
+				$objects[$i]['btype'] = "N/A";
+				if($rows[7] == "rsync")$objects[$i]['btype'] = "Single version";
 				$i++;
 			}
 		}
@@ -148,7 +149,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 			$objectv['enable'] = boolval($objectv['enable']);
 			$wdays = array('Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Daily');
 			$objectv['schedule'] = $wdays[$objectv['wday']]." ".$objectv['hour'].":".$objectv['minute'];
-			if($objectv['btype'] == "rsync")$objectv['btype'] = "Rsync";
+			if($objectv['btype'] == "rsync")$objectv['btype'] = "Single version";
 		}
 
 		// Filter the result.
