@@ -233,6 +233,9 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		"savelog" => $params['savelog'],
 		"btype" => $params['btype']
 		);
+		if($params['sharedfoldersource'] == $params['sharedfoldertarget']){
+			throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Source and destination targets cannot be the same.");
+		}
 		// Set the configuration object.
 		$success = FALSE;
 		if($params['uuid'] == $GLOBALS['OMV_UUID_UNDEFINED']) {
@@ -493,6 +496,10 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
         }
       }'
     );
+    
+    if($params['backuplogretention'] < $params['sessionlogretention']){
+    	throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Log retention cannot be longer then history retention.");
+    }
     
     // Get the existing configuration object.
     $xpath = "//services/sbackup/settings";
