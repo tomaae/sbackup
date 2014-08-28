@@ -49,6 +49,10 @@ implements OMVINotifyListener {
 		"org.openmediavault.services.sbackup.backuplist.backup",
 		array($this, "setDirty"));
 		$dispatcher->addListener(
+		OMV_NOTIFY_CREATE | OMV_NOTIFY_MODIFY | OMV_NOTIFY_DELETE,
+		"org.openmediavault.services.sbackup.settings",
+		array($this, "setDirty"));
+		$dispatcher->addListener(
 		OMV_NOTIFY_MODIFY,
 		"org.openmediavault.system.shares.sharedfolder",
 		array($this, "onSharedFolder"));

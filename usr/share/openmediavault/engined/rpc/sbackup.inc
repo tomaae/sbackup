@@ -25,6 +25,8 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		$this->registerMethod("showLog");
 		$this->registerMethod("runBackup");
 		$this->registerMethod("runRestore");
+		$this->registerMethod("getSettings");
+		$this->registerMethod("setSettings");
 	}
 
 	/**
@@ -458,6 +460,67 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 			}
 		}
 	}
+
+	/**
+	* getSettings
+	*/
+  public function getSettings($params, $context) {
+  	global $xmlConfig;
+  	$this->validateMethodContext($context, array("role" => OMV_ROLE_ADMINISTRATOR));
+  	$xpath = "//services/sbackup/settings";
+    $object = $xmlConfig->get($xpath);
+    if(is_null($object)) {
+       throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,$xpath);
+    }
+    
+    $object['backuplogretention'] = intval($object['backuplogretention']);
+    $object['sessionlogretention'] = intval($object['sessionlogretention']);
+
+    return $object;
+  }
+  
+  /**
+	* setSettings
+	*/
+  public function setSettings($params, $context) {
+  	global $xmlConfig;
+    $this->validateMethodContext($context, array("role" => OMV_ROLE_ADMINISTRATOR)); 
+    $this->validateMethodParams($params, '{
+      "type":"object",
+      "properties":{
+        "backuplogretention":{"type":"integer","minimum":0,"maximum":365},
+        "sessionlogretention":{"type":"integer","minimum":0,"maximum":365}
+        }
+      }'
+    );
+    
+    // Get the existing configuration object.
+    $xpath = "//services/sbackup/settings";
+    $oldObject = $xmlConfig->get($xpath);
+    if(is_null($oldObject)) {
+       throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,$xpath);
+    }
+ 
+    // Update the configuration object.
+    $object = array(
+      "backuplogretention" => $params['backuplogretention'],
+      "sessionlogretention" => $params['sessionlogretention']
+    );
+
+    // Update the xmlConfig file. If it fails then generate an error
+    
+    if(FALSE === $xmlConfig->replace("//services/sbackup/settings", $object)) {
+        throw new OMVException(OMVErrorMsg::E_CONFIG_SET_OBJECT_FAILED);
+    }
+
+    // Notify configuration changes.
+    $dispatcher = &OMVNotifyDispatcher::getInstance();
+    $dispatcher->notify(OMV_NOTIFY_MODIFY, "org.openmediavault.services.sbackup.settings", $object);
+
+    // Return the configuration object.
+    return $object;
+      
+  }
 }
 
 // Register the RPC service.
