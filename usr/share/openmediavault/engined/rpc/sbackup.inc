@@ -236,6 +236,21 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		if($params['sharedfoldersource'] == $params['sharedfoldertarget']){
 			throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Source and destination targets cannot be the same.");
 		}
+		$xpath = "//services/sbackup/backuplist/backup";
+		$objects = $xmlConfig->getList($xpath);
+		if(is_null($objects)) {
+			throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,	$xpath);
+		}
+		
+		// Add additional share informations.
+		foreach($objects as $objectk => &$objectv) {
+
+			// Get the shared folder configuration object.
+			if($objectv['sharedfoldertarget'] == $params['sharedfoldersource']){
+				throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Backup source is set as destinations for another backup. Cannot be used.");
+			}
+		}
+		
 		// Set the configuration object.
 		$success = FALSE;
 		if($params['uuid'] == $GLOBALS['OMV_UUID_UNDEFINED']) {
