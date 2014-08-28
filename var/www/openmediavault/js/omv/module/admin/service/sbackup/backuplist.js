@@ -249,26 +249,38 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
   		dir = dirnode.data.name+"/"+dir
   		dirnode = dirnode.parentNode
   	}
-  	// Execute RPC
-  	OMV.Rpc.request({
-  		scope: me,
-  		callback: function(id, success, response) {
-  			//var now = new Date().getTime();
-  			//while(new Date().getTime() < now + 1500){ /* do nothing */ }
-  			//this.parent.doReload();
-  			this.close();
+
+  	OMV.MessageBox.show({
+  		title: _("Confirmation"),
+  		msg: _("Do you really want to start restore?"),
+  		buttons: Ext.Msg.YESNO,
+  		fn: function(answer) {
+  			if(answer === "no")
+  			return;
+      	// Execute RPC
+      	OMV.Rpc.request({
+      		scope: me,
+      		callback: function(id, success, response) {
+      			//var now = new Date().getTime();
+      			//while(new Date().getTime() < now + 1500){ /* do nothing */ }
+      			//this.parent.doReload();
+      			this.close();
+      		},
+      		relayErrors: false,
+      		rpcData: {
+      			service: "sbackup",
+      			method: "runRestore",
+      			params: {
+      				uuid: me.uuid,
+      				dir: dir,
+      				deleteold: options.deleteold,
+      				savelog: options.savelog
+      			}
+      		}
+      	});
   		},
-  		relayErrors: false,
-  		rpcData: {
-  			service: "sbackup",
-  			method: "runRestore",
-  			params: {
-  				uuid: me.uuid,
-  				dir: dir,
-  				deleteold: options.deleteold,
-  				savelog: options.savelog
-  			}
-  		}
+  		scope: me,
+  		icon: Ext.Msg.QUESTION
   	});
 	}
 });
@@ -485,33 +497,46 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 			listeners: {
 				scope: me,
 				submit: function() {
+  				var now = new Date().getTime();
+  				while(new Date().getTime() < now + 1500){ /* do nothing */ }
 					this.doReload();
 				}
 			}
 		}).show();
 	},
 
-	onRunButton: function() {
-		var me = this;
-		var record = me.getSelected();
-		// Execute RPC
-		OMV.Rpc.request({
-			scope: me,
-			callback: function(id, success, response) {
-				var now = new Date().getTime();
-				while(new Date().getTime() < now + 1500){ /* do nothing */ }
-				this.doReload();
-			},
-			relayErrors: false,
-			rpcData: {
-				service: "sbackup",
-				method: "runBackup",
-				params: {
-					uuid: record.get("uuid")
-				}
-			}
-		});
-	}
+  onRunButton: function() {
+  	var me = this;
+  	var record = me.getSelected();
+  	OMV.MessageBox.show({
+  		title: _("Confirmation"),
+  		msg: _("Do you really want to start backup?"),
+  		buttons: Ext.Msg.YESNO,
+  		fn: function(answer) {
+  			if(answer === "no")
+  			return;
+  			// Execute RPC
+  			OMV.Rpc.request({
+  				scope: me,
+  				callback: function(id, success, response) {
+  					var now = new Date().getTime();
+  					while(new Date().getTime() < now + 1500){ /* do nothing */ }
+  					this.doReload();
+  				},
+  				relayErrors: false,
+  				rpcData: {
+  					service: "sbackup",
+  					method: "runBackup",
+  					params: {
+  						uuid: record.get("uuid")
+  					}
+  				}
+  			});
+  		},
+  		scope: me,
+  		icon: Ext.Msg.QUESTION
+  	});
+  }
 });
 
 // Register the class that is defined above
