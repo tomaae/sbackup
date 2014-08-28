@@ -495,26 +495,29 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
                                 }
                         }
                 }).show();
-        },//,
-//
-//        onRunButton: function() {
-//                var me = this;
-//                var record = me.getSelected();
-//                Ext.create("OMV.window.Execute", {
-//                        title: _("Execute backup job"),
-//                        rpcService: "sbackup",
-//                        rpcMethod: "execute",
-//                        rpcParams: {
-//                                uuid: record.get("uuid")
-//                        },
-//                        listeners: {
-//                                scope: me,
-//                                exception: function(wnd, error) {
-//                                        OMV.MessageBox.error(null, error);
-//                                }
-//                        }
-//                }).show();
-//        }
+        },
+        
+        onRunButton: function() {
+                var me = this;
+                var record = me.getSelected();
+                // Execute RPC.
+                OMV.Rpc.request({
+                        scope: me,
+                        callback: function(id, success, response) {
+                        	var now = new Date().getTime();
+    											while(new Date().getTime() < now + 1500){ /* do nothing */ } 
+                                this.doReload();
+                        },
+                        relayErrors: false,
+                        rpcData: {
+                                service: "sbackup",
+                                method: "runBackup",
+                                params: {
+                                        uuid: record.get("uuid")
+                                }
+                        }
+                });
+        }
 });
 
 // Register the class that is defined above

@@ -23,7 +23,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
                 $this->registerMethod("set");
                 $this->registerMethod("delete");
                 $this->registerMethod("showLog");
-                //$this->registerMethod("execute");
+                $this->registerMethod("runBackup");
         }
 
         /**
@@ -137,7 +137,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
                         }
                         
                         // Get last completed job
-                        if($objectv['lastcompleted'] != "N/A" && file_exists(sprintf("/var/log/sbackup/sessionstatus/lastcompleted-%s", $objectv['uuid']))){
+                        if($objectv['lastcompleted'] == "N/A" && file_exists(sprintf("/var/log/sbackup/sessionstatus/lastcompleted-%s", $objectv['uuid']))){
                         	$txt_file           = file_get_contents(sprintf("/var/log/sbackup/sessionstatus/lastcompleted-%s", $objectv['uuid']));
 													$rows               = explode("|", $txt_file);
 													if($rows[1])$objectv['lastcompleted'] = date('r', $rows[1]);
@@ -265,56 +265,33 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
         }
 
         /**
-         * Execute a backup job.
-         * @param params An array containing the following fields:
-         *   \em uuid The UUID of the cron job to execute.
-         * @param context The context of the caller.
-         * @return The name of the background process status file.
-         * @throw E_CONFIG_DIRTY
+         * runBackup
          */
-//        public function execute($params, $context) {
-//                // Validate the RPC caller context.
-//                $this->validateMethodContext($context, array(
-//                          "role" => OMV_ROLE_ADMINISTRATOR
-//                  ));
-//                // Validate the parameters of the RPC service method.
-//                $this->validateMethodParams($params, '{
-//                          "type":"object",
-//                          "properties":{
-//                                  "uuid":{'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'}
-//                          }
-//                  }');
-//                // Check if the module is marked as dirty. This is an indication
-//                // that the rsync cron script has not been created or updated
-//                // until now.
-//                if($this->isModuleDirty("sbackup")) {
-//                        throw new OMVException(OMVErrorMsg::E_CONFIG_DIRTY);
-//                }
-//                // Create a background process.
-//                $bgStatusFilename = $this->createBgProcStatus();
-//                $pid = $this->fork();
-//                if($pid > 0) { // Parent process.
-//                        $this->initializeBgProcStatus($bgStatusFilename, $pid);
-//                        return $bgStatusFilename;
-//                }
-//                // Child process.
-//                try {
-//                        $bgOutputFilename = $this->createBgProcOutput();
-//                        $this->updateBgProcStatus($bgStatusFilename, "outputfilename",
-//                          $bgOutputFilename);
-//                        // Execute the backup script.
-//                        $cmd = "/bin/sh";
-//                        $cmdArgs = array(sprintf("%s/rsync-%s",
-//                          $GLOBALS['OMV_USBBACKUP_SCRIPTS_DIR'], $params['uuid']));
-//                        if(FALSE === $this->execve($cmd, $cmdArgs, $bgOutputFilename)) {
-//                                throw new OMVException(OMVErrorMsg::E_EXEC_FAILED,
-//                                  $cmd." ".implode(" ", $cmdArgs), "");
-//                        }
-//                } catch(Exception $e) {
-//                        $this->finalizeBgProcStatus($bgStatusFilename, "", $e);
-//                        exit(1);
-//                }
-//        }
+        public function runBackup($params, $context) {
+                global $xmlConfig;
+                // Validate the RPC caller context.
+                $this->validateMethodContext($context, array(
+                          "role" => OMV_ROLE_ADMINISTRATOR
+                  ));
+                // Validate the parameters of the RPC service method.
+                $this->validateMethodParams($params, '{
+                          "type":"object",
+                          "properties":{
+                                  "uuid":{'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'}
+                          }
+                  }');
+                // Check if the module is marked as dirty. This can be an indication
+                // that the samba recycle bin cron script has not been created or
+                // updated until now.
+                if($this->isModuleDirty("sbackup"))
+                        throw new OMVException(OMVErrorMsg::E_CONFIG_DIRTY);
+                // Execute process.
+								$cmd = "/usr/bin/at -f /var/lib/openmediavault/sbackup.d/script-".$params['uuid']." now";
+                if(0 !== $this->exec($cmd, $output)) {
+                        throw new OMVException(OMVErrorMsg::E_EXEC_FAILED,
+                          $cmd, implode("\n", $output));
+                }
+        }         
 
         /**
          * showLog
