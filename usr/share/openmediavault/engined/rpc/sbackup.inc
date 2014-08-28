@@ -70,6 +70,8 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 				}else{
 					$objects[$i]['haslog'] = "no";
 				}
+				if($rows[6]){$objects[$i]['backupperf'] = $rows[6];}else{$objects[$i]['backupperf'] = "N/A";}
+				if($rows[7] == "rsync")$objects[$i]['btype'] = "Rsync";
 				$i++;
 			}
 		}
@@ -146,6 +148,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 			$objectv['enable'] = boolval($objectv['enable']);
 			$wdays = array('Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Daily');
 			$objectv['schedule'] = $wdays[$objectv['wday']]." ".$objectv['hour'].":".$objectv['minute'];
+			if($objectv['btype'] == "rsync")$objectv['btype'] = "Rsync";
 		}
 
 		// Filter the result.
@@ -203,7 +206,8 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		"wday":{"type":"string"},
 		"hour":{"type":"string"},
 		"minute":{"type":"string"},
-		"savelog":{"type":"boolean"}
+		"savelog":{"type":"boolean"},
+		"btype":{"type":"string"}
 		}
 		}');
 		// Prepare the configuration object.
@@ -217,7 +221,8 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		"wday" => $params['wday'],
 		"hour" => $params['hour'],
 		"minute" => $params['minute'],
-		"savelog" => $params['savelog']
+		"savelog" => $params['savelog'],
+		"btype" => $params['btype']
 		);
 		// Set the configuration object.
 		$success = FALSE;

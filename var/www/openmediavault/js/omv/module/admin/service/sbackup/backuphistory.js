@@ -15,6 +15,12 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
 	stateful: true,
 	stateId: "693bddb2-7765-11e2-8c62-00221568ca71",
 	columns: [{
+		text: _("Id"),
+		sortable: true,
+		width: 35,
+		dataIndex: "id",
+		stateId: "id"
+	},{
 		text: _("Backup name"),
 		sortable: true,
 		width: 150,
@@ -44,11 +50,22 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
 		dataIndex: "backupsize",
 		stateId: "backupsize"
 	},{
+		text: _("Perf"),
+		sortable: true,
+		dataIndex: "backupperf",
+		stateId: "backupperf"
+	},{
 		text: _("Log"),
 		sortable: true,
-		width: 30,
+		width: 35,
 		dataIndex: "haslog",
 		stateId: "haslog"
+	},{
+		text: _("Backup type"),
+		sortable: true,
+		width: 90,
+		dataIndex: "btype",
+		stateId: "btype"
 	}],
 
 	initComponent: function() {
@@ -67,7 +84,9 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
 					{ name: "starttime", type: "string" },
 					{ name: "endtime", type: "string" },
 					{ name: "backupsize", type: "string" },
-					{ name: "haslog", type: "string" }
+					{ name: "backupperf", type: "string" },
+					{ name: "haslog", type: "string" },
+					{ name: "btype", type: "string" }
 					]
 				}),
 				proxy: {

@@ -51,6 +51,23 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			}]
 		},{
 			xtype: "combo",
+			name: "btype",
+			fieldLabel: _("Backup type"),
+			queryMode: "local",
+			store: Ext.create("Ext.data.ArrayStore", {
+				fields: [ "value", "text" ],
+				data: [
+				[ "rsync", _("Rsync") ]
+				]
+			}),
+			displayField: "text",
+			valueField: "value",
+			allowBlank: false,
+			editable: false,
+			triggerAction: "all",
+			value: "rsync"
+		},{
+			xtype: "combo",
 			name: "wday",
 			fieldLabel: _("Day"),
 			queryMode: "local",
@@ -347,6 +364,12 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 		width: 120,
 		dataIndex: "schedule",
 		stateId: "schedule"
+	},{
+		text: _("Backup type"),
+		sortable: true,
+		width: 90,
+		dataIndex: "btype",
+		stateId: "btype"
 	}],
 
 	initComponent: function() {
@@ -365,7 +388,8 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 					{ name: "lastcompleted", type: "string" },
 					{ name: "targetfoldername", type: "string" },
 					{ name: "sourcefoldername", type: "string" },
-					{ name: "schedule", type: "string" }
+					{ name: "schedule", type: "string" },
+					{ name: "btype", type: "string" }
 					]
 				}),
 				proxy: {
