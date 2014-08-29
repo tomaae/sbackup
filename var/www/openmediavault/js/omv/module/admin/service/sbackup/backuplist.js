@@ -259,9 +259,6 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
       	OMV.Rpc.request({
       		scope: me,
       		callback: function(id, success, response) {
-      			//var now = new Date().getTime();
-      			//while(new Date().getTime() < now + 1500){ /* do nothing */ }
-      			//this.parent.doReload();
       			this.close();
       		},
       		relayErrors: false,
@@ -301,6 +298,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 
 	hidePagingToolbar: false,
 	stateful: true,
+	reloadOnActivate : true,
 	stateId: "693bddb2-7765-11e2-8c62-00221568ca70",
 	columns: [{
 		xtype: "booleaniconcolumn",
@@ -494,9 +492,9 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 			sourcefoldername: record.get("sourcefoldername"),
 			listeners: {
 				scope: me,
-				submit: function() {
-  				var now = new Date().getTime();
-  				while(new Date().getTime() < now + 1500){ /* do nothing */ }
+				close: function() {
+  				//var now = new Date().getTime();
+  				//while(new Date().getTime() < now + 1500){ /* do nothing */ }
 					this.doReload();
 				}
 			}
@@ -517,8 +515,8 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
   			OMV.Rpc.request({
   				scope: me,
   				callback: function(id, success, response) {
-  					var now = new Date().getTime();
-  					while(new Date().getTime() < now + 1500){ /* do nothing */ }
+  					//var now = new Date().getTime();
+  					//while(new Date().getTime() < now + 1500){ /* do nothing */ }
   					this.doReload();
   				},
   				relayErrors: false,

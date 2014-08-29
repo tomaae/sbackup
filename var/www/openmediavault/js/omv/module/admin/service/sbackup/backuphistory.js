@@ -12,6 +12,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
 	hideAddButton: true,
 	hideEditButton: true,
 	hideDeleteButton: true,
+	reloadOnActivate : true,
 	stateful: true,
 	stateId: "693bddb2-7765-11e2-8c62-00221568ca71",
 	columns: [{
