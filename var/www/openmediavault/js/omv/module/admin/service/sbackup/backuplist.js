@@ -388,6 +388,35 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 				}]
 			})
 		});
+		this.store.on("load", function(store, records, options) {
+			var sm = this.getSelectionModel();
+      var records_bl = sm.getSelection();
+      var ai = -1;
+      if(records_bl.length > 0){
+      	for (i = 0; i < records.length; i++) { 
+      		if(records[i].data.uuid == records_bl[0].data.uuid){
+      			ai = i;
+      			break;
+      		}
+      	}
+      	if(ai >= 0){
+      		var tbarRunCtrl = this.queryById(me.getId() + "-run");
+					var tbarRestoreCtrl = this.queryById(me.getId() + "-restore");
+      		if(records.length > 0 && (records[ai].data.running == "Running" || records[ai].data.running == "Restoring")){
+						tbarRunCtrl.disable();
+						tbarRestoreCtrl.disable();
+					}else{
+						tbarRunCtrl.enable();
+						tbarRestoreCtrl.enable();
+					}
+      	}
+      }
+    }, this);
+                
+                
+                
+            
+		
 		me.callParent(arguments);
 	},
 	
@@ -417,16 +446,6 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 		return items;
 	},
 
-//	doReload: function() {
-//		var me = this;
-//		if(me.mode === "remote") {
-//			me.store.reload();
-//		}
-//		var sm = me.getSelectionModel();
-//		var records = sm.getSelection(); 
-//		if(records.length > 0)alert(records[0].data.name+" "+records[0].data.running)
-//	}, 
-	
 	onSelectionChange: function(model, records) {
 		var me = this;
 		me.callParent(arguments);
