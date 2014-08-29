@@ -52,7 +52,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 		},{
 			xtype: "combo",
 			name: "btype",
-			fieldLabel: _("Backup type"),
+			fieldLabel: _("Backup scheme"),
 			queryMode: "local",
 			store: Ext.create("Ext.data.ArrayStore", {
 				fields: [ "value", "text" ],
@@ -169,13 +169,12 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
 	"OMV.grid.Privileges",
 	"OMV.tree.Folder",
 	"OMV.util.Format",
-	"OMV.form.CompositeField",
-	"OMV.form.field.UnixFilePermComboBox"
+	"OMV.form.CompositeField"
 	],
 
 	readOnly: false,
 
-	title: _("Modify shared folder ACL"),
+	title: _("Restore from backup"),
 	width: 700,
 	height: 520,
 	layout: "border",
@@ -186,7 +185,6 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
 	initComponent: function() {
 		var me = this;
 		me.tp = Ext.create("OMV.tree.Folder", {
-			//region: "west",
 			title: _("Directory"),
 			split: false,
 			width: 700,
@@ -225,7 +223,7 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
 		
 		Ext.apply(me, {
 			buttons: [{
-				text: _("Run restore"),
+				text: _("Start restore"),
 				handler: me.onApplyButton,
 				scope: me,
 				disabled: me.readOnly
