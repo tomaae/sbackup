@@ -299,6 +299,8 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 	hidePagingToolbar: false,
 	stateful: true,
 	reloadOnActivate : true,
+	autoReload : true,
+	reloadInterval : 10000,
 	stateId: "693bddb2-7765-11e2-8c62-00221568ca70",
 	columns: [{
 		xtype: "booleaniconcolumn",
@@ -388,7 +390,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 		});
 		me.callParent(arguments);
 	},
-
+	
 	getTopToolbarItems: function() {
 		var me = this;
 		var items = me.callParent(arguments);
@@ -415,6 +417,16 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 		return items;
 	},
 
+//	doReload: function() {
+//		var me = this;
+//		if(me.mode === "remote") {
+//			me.store.reload();
+//		}
+//		var sm = me.getSelectionModel();
+//		var records = sm.getSelection(); 
+//		if(records.length > 0)alert(records[0].data.name+" "+records[0].data.running)
+//	}, 
+	
 	onSelectionChange: function(model, records) {
 		var me = this;
 		me.callParent(arguments);
