@@ -49,40 +49,50 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		}
 		}');
 
-		if(file_exists("/var/log/sbackup/backup.log")){
-			$i=0;
-			$txt_file = file_get_contents("/var/log/sbackup/backup.log");
-			$lines    = explode("\n", $txt_file);
-			foreach($lines as $line){
-				if(!$line)continue;
-				$rows = explode("|", $line);
-				$objects[$i]['id'] = $i;
-				$objects[$i]['uuid'] = $rows[1];
-				if($rows[0]){$objects[$i]['name'] = $rows[0];}else{$objects[$i]['name'] = "N/A";}
-				if($rows[4] == "0"){
-					$objects[$i]['running'] = "Completed";
-				}else{
-					$objects[$i]['running'] = "Error:".$rows[4];
-				}
-				if($rows[2]){$objects[$i]['starttime'] = date('r', $rows[2]);}else{$objects[$i]['starttime'] = "N/A";}
-				if($rows[3]){$objects[$i]['endtime'] = date('r', $rows[3]);}else{$objects[$i]['endtime'] = "N/A";}
-				if($rows[5] != ""){$objects[$i]['backupsize'] = $rows[5];}else{$objects[$i]['backupsize'] = "N/A";}
-				if(file_exists("/var/log/sbackup/sessionlogs/".$objects[$i]['name']."_".$objects[$i]['uuid']."_".$rows[2].".log")){
-					$objects[$i]['haslog'] = "yes";
-					$objects[$i]['fileid'] = $objects[$i]['name']."_".$objects[$i]['uuid']."_".$rows[2];
-				}else{
-					$objects[$i]['haslog'] = "no";
-				}
-				if($rows[6]){$objects[$i]['backupperf'] = $rows[6];}else{$objects[$i]['backupperf'] = "N/A";}
-  			$objects[$i]['sessiontype'] = "Backup";#"N/A";
-				if($rows[7] == "backup")$objects[$i]['sessiontype'] = "Backup";
-				if($rows[7] == "restore")$objects[$i]['sessiontype'] = "Restore";
-				
-				$i++;
-			}
+		// Get the configuration objects.
+		$xpath = "//services/sbackup/backuplist/backup";
+		$objects = $xmlConfig->getList($xpath);
+		if(is_null($objects)) {
+			throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,
+			$xpath);
+		}
+		// Add additional share informations.
+		$i=0;
+		foreach($objects as $objectk => &$objectv) {
+  		if(file_exists("/var/log/sbackup/history_".$objectv['uuid'])){
+  			$txt_file = file_get_contents("/var/log/sbackup/history_".$objectv['uuid']);
+  			$lines    = explode("\n", $txt_file);
+  			foreach($lines as $line){
+  				if(!$line)continue;
+  				$rows = explode("|", $line);
+  				$t_objects[$i]['id'] = $rows[3];
+  				$t_objects[$i]['uuid'] = $objectv['uuid'];
+  				$t_objects[$i]['name'] = $objectv['name'];
+  				if($rows[0] == "0"){
+  					$t_objects[$i]['running'] = "Completed";
+  				}else{
+  					$t_objects[$i]['running'] = "Error:".$rows[0];
+  				}
+  				if($rows[3]){$t_objects[$i]['starttime'] = date('r', $rows[3]);}else{$t_objects[$i]['starttime'] = "N/A";}
+  				if($rows[4]){$t_objects[$i]['endtime'] = date('r', $rows[4]);}else{$t_objects[$i]['endtime'] = "N/A";}
+  				if($rows[5] != ""){$t_objects[$i]['backupsize'] = $rows[5];}else{$t_objects[$i]['backupsize'] = "N/A";}
+  				if(file_exists("/var/log/sbackup/sessionlogs/".$objectv['uuid']."_".$rows[3].".log")){
+  					$t_objects[$i]['haslog'] = "yes";
+  					$t_objects[$i]['fileid'] = $objectv['uuid']."_".$rows[3];
+  				}else{
+  					$t_objects[$i]['haslog'] = "no";
+  				}
+  				if($rows[6]){$t_objects[$i]['backupperf'] = $rows[6];}else{$t_objects[$i]['backupperf'] = "N/A";}
+    			$t_objects[$i]['sessiontype'] = "Backup";#"N/A";
+  				if($rows[7] == "backup")$t_objects[$i]['sessiontype'] = "Backup";
+  				if($rows[7] == "restore")$t_objects[$i]['sessiontype'] = "Restore";
+  				
+  				$i++;
+  			}
+  		}
 		}
 		// Filter the result.
-		return $this->applyFilter($objects, $params['start'],
+		return $this->applyFilter($t_objects, $params['start'],
 		$params['limit'], $params['sortfield'], $params['sortdir']);
 	}
 
@@ -142,7 +152,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 				$txt_file = file_get_contents(sprintf("/var/log/sbackup/history_%s", $objectv['uuid']));
 				$lines    = explode("\n", $txt_file);
 				foreach($lines as $line){
-					if($line == "")continue;
+					if(!$line)continue;
 					$rows_latest        = explode("|", $line);
 					if($rows_latest[0] == "0"){
 						$objectv['versions']++;

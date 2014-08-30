@@ -69,12 +69,6 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
 		width: 35,
 		dataIndex: "haslog",
 		stateId: "haslog"
-	},{
-		text: _("Backup scheme"),
-		sortable: true,
-		width: 100,
-		dataIndex: "btype",
-		stateId: "btype"
 	}],
 
 	initComponent: function() {
@@ -95,8 +89,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
 					{ name: "endtime", type: "string" },
 					{ name: "backupsize", type: "string" },
 					{ name: "backupperf", type: "string" },
-					{ name: "haslog", type: "string" },
-					{ name: "btype", type: "string" }
+					{ name: "haslog", type: "string" }
 					]
 				}),
 				proxy: {
