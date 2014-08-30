@@ -425,7 +425,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
     fwrite($scriptfile, "touch \"".$runfile2."\"\n");
     fwrite($scriptfile, "# Create target directory.\n");
     fwrite($scriptfile, "mkdir -p \"".$GET_SOURCE_PATH."\"\n");
-    fwrite($scriptfile, "RSOUT=\$(rsync --verbose -rlHpEAXogt");
+    fwrite($scriptfile, "RSOUT=\$(rsync --verbose -aEAX");
     if($params['deleteold'])fwrite($scriptfile, " --delete");
     fwrite($scriptfile, "  \"".$GET_TARGET_DEST."\" \"".$GET_SOURCE_PATH."\" 2>&1)\n");
     fwrite($scriptfile, " SB_ECODE=\$(echo \$?)\n sleep 10");

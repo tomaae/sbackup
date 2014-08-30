@@ -112,7 +112,7 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
       -o "chmod 777 \"" ${GET_TARGET_DEST} -o "\"" -n \
       -o "# Syncing \"" ${GET_SOURCE_PATH} -o "\" to \"" ${GET_TARGET_DEST} -o "\"" -n \
       -o "RSOUT=\$(rsync --verbose" \
-      -o " -rlHpEAXogt --delete " \
+      -o " -aEAX --delete " \
       -o " \"" ${GET_SOURCE_PATH} -o "\"" -o " \"" ${GET_TARGET_DEST} -o "\" 2>&1)" -n \
       -o " SB_ECODE=\$(echo \$?)" -n \
       -o " sleep 10" -n \
