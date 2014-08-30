@@ -50,23 +50,19 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 				text: _("Backup destination.")
 			}]
 		},{
-			xtype: "combo",
-			name: "btype",
-			fieldLabel: _("Backup scheme"),
-			queryMode: "local",
-			store: Ext.create("Ext.data.ArrayStore", {
-				fields: [ "value", "text" ],
-				data: [
-				[ "rsync", _("Single version") ]
-				]
-			}),
-			displayField: "text",
-			valueField: "value",
-			allowBlank: false,
-			editable: false,
-			triggerAction: "all",
-			value: "rsync"
-		},{
+  			xtype: "numberfield",
+  			name: "retention",
+  			fieldLabel: "Backup retention",
+  			minValue: 0,
+  			maxValue: 365,
+  			value: 1,
+  			allowDecimals: false,
+  			allowBlank: true,
+  			plugins: [{
+					ptype: "fieldinfo",
+					text: _("Specifies how many days backup should be stored.")
+				}]
+  	},{
 			xtype: "combo",
 			name: "wday",
 			fieldLabel: _("Day"),
@@ -347,11 +343,17 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 		dataIndex: "targetfoldername",
 		stateId: "targetfoldername"
 	},{
-		text: _("Backup scheme"),
+		text: _("Retention"),
 		sortable: true,
-		width: 100,
-		dataIndex: "btype",
-		stateId: "btype"
+		width: 80,
+		dataIndex: "retention",
+		stateId: "retention"
+	},{
+		text: _("Versions"),
+		sortable: true,
+		width: 65,
+		dataIndex: "versions",
+		stateId: "versions"
 	}],
 
 	initComponent: function() {
@@ -371,7 +373,8 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 					{ name: "targetfoldername", type: "string" },
 					{ name: "sourcefoldername", type: "string" },
 					{ name: "schedule", type: "string" },
-					{ name: "btype", type: "string" }
+					{ name: "retention", type: "string" },
+					{ name: "versions", type: "string" }
 					]
 				}),
 				proxy: {
@@ -412,11 +415,6 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
       	}
       }
     }, this);
-                
-                
-                
-            
-		
 		me.callParent(arguments);
 	},
 	

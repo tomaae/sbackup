@@ -74,11 +74,9 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 					$objects[$i]['haslog'] = "no";
 				}
 				if($rows[6]){$objects[$i]['backupperf'] = $rows[6];}else{$objects[$i]['backupperf'] = "N/A";}
-				$objects[$i]['btype'] = "Single version";#"N/A";
-				if($rows[7] == "rsync")$objects[$i]['btype'] = "Single version";
-				$objects[$i]['sessiontype'] = "Backup";#"N/A";
-				if($rows[8] == "backup")$objects[$i]['sessiontype'] = "Backup";
-				if($rows[8] == "restore")$objects[$i]['sessiontype'] = "Restore";
+  			$objects[$i]['sessiontype'] = "Backup";#"N/A";
+				if($rows[7] == "backup")$objects[$i]['sessiontype'] = "Backup";
+				if($rows[7] == "restore")$objects[$i]['sessiontype'] = "Restore";
 				
 				$i++;
 			}
@@ -134,30 +132,46 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 			// Get last job status
 			$objectv['running'] = "N/A";
 			$objectv['lastcompleted'] = "N/A";
-			if(file_exists(sprintf("/var/run/sbackup-%s", $objectv['uuid']))){$objectv['running'] = "Running";}
-			if(file_exists(sprintf("/var/run/sbackup_restore-%s", $objectv['uuid']))){$objectv['running'] = "Restoring";}
-			if($objectv['running'] == "N/A" && file_exists(sprintf("/var/log/sbackup/sessionstatus/laststatus-%s", $objectv['uuid']))){
-				$txt_file    = file_get_contents(sprintf("/var/log/sbackup/sessionstatus/laststatus-%s", $objectv['uuid']));
-				$rows        = explode("|", $txt_file);
-				if($rows[2] == "0"){
-					$objectv['running'] = "Completed";
-				}else{
-					if($rows[2] != "")$objectv['running'] = "Error:".$rows[2];
+			if(file_exists(sprintf("/var/run/sbackup_%s", $objectv['uuid']))){
+				$txt_file           = file_get_contents(sprintf("/var/run/sbackup_%s", $objectv['uuid']));
+				$rows               = explode("|", $txt_file);
+				if($rows[0] == "backup")$objectv['running'] = "Running";
+			}
+			$objectv['versions'] = 0;
+			if(file_exists(sprintf("/var/log/sbackup/history_%s", $objectv['uuid']))){
+				$txt_file = file_get_contents(sprintf("/var/log/sbackup/history_%s", $objectv['uuid']));
+				$lines    = explode("\n", $txt_file);
+				foreach($lines as $line){
+					if($line == "")continue;
+					$rows_latest        = explode("|", $line);
+					if($rows_latest[0] == "0"){
+						$objectv['versions']++;
+						$rows_completed = explode("|", $line);
+					}
 				}
-				if($rows[1])$objectv['lastcompleted'] = date('r', $rows[1]);
+    			if($objectv['running'] == "N/A" ){
+    				if($rows_latest[0] == "0"){
+    					$objectv['running'] = "Completed";
+    				}else{
+    					if($rows_latest[0] != "")$objectv['running'] = "Error:".$rows_latest[0];
+    				}
+  				}
+  				if($rows_completed[3])$objectv['lastcompleted'] = date('r', $rows_completed[3]);
 			}
 
-			// Get last completed job
-			if($objectv['lastcompleted'] == "N/A" && file_exists(sprintf("/var/log/sbackup/sessionstatus/lastcompleted-%s", $objectv['uuid']))){
-				$txt_file           = file_get_contents(sprintf("/var/log/sbackup/sessionstatus/lastcompleted-%s", $objectv['uuid']));
-				$rows               = explode("|", $txt_file);
-				if($rows[1])$objectv['lastcompleted'] = date('r', $rows[1]);
-			}
 			// Modify result object.
 			$objectv['enable'] = boolval($objectv['enable']);
 			$wdays = array('Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Daily');
 			$objectv['schedule'] = $wdays[$objectv['wday']]." ".$objectv['hour'].":".$objectv['minute'];
-			if($objectv['btype'] == "rsync")$objectv['btype'] = "Single version";
+			if($objectv['retention'] == 0){
+				$objectv['retention'] = "Single version";
+			}
+			if($objectv['retention'] == 1){
+				$objectv['retention'] = $objectv['retention']." day";
+			}
+			if($objectv['retention'] > 1){
+				$objectv['retention'] = $objectv['retention']." days";
+			}
 		}
 
 		// Filter the result.
@@ -216,7 +230,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		"hour":{"type":"string"},
 		"minute":{"type":"string"},
 		"savelog":{"type":"boolean"},
-		"btype":{"type":"string"}
+		"retention":{"type":"integer","minimum":0,"maximum":365}
 		}
 		}');
 		// Prepare the configuration object.
@@ -231,7 +245,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		"hour" => $params['hour'],
 		"minute" => $params['minute'],
 		"savelog" => $params['savelog'],
-		"btype" => $params['btype']
+		"retention" => $params['retention']
 		);
 		if($params['sharedfoldersource'] == $params['sharedfoldertarget']){
 			throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Source and destination targets cannot be the same.");
@@ -318,7 +332,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		if($this->isModuleDirty("sbackup"))
 		throw new OMVException(OMVErrorMsg::E_CONFIG_DIRTY);
 		// Execute process.
-		$cmd = "/usr/bin/at -f /var/lib/openmediavault/sbackup.d/script-".$params['uuid']." now";
+		$cmd = "/usr/bin/at -f /var/lib/openmediavault/sbackup.d/backup_".$params['uuid']." now";
 		if(0 !== $this->exec($cmd, $output)) {
 			throw new OMVException(OMVErrorMsg::E_EXEC_FAILED,
 			$cmd, implode("\n", $output));
@@ -377,9 +391,9 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		// Generate restore script.
 		$OMV_SBACKUP_LOGDIR  = "/var/log/sbackup/sessionlogs";
 		$OMV_SBACKUP_LOGFILE = "/var/log/sbackup/backup.log";
-		$runfile="/var/run/sbackup_restore-".$params['uuid'];
-		$runfile2="/var/run/sbackup-".$params['uuid'];
-		$filename = "/var/lib/openmediavault/sbackup.d/restore-".$params['uuid'];
+		$runfile="/var/run/sbackup-restore_".$params['uuid'];
+		$runfile2="/var/run/sbackup_".$params['uuid'];
+		$filename = "/var/lib/openmediavault/sbackup.d/restore_".$params['uuid'];
 		$scriptfile = fopen($filename, "w");
 		fwrite($scriptfile, "#!/bin/sh\n");
     fwrite($scriptfile, "# This configuration file is auto-generated.\n");
@@ -398,7 +412,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
     fwrite($scriptfile, "  RSPERF=\$(echo \${line}|awk '/^total size is / {print \$7}')\n");
     fwrite($scriptfile, "  done\n");
     fwrite($scriptfile, "  SB_TIMEEND=\$(date +\"%s\")\n");
-    fwrite($scriptfile, "  echo \"".$object['name']."|".$params['uuid']."|\${SB_TIMESTART}|\${SB_TIMEEND}|\${SB_ECODE}|\${RSSIZE}|\${RSPERF}|rsync|restore|\" >> \"".$OMV_SBACKUP_LOGFILE."\"\n");
+    fwrite($scriptfile, "  echo \"".$object['name']."|".$params['uuid']."|\${SB_TIMESTART}|\${SB_TIMEEND}|\${SB_ECODE}|\${RSSIZE}|\${RSPERF}|restore|\" >> \"".$OMV_SBACKUP_LOGFILE."\"\n");
     if($params['savelog']){
       fwrite($scriptfile, "  echo \"Start time: \$(date -d @\${SB_TIMESTART})\" >> \"".$OMV_SBACKUP_LOGDIR."/".$object['name']."_".$params['uuid']."_\${SB_TIMESTART}.log\"\n");
       fwrite($scriptfile, "  echo \"End time: \$(date -d @\${SB_TIMEEND})\" >> \"".$OMV_SBACKUP_LOGDIR."/".$object['name']."_".$params['uuid']."_\${SB_TIMESTART}.log\"\n");
@@ -412,12 +426,12 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
     fwrite($scriptfile, "# Check if all filesystems are mounted.\n");
     fwrite($scriptfile, "if ! omv_is_mounted \"".$GET_SOURCE_MNT."\" ; then\n");
     fwrite($scriptfile, "    echo \"Source storage device not mounted!\"\n");
-    fwrite($scriptfile, "    echo \"".$object['name']."|".$params['uuid']."|\${SB_TIMESTART}||Source not mounted|||rsync|restore|\" >> \"".$OMV_SBACKUP_LOGFILE."\"\n");
+    fwrite($scriptfile, "    echo \"".$object['name']."|".$params['uuid']."|\${SB_TIMESTART}||Source not mounted|||restore|\" >> \"".$OMV_SBACKUP_LOGFILE."\"\n");
     fwrite($scriptfile, "    exit 1\n");
     fwrite($scriptfile, "fi\n");
     fwrite($scriptfile, "if ! omv_is_mounted \"".$GET_TARGET_MNT."\" ; then\n");
     fwrite($scriptfile, "    echo \"Target storage device not mounted!\"\n");
-    fwrite($scriptfile, "    echo \"".$object['name']."|".$params['uuid']."|\${SB_TIMESTART}||Target not mounted|||rsync|restore|\" >> \"".$OMV_SBACKUP_LOGFILE."\"\n");
+    fwrite($scriptfile, "    echo \"".$object['name']."|".$params['uuid']."|\${SB_TIMESTART}||Target not mounted|||restore|\" >> \"".$OMV_SBACKUP_LOGFILE."\"\n");
     fwrite($scriptfile, "    exit 1\n");
     fwrite($scriptfile, "fi\n");
     fwrite($scriptfile, "trap cleanup 0 1 2 5 9 15\n");
