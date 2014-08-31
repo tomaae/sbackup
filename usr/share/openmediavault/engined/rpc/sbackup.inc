@@ -4,6 +4,7 @@ require_once("openmediavault/config.inc");
 require_once("openmediavault/error.inc");
 require_once("openmediavault/rpcservice.inc");
 require_once("openmediavault/notify.inc");
+//require_once("openmediavault/util.inc");
 
 class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 	/**
@@ -25,8 +26,10 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		$this->registerMethod("showLog");
 		$this->registerMethod("runBackup");
 		$this->registerMethod("runRestore");
+		$this->registerMethod("getRestoreDirBrowser");
 		$this->registerMethod("getSettings");
 		$this->registerMethod("setSettings");
+		$this->registerMethod("getVersions");
 	}
 
 	/**
@@ -72,6 +75,9 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
   					$t_objects[$i]['running'] = "Completed";
   				}else{
   					$t_objects[$i]['running'] = "Error:".$rows[0];
+  				}
+  				if($rows[0] == "running"){
+  					$t_objects[$i]['running'] = "Running";
   				}
   				if($rows[3]){$t_objects[$i]['starttime'] = date('r', $rows[3]);}else{$t_objects[$i]['starttime'] = "N/A";}
   				if($rows[4]){$t_objects[$i]['endtime'] = date('r', $rows[4]);}else{$t_objects[$i]['endtime'] = "N/A";}
@@ -146,6 +152,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 				$txt_file           = file_get_contents(sprintf("/var/run/sbackup_%s", $objectv['uuid']));
 				$rows               = explode("|", $txt_file);
 				if($rows[0] == "backup")$objectv['running'] = "Running";
+				if($rows[0] == "restore")$objectv['running'] = "Restoring";
 			}
 			$objectv['versions'] = 0;
 			if(file_exists(sprintf("/var/log/sbackup/history_%s", $objectv['uuid']))){
@@ -359,12 +366,16 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		"role" => OMV_ROLE_ADMINISTRATOR
 		));
 		// Validate the parameters of the RPC service method.
-//		$this->validateMethodParams($params, '{
-//		"type":"object",
-//		"properties":{
-//		"uuid":{'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'}
-//		}
-//		}');
+		$this->validateMethodParams($params, '{
+		"type":"object",
+		"properties":{
+		"uuid":{'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
+		"version":{"type":"string"},
+		"dir":{"type":"string"},
+		"savelog":{"type":"boolean"},
+		"deleteold":{"type":"boolean"}
+		}
+		}');
 
 		// Check if the module is marked as dirty. This can be an indication
 		// that the samba recycle bin cron script has not been created or
@@ -392,17 +403,21 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		$GET_TARGET_PATH = $GET_TARGET_MNT."/".$GET_TARGET_PATH;
 		$GET_TARGET_DEST = $GET_TARGET_PATH."/sbackup_".$params['uuid']."/";
 		
+		$GET_TARGET_DEST .= "/data_".$params['version']."/";
 		
 		if($params['dir']){
 			$GET_SOURCE_PATH .= "/".$params['dir']."/";
 			$GET_TARGET_DEST .= "/".$params['dir']."/";
 		}
 
+		if(!file_exists($GET_TARGET_DEST)){
+			throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Version \"".$params['version']."\" cannot be found.");
+		}
+
 		// Generate restore script.
-		$OMV_SBACKUP_LOGDIR  = "/var/log/sbackup/sessionlogs";
-		$OMV_SBACKUP_LOGFILE = "/var/log/sbackup/backup.log";
-		$runfile="/var/run/sbackup-restore_".$params['uuid'];
-		$runfile2="/var/run/sbackup_".$params['uuid'];
+		$OMV_SBACKUP_SESLOGDIR  = "/var/log/sbackup/sessionlogs";
+		$OMV_SBACKUP_LOGFILE = "/var/log/sbackup/history_".$params['uuid'];
+		$runfile="/var/run/sbackup_".$params['uuid'];
 		$filename = "/var/lib/openmediavault/sbackup.d/restore_".$params['uuid'];
 		$scriptfile = fopen($filename, "w");
 		fwrite($scriptfile, "#!/bin/sh\n");
@@ -412,47 +427,42 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
     fwrite($scriptfile, "SB_TIMESTART=\$(date +\"%s\")\n");
     fwrite($scriptfile, "cleanup() {\n");
     fwrite($scriptfile, "  omv_kill_children \$\$\n");
-    fwrite($scriptfile, "  rm -f \"".$runfile."\"\n");
-    fwrite($scriptfile, "  rm -f \"".$runfile2."\"\n");
-    if($params['savelog'])fwrite($scriptfile, "  echo \"\$RSOUT\" > \"".$OMV_SBACKUP_LOGDIR."/".$object['name']."_".$params['uuid']."_\${SB_TIMESTART}.log\"\n");
     fwrite($scriptfile, "  IFS='\n");
     fwrite($scriptfile, "'\n");
     fwrite($scriptfile, "  for line in `echo \"\$RSOUT\"`; do \n");
-    fwrite($scriptfile, "  RSSIZE=\$(echo \${line}|awk '/^total size is / {print \$4}')\n");
-    fwrite($scriptfile, "  RSPERF=\$(echo \${line}|awk '/^total size is / {print \$7}')\n");
+    fwrite($scriptfile, "    RSSIZE=\$(echo \${line}|awk '/^total size is / {print \$4}')\n");
+    fwrite($scriptfile, "    RSPERF=\$(echo \${line}|awk '/^total size is / {print \$7}')\n");
     fwrite($scriptfile, "  done\n");
     fwrite($scriptfile, "  SB_TIMEEND=\$(date +\"%s\")\n");
-    fwrite($scriptfile, "  echo \"".$object['name']."|".$params['uuid']."|\${SB_TIMESTART}|\${SB_TIMEEND}|\${SB_ECODE}|\${RSSIZE}|\${RSPERF}|restore|\" >> \"".$OMV_SBACKUP_LOGFILE."\"\n");
-    if($params['savelog']){
-      fwrite($scriptfile, "  echo \"Start time: \$(date -d @\${SB_TIMESTART})\" >> \"".$OMV_SBACKUP_LOGDIR."/".$object['name']."_".$params['uuid']."_\${SB_TIMESTART}.log\"\n");
-      fwrite($scriptfile, "  echo \"End time: \$(date -d @\${SB_TIMEEND})\" >> \"".$OMV_SBACKUP_LOGDIR."/".$object['name']."_".$params['uuid']."_\${SB_TIMESTART}.log\"\n");
-      fwrite($scriptfile, "  echo \"Status: \${SB_ECODE}\" >> \"".$OMV_SBACKUP_LOGDIR."/".$object['name']."_".$params['uuid']."_\${SB_TIMESTART}.log\"\n");
-    }
+    fwrite($scriptfile, "  if [ \"\${SB_ECODE}\" = \"\" ]; then\n");
+    fwrite($scriptfile, "    SB_ECODE=-1\n");
+    fwrite($scriptfile, "  fi\n");
+		fwrite($scriptfile, "  cat \"".$OMV_SBACKUP_LOGFILE."\"|sed \"s/^running|\(.*\)|\(.*\)|\${SB_TIMESTART}||||restore|/\${SB_ECODE}|\\1|\\2|\${SB_TIMESTART}|\${SB_TIMEEND}|\${RSSIZE}|\${RSPERF}|restore|/g\" > \"".$OMV_SBACKUP_LOGFILE.".new\"\n");
+    fwrite($scriptfile, "  mv \"".$OMV_SBACKUP_LOGFILE.".new\" \"".$OMV_SBACKUP_LOGFILE."\"\n");
+		if($params['savelog'])fwrite($scriptfile, "  echo \"Backup name: ".$object['name']."\nUUID: ".$params['uuid']."\n\n\$RSOUT\n\nStart time: \$(date -d @\${SB_TIMESTART})\nEnd time: \$(date -d @\${SB_TIMEEND})\nStatus: \${SB_ECODE}\" > \"".$OMV_SBACKUP_SESLOGDIR."/".$params['uuid']."_\${SB_TIMESTART}.log\"\n");
+    fwrite($scriptfile, "  rm -f \"".$runfile."\"\n");
     fwrite($scriptfile, "  exit 0\n");
     fwrite($scriptfile, "}\n");
     fwrite($scriptfile, "# Check if backup is already running.\n");
     fwrite($scriptfile, "[ -e \"".$runfile."\" ] && exit 1\n");
-    fwrite($scriptfile, "[ -e \"".$runfile2."\" ] && exit 1\n");
     fwrite($scriptfile, "# Check if all filesystems are mounted.\n");
     fwrite($scriptfile, "if ! omv_is_mounted \"".$GET_SOURCE_MNT."\" ; then\n");
-    fwrite($scriptfile, "    echo \"Source storage device not mounted!\"\n");
-    fwrite($scriptfile, "    echo \"".$object['name']."|".$params['uuid']."|\${SB_TIMESTART}||Source not mounted|||restore|\" >> \"".$OMV_SBACKUP_LOGFILE."\"\n");
-    fwrite($scriptfile, "    exit 1\n");
+		fwrite($scriptfile, "  echo \"Source not mounted|".$object['name']."|".$params['uuid']."|\${SB_TIMESTART}||||restore|\" >> \"".$OMV_SBACKUP_LOGFILE."\"\n");
+    fwrite($scriptfile, "  exit 1\n");
     fwrite($scriptfile, "fi\n");
     fwrite($scriptfile, "if ! omv_is_mounted \"".$GET_TARGET_MNT."\" ; then\n");
-    fwrite($scriptfile, "    echo \"Target storage device not mounted!\"\n");
-    fwrite($scriptfile, "    echo \"".$object['name']."|".$params['uuid']."|\${SB_TIMESTART}||Target not mounted|||restore|\" >> \"".$OMV_SBACKUP_LOGFILE."\"\n");
-    fwrite($scriptfile, "    exit 1\n");
+    fwrite($scriptfile, "  echo \"Target not mounted|".$object['name']."|".$params['uuid']."|\${SB_TIMESTART}||||restore|\" >> \"".$OMV_SBACKUP_LOGFILE."\"\n");
+    fwrite($scriptfile, "  exit 1\n");
     fwrite($scriptfile, "fi\n");
     fwrite($scriptfile, "trap cleanup 0 1 2 5 9 15\n");
-    fwrite($scriptfile, "touch \"".$runfile."\"\n");
-    fwrite($scriptfile, "touch \"".$runfile2."\"\n");
+    fwrite($scriptfile, "echo \"restore|\" > \"".$runfile."\"\n");
     fwrite($scriptfile, "# Create target directory.\n");
     fwrite($scriptfile, "mkdir -p \"".$GET_SOURCE_PATH."\"\n");
+    fwrite($scriptfile, "echo \"running|".$object['name']."|".$params['uuid']."|\${SB_TIMESTART}||||restore|\" >> \"".$OMV_SBACKUP_LOGFILE."\"\n");
     fwrite($scriptfile, "RSOUT=\$(rsync --verbose -aEAX");
     if($params['deleteold'])fwrite($scriptfile, " --delete");
-    fwrite($scriptfile, "  \"".$GET_TARGET_DEST."\" \"".$GET_SOURCE_PATH."\" 2>&1)\n");
-    fwrite($scriptfile, " SB_ECODE=\$(echo \$?)\n sleep 10");
+    fwrite($scriptfile, " \"".$GET_TARGET_DEST."\" \"".$GET_SOURCE_PATH."\" 2>&1)\n");
+    fwrite($scriptfile, "SB_ECODE=\$(echo \$?)\n sleep 5");
 		fclose($scriptfile);
 		
 		$cmd = "chmod 755 \"$filename\"";
@@ -467,6 +477,50 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 			$cmd, implode("\n", $output));
 		}
 	}
+	
+  public function getRestoreDirBrowser($params, $context) {
+    global $xmlConfig;
+    // Validate the RPC caller context.
+    $this->validateMethodContext($context, array(
+       "role" => OMV_ROLE_ADMINISTRATOR
+      ));
+    if(!$params['version'])return;
+    // Validate the parameters of the RPC service method.
+    $this->validateMethodParams($params, '{
+       "type":"object",
+       "properties":{
+        "uuid":{'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
+        "backupuuid":{'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
+        "version":{"type":"string"},
+        "path":{"type":"string"}
+       }
+      }');
+    // The field 'path' may not contain the characters '..'.
+    if (1 == preg_match("/\.\./", $params['path'])) {
+     throw new OMVException(OMVErrorMsg::E_RPC_SERVICE_INVALID_PARAM,
+       sprintf(gettext("The field '%s' contains forbidden ".
+       "two-dot symbols"), "path"));
+    }
+    // Get the absolute shared folder path.
+    $rootPath = OMVRpc::exec("ShareMgmt", "getPath", array("uuid" => $params['uuid']), $context);
+     
+    // List the directory contents.
+    $result = array();
+    $path = sprintf("%s/%s", $rootPath.$params['version'], rtrim($params['path'], "/"));
+    
+		$scriptfile = fopen("/root/test", "w");
+		fwrite($scriptfile, $rootPath."|".$params['version']."|\n");
+		fclose($scriptfile);
+		
+    foreach (new DirectoryIterator($path) as $item) {
+     if ($item->isDot())
+      continue;
+     if (!$item->isDir())
+      continue;
+     $result[] = $item->getFilename();
+    }
+    return $result;
+  }
 
 	/**
 	* showLog
@@ -565,8 +619,44 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 
     // Return the configuration object.
     return $object;
-      
   }
+  
+  /**
+	* getVersions
+	*/
+  public function getVersions($params, $context) {
+  	global $xmlConfig;
+  	// Validate the RPC caller context.
+  	$this->validateMethodContext($context, array(
+  	"role" => OMV_ROLE_ADMINISTRATOR
+  	));
+		$this->validateMethodParams($params, '{
+		"type":"object",
+		"properties":{
+		"uuid":{'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'}
+		}
+		}');
+  	
+  	// Prepare the result list.
+  	$result = array();
+  	
+		if(file_exists("/var/log/sbackup/history_".$params['uuid'])){
+			$txt_file = file_get_contents("/var/log/sbackup/history_".$params['uuid']);
+			$lines    = explode("\n", $txt_file);
+			foreach($lines as $line){
+				if(!$line)continue;
+				$rows = explode("|", $line);
+				if($rows[0] != "0" || $rows[7] != "backup")continue;
+  			$result[] = array(
+  				"version" => $rows[3],
+  				"version_human" => date('r', $rows[3])
+  			);
+				
+			}
+		}
+  	return $result;
+  }
+
 }
 
 // Register the RPC service.

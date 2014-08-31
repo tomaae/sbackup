@@ -72,19 +72,19 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
 			-o "  fi" -n \
 			-o "  cat \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"|sed \"s/^running|\(.*\)|\(.*\)|\${SB_TIMESTART}||||backup|/\${SB_ECODE}|\1|\2|\${SB_TIMESTART}|\${SB_TIMEEND}|\${RSSIZE}|\${RSPERF}|backup|/g\" > \"" -o ${OMV_SBACKUP_LOGFILE} -o ".new\"" -n \
 			-o "  mv \"" -o ${OMV_SBACKUP_LOGFILE} -o ".new\" \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
-			-i "savelog = 1" -o "  echo \"\$RSOUT\n\nStart time: \$(date -d @\${SB_TIMESTART})\nEnd time: \$(date -d @\${SB_TIMEEND})\nStatus: \${SB_ECODE}\" >> \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"" -b -n \
-      -o "  rm -f ${runfile}" -n \
+			-i "savelog = 1" -o "  echo \"Backup name: " -v "name" -o "\nUUID: " -v "uuid" -o "\n\n\$RSOUT\n\nStart time: \$(date -d @\${SB_TIMESTART})\nEnd time: \$(date -d @\${SB_TIMEEND})\nStatus: \${SB_ECODE}\" > \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"" -b -n \
+      -o "  rm -f \"${runfile}\"" -n \
       -o "  exit 0" -n \
       -o "}" -n \
       -o "# Check if backup is already running." -n \
-      -o "[ -e ${runfile} ] && exit 1" -n \
+      -o "[ -e \"${runfile}\" ] && exit 1" -n \
       -o "# Check if all filesystems are mounted." -n \
       -o "if ! omv_is_mounted \"" ${GET_SOURCE_MNT} -o "\" ; then" -n \
-      -o "  echo \"Source not mounted|" -v "name" -o "|" -v "uuid" -o "|\${SB_TIMESTART}||||backup|"  -o "\" >> \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
+      -o "  echo \"Source not mounted|" -v "name" -o "|" -v "uuid" -o "|\${SB_TIMESTART}||||backup|\" >> \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
       -o "  exit 1" -n \
       -o "fi" -n \
       -o "if ! omv_is_mounted \"" ${GET_TARGET_MNT} -o "\" ; then" -n \
-      -o "  echo \"Target not mounted|" -v "name" -o "|" -v "uuid" -o "|\${SB_TIMESTART}||||backup|"  -o "\" >> \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
+      -o "  echo \"Target not mounted|" -v "name" -o "|" -v "uuid" -o "|\${SB_TIMESTART}||||backup|\" >> \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
       -o "  exit 1" -n \
       -o "fi" -n \
       -o "trap cleanup 0 1 2 5 9 15" -n \
@@ -109,7 +109,7 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
       -o "fi" -n \
       -o "mkdir -p \"" ${GET_TARGET_DEST} -o "/data_\${SB_TIMESTART}/\"" -n \
       -o "chmod 777 \"" ${GET_TARGET_DEST} -o "/data_\${SB_TIMESTART}/\"" -n \
-      -o "echo \"running|" -v "name" -o "|" -v "uuid" -o "|\${SB_TIMESTART}||||backup|"  -o "\" >> \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
+      -o "echo \"running|" -v "name" -o "|" -v "uuid" -o "|\${SB_TIMESTART}||||backup|\" >> \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
       -o "RSOUT=\$(rsync --verbose" \
       -o " -aEAX --delete \${INCR}" \
       -o " \"" ${GET_SOURCE_PATH} -o "\"" -o " \"" ${GET_TARGET_DEST} -o "/data_\${SB_TIMESTART}/\" 2>&1)" -n \

@@ -165,7 +165,9 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
 	"OMV.grid.Privileges",
 	"OMV.tree.Folder",
 	"OMV.util.Format",
-	"OMV.form.CompositeField"
+	"OMV.data.Model",
+  "OMV.data.Store",
+  "OMV.tree.RestoreDirBrowser"
 	],
 
 	readOnly: false,
@@ -180,20 +182,73 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
 
 	initComponent: function() {
 		var me = this;
-		me.tp = Ext.create("OMV.tree.Folder", {
-			title: _("Directory"),
+		
+    me.vp = Ext.create("OMV.form.Panel", {
+    	region: "north",
+    	split: true,
+    	collapsible: false,
+    	bodyPadding: "5 5 0",
+    	border: true,
+    	items: [{
+        xtype: "combo",
+        name: "version",
+        fieldLabel: _("Version"),
+        emptyText: _("Select version ..."),
+        store: Ext.create("OMV.data.Store", {
+          autoLoad: true,
+          model: OMV.data.Model.createImplicit({
+            idProperty: "devicefile",
+            fields: [
+              { name: "version", type: "string" },
+              { name: "version_human", type: "string" }
+            ]
+          }),
+          proxy: {
+            type: "rpc",
+            appendSortParams: false,
+            rpcData: {
+      				service: "sbackup",
+      				method: "getVersions",
+      				params: {
+      					uuid: me.uuid
+      				}
+            }
+          },
+          sorters: [{
+            direction: "DESC",
+            property: "version"
+          }]
+        }),
+        displayField: "version_human",
+        valueField: "version",
+        allowBlank: false,
+        editable: false,
+        triggerAction: "all",
+        
+        listeners: {
+          scope: me,
+          select: function(combo, records) {
+            var record = records[0];
+            this.tp.setVersion(record.get("version"));
+          }
+        }
+
+        
+			}]
+    });
+		
+		me.tp = Ext.create("OMV.tree.RestoreDirBrowser", {
+			title: _("Browse backup"),
+			autoLoad: false,
 			split: false,
 			width: 700,
 			height: 400,
 			collapsible: false,
 			uuid: me.sharedfoldertarget,
-			type: "sharedfolder",
-			rootVisible: true,
-			root: {
-				text: me.sourcefoldername,
-				name: "sbackup_"+me.uuid
-			}
-		});
+			backupuuid: me.uuid,
+			version: "",
+			rootVisible: true      
+ 		});
 
     me.fp = Ext.create("OMV.form.Panel", {
     	title: _("Options"),
@@ -228,7 +283,7 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
 				handler: me.close,
 				scope: me
 			}],
-			items: [ me.tp, me.fp ]
+			items: [ me.vp, me.tp, me.fp ]
 		});
 		me.callParent(arguments);
 	},
@@ -237,42 +292,49 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
   	var me = this;
   	var node = me.tp.getSelectionModel().getSelection()[0];
   	var options = me.fp.getValues();
+  	var version = me.vp.getValues();
+    if(version.version != parseInt(version.version) || typeof node === 'undefined'){
+     	if(version.version != parseInt(version.version)){
+     		OMV.MessageBox.info(null, _("Please select version first."));
+     	}else	if(typeof node === 'undefined')OMV.MessageBox.info(null, _("Please select directory first."));
+    }else{
+    	var dir = "",dirnode = node
+    	while(dirnode.data.root == false){
+    		dir = dirnode.data.name+"/"+dir
+    		dirnode = dirnode.parentNode
+    	}
   
-  	var dir = "",dirnode = node
-  	while(dirnode.data.root == false){
-  		dir = dirnode.data.name+"/"+dir
-  		dirnode = dirnode.parentNode
+    	OMV.MessageBox.show({
+    		title: _("Confirmation"),
+    		msg: _("Do you really want to start restore?"),
+    		buttons: Ext.Msg.YESNO,
+    		fn: function(answer) {
+    			if(answer === "no")
+    			return;
+        	// Execute RPC
+        	OMV.Rpc.request({
+        		scope: me,
+        		callback: function(id, success, response) {
+        			this.close();
+        		},
+        		relayErrors: false,
+        		rpcData: {
+        			service: "sbackup",
+        			method: "runRestore",
+        			params: {
+        				uuid: me.uuid,
+        				dir: dir,
+        				deleteold: options.deleteold,
+        				savelog: options.savelog,
+        				version: version.version
+        			}
+        		}
+        	});
+    		},
+    		scope: me,
+    		icon: Ext.Msg.QUESTION
+    	});
   	}
-
-  	OMV.MessageBox.show({
-  		title: _("Confirmation"),
-  		msg: _("Do you really want to start restore?"),
-  		buttons: Ext.Msg.YESNO,
-  		fn: function(answer) {
-  			if(answer === "no")
-  			return;
-      	// Execute RPC
-      	OMV.Rpc.request({
-      		scope: me,
-      		callback: function(id, success, response) {
-      			this.close();
-      		},
-      		relayErrors: false,
-      		rpcData: {
-      			service: "sbackup",
-      			method: "runRestore",
-      			params: {
-      				uuid: me.uuid,
-      				dir: dir,
-      				deleteold: options.deleteold,
-      				savelog: options.savelog
-      			}
-      		}
-      	});
-  		},
-  		scope: me,
-  		icon: Ext.Msg.QUESTION
-  	});
 	}
 });
 
