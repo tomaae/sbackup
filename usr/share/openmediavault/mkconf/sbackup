@@ -110,7 +110,7 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
       -o "mkdir -p \"" ${GET_TARGET_DEST} -o "/data_\${SB_TIMESTART}/\"" -n \
       -o "chmod 777 \"" ${GET_TARGET_DEST} -o "/data_\${SB_TIMESTART}/\"" -n \
       -o "echo \"running|" -v "name" -o "|" -v "uuid" -o "|\${SB_TIMESTART}||||backup|\" >> \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
-      -o "RSOUT=\$(rsync --verbose" \
+      -o "RSOUT=\$(rsync --verbose --stats" \
       -o " -aEAX --delete \${INCR}" \
       -o " \"" ${GET_SOURCE_PATH} -o "\"" -o " \"" ${GET_TARGET_DEST} -o "/data_\${SB_TIMESTART}/\" 2>&1)" -n \
       -o "SB_ECODE=\$(echo \$?)" -n \
