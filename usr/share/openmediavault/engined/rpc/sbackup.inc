@@ -27,7 +27,6 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		$this->registerMethod("runBackup");
 		$this->registerMethod("runRestore");
 		$this->registerMethod("getRestoreDirBrowser");
-		$this->registerMethod("getRestoreFileBrowser");
 		$this->registerMethod("getSettings");
 		$this->registerMethod("setSettings");
 		$this->registerMethod("getVersions");
@@ -522,59 +521,6 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
     return $result;
   }
   
-	/**
-	* getRestoreFileBrowser
-	*/
-  public function getRestoreFileBrowser($params, $context) {
-    global $xmlConfig;
-    // Validate the RPC caller context.
-    $this->validateMethodContext($context, array(
-       "role" => OMV_ROLE_ADMINISTRATOR
-      ));
-    if(!$params['version'])return;
-//    // Validate the parameters of the RPC service method.
-//    $this->validateMethodParams($params, '{
-//       "type":"object",
-//       "properties":{
-//        "uuid":{'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
-//        "backupuuid":{'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
-//        "version":{"type":"string"},
-//        "path":{"type":"string"}
-//       }
-//      }');
-    // The field 'path' may not contain the characters '..'.
-    if (1 == preg_match("/\.\./", $params['path'])) {
-     throw new OMVException(OMVErrorMsg::E_RPC_SERVICE_INVALID_PARAM,
-       sprintf(gettext("The field '%s' contains forbidden ".
-       "two-dot symbols"), "path"));
-    }
-    
-		$scriptfile = fopen("/root/test", "w");
-//		fwrite($scriptfile, $rootPath."|".$params['version']."|".rtrim($params['path'], "/")."|".$params['path']."\n");
-		fwrite($scriptfile, $params['path']."\n");
-		fclose($scriptfile);
-    
-    // Get the absolute shared folder path.
-    $rootPath = OMVRpc::exec("ShareMgmt", "getPath", array("uuid" => $params['uuid']), $context);
-     
-    // List the directory contents.
-    $result = array();
-    $path = sprintf("%s/%s", $rootPath.$params['version'], rtrim($params['path'], "/"));
-		//$path = "/root/";
-
-		
-    foreach (new DirectoryIterator($path) as $item) {
-     if ($item->isDot())
-      continue;
-     if ($item->isDir())
-      continue;
-      		fwrite($scriptfile, $item->getFilename()."\n");
-     $result[] = $item->getFilename();
-    }
-		
-    return $result;
-  }
-
 	/**
 	* showLog
 	*/
