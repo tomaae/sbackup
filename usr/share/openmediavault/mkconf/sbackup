@@ -90,15 +90,15 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
       -o "trap cleanup 0 1 2 5 9 15" -n \
       -o "echo \"backup|\" > ${runfile}" -n \
       -o "# Run backup" -n \
-      -o "[ -e \"" -o ${OMV_SBACKUP_LOGFILE} -o "\" ] && LASTERR=\$(tail -1 \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"|awk -F \"|\" '{print \$1}')" -n \
+      -o "[ -e \"" -o ${OMV_SBACKUP_LOGFILE} -o "\" ] && LASTERR=\$(cat \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"|grep \"|backup|$\"|tail -1|awk -F \"|\" '{print \$1}')" -n \
       -o "if [ \"\${LASTERR}\" != \"\" ]; then" -n \
 			-o "  if [ \"\${LASTERR}\" != \"0\" ]; then" -n \
-			-o "    LASTSTAMP=\$(tail -1 \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"|awk -F \"|\" '{print \$4}')" -n \
+			-o "    LASTSTAMP=\$(cat \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"|grep \"|backup|$\"|tail -1|awk -F \"|\" '{print \$4}')" -n \
 			-o "    if [ -d \"" ${GET_TARGET_DEST} -o "/data_\${LASTSTAMP}\" ]; then" -n \
 			-o "      mv \"" ${GET_TARGET_DEST} -o "/data_\${LASTSTAMP}\" \"" ${GET_TARGET_DEST} -o "/data_\${SB_TIMESTART}\"" -n \
 			-o "    fi" -n \
       -o "  fi" -n \
-      -o "  LASTSTAMP=\$(cat \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"|grep \"^0|\"|tail -1|awk -F \"|\" '{print \$4}')" -n \
+      -o "  LASTSTAMP=\$(cat \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"|grep \"|backup|$\"|grep \"^0|\"|tail -1|awk -F \"|\" '{print \$4}')" -n \
       -o "  if [ \"\${LASTSTAMP}\" != \"\" ]; then" -n \
       -o "    if [ \"\${LASTSTAMP}\" -gt \"100\" ]; then" -n \
       -o "      if [ -d \"" ${GET_TARGET_DEST} -o "/data_\${LASTSTAMP}\" ]; then" -n \
