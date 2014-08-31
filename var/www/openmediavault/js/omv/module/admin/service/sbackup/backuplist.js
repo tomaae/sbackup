@@ -232,13 +232,11 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
             this.tp.setVersion(record.get("version"));
           }
         }
-
-        
 			}]
     });
 		
 		me.tp = Ext.create("OMV.tree.RestoreDirBrowser", {
-			title: _("Browse backup"),
+			title: _("Browse directories"),
 			autoLoad: false,
 			split: false,
 			width: 700,
