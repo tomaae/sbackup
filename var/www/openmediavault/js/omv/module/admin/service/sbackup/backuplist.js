@@ -470,25 +470,23 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
       		}
       	}
       	if(ai >= 0){
-
-		var tbarRunCtrl = me.queryById(me.getId() + "-run");
-		if(records.length > 0)
-		  tbarRunCtrl.enable();
-		else tbarRunCtrl.disable();
-		var tbarRestoreCtrl = me.queryById(me.getId() + "-restore");
-		if(records.length > 0 && records[ai].data.lastcompleted != "N/A")
-			tbarRestoreCtrl.enable();
-		else tbarRestoreCtrl.disable();
-		var tbarConsolidateCtrl = me.queryById(me.getId() + "-consolidate");
-		if(records.length > 0 && records[ai].data.versions > 0)
-			tbarConsolidateCtrl.enable();
-		else tbarConsolidateCtrl.disable();
-		if(records.length > 0 && (records[ai].data.running == "Running" || records[ai].data.running == "Restoring" || records[ai].data.running == "Consolidating" || records[ai].data.running == "Migrating")){
-			tbarRunCtrl.disable();
-			tbarRestoreCtrl.disable();
-			tbarConsolidateCtrl.disable();
-		}
-
+      		var tbarRunCtrl = me.queryById(me.getId() + "-run");
+      		if(records.length > 0)
+      		  tbarRunCtrl.enable();
+      		else tbarRunCtrl.disable();
+      		var tbarRestoreCtrl = me.queryById(me.getId() + "-restore");
+      		if(records.length > 0 && records[ai].data.lastcompleted != "N/A")
+      			tbarRestoreCtrl.enable();
+      		else tbarRestoreCtrl.disable();
+      		var tbarConsolidateCtrl = me.queryById(me.getId() + "-consolidate");
+      		if(records.length > 0 && records[ai].data.versions > 0)
+      			tbarConsolidateCtrl.enable();
+      		else tbarConsolidateCtrl.disable();
+      		if(records.length > 0 && (records[ai].data.running == "Running" || records[ai].data.running == "Restoring" || records[ai].data.running == "Consolidating" || records[ai].data.running == "Migrating")){
+      			tbarRunCtrl.disable();
+      			tbarRestoreCtrl.disable();
+      			tbarConsolidateCtrl.disable();
+      		}
       	}
       }
     }, this);

@@ -106,6 +106,35 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
 				}]
 			})
 		});
+		this.store.on("load", function(store, records, options) {
+			var sm = this.getSelectionModel();
+      var records_bl = sm.getSelection();
+      var ai = -1;
+      if(records_bl.length > 0){
+      	for (i = 0; i < records.length; i++) { 
+      		if(records[i].data.uuid == records_bl[0].data.uuid){
+      			ai = i;
+      			break;
+      		}
+      	}
+      	if(ai >= 0){
+      		var tbarRunCtrl = me.queryById(me.getId() + "-log");
+      		if(records.length > 0 && records[ai].data.haslog == "yes")
+      			tbarRunCtrl.enable();
+      		else
+      			tbarRunCtrl.disable();
+      		var tbarRestoreCtrl = me.queryById(me.getId() + "-restore");
+      		var tbarPurgeCtrl = me.queryById(me.getId() + "-purge");
+      		if(records.length > 0 && (records[ai].data.sessiontype == "Backup")){
+      			tbarRestoreCtrl.enable();
+      			tbarPurgeCtrl.enable();
+      		}else{
+      			tbarRestoreCtrl.disable();
+      			tbarPurgeCtrl.disable();
+      		}
+      	}
+      }
+    }, this);
 		me.callParent(arguments);
 	},
 
@@ -122,6 +151,24 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
 			handler: Ext.Function.bind(me.onShowlog, me, [ me ]),
 			scope: me,
 			disabled: true
+		},{
+			id: me.getId() + "-restore",
+			xtype: "button",
+			text: _("Restore version"),
+			icon: "images/ftp.png",
+			iconCls: Ext.baseCSSPrefix + "btn-icon-16x16",
+			handler: Ext.Function.bind(me.onRestoreVersionButton, me, [ me ]),
+			scope: me,
+			disabled: true
+		},{
+			id: me.getId() + "-purge",
+			xtype: "button",
+			text: _("Purge version"),
+			icon: "images/delete.png",
+			iconCls: Ext.baseCSSPrefix + "btn-icon-16x16",
+			handler: Ext.Function.bind(me.onPurgeVersionButton, me, [ me ]),
+			scope: me,
+			disabled: true
 		}]);
 		return items;
 	},
@@ -132,9 +179,18 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
 		// Process additional buttons.
 		var tbarRunCtrl = me.queryById(me.getId() + "-log");
 		if(records.length > 0 && records[0].data.haslog == "yes")
-		tbarRunCtrl.enable();
+			tbarRunCtrl.enable();
 		else
 			tbarRunCtrl.disable();
+		var tbarRestoreCtrl = me.queryById(me.getId() + "-restore");
+		var tbarPurgeCtrl = me.queryById(me.getId() + "-purge");
+		if(records.length > 0 && (records[0].data.sessiontype == "Backup")){
+			tbarRestoreCtrl.enable();
+			tbarPurgeCtrl.enable();
+		}else{
+			tbarRestoreCtrl.disable();
+			tbarPurgeCtrl.disable();
+		}
 	},
 
 	onShowlog: function() {
@@ -155,6 +211,18 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
 				}
 			}
 		}).show();
+	},
+	
+	onRestoreVersionButton: function() {
+		var me = this;
+		var record = me.getSelected();
+		//placeholder
+	},
+	
+	onPurgeVersionButton: function() {
+		var me = this;
+		var record = me.getSelected();
+		//placeholder
 	}
 });
 
