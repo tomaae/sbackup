@@ -92,6 +92,8 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
     			$t_objects[$i]['sessiontype'] = "Backup";#"N/A";
   				if($rows[7] == "backup")$t_objects[$i]['sessiontype'] = "Backup";
   				if($rows[7] == "restore")$t_objects[$i]['sessiontype'] = "Restore";
+  				if($rows[7] == "consolidation")$t_objects[$i]['sessiontype'] = "Consolidation";
+					if($rows[7] == "migration")$t_objects[$i]['sessiontype'] = "Migration";
   				
   				$i++;
   			}
@@ -153,16 +155,21 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 				$rows               = explode("|", $txt_file);
 				if($rows[0] == "backup")$objectv['running'] = "Running";
 				if($rows[0] == "restore")$objectv['running'] = "Restoring";
+				if($rows[0] == "consolidation")$objectv['running'] = "Consolidating";
+				if($rows[0] == "migration")$objectv['running'] = "Migrating";
 			}
 			$objectv['versions'] = 0;
+			$objectv['size']     = 0;
 			if(file_exists(sprintf("/var/log/sbackup/history_%s", $objectv['uuid']))){
 				$txt_file = file_get_contents(sprintf("/var/log/sbackup/history_%s", $objectv['uuid']));
 				$lines    = explode("\n", $txt_file);
 				foreach($lines as $line){
 					if(!$line)continue;
 					$rows_latest        = explode("|", $line);
+					if($rows_latest[7] != "backup")continue;
 					if($rows_latest[0] == "0"){
 						$objectv['versions']++;
+						$objectv['size']+=$rows_latest[5];
 						$rows_completed = explode("|", $line);
 					}
 				}

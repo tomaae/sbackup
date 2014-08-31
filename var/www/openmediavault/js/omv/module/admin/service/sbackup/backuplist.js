@@ -197,7 +197,7 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
         store: Ext.create("OMV.data.Store", {
           autoLoad: true,
           model: OMV.data.Model.createImplicit({
-            idProperty: "devicefile",
+            idProperty: "backupversion",
             fields: [
               { name: "version", type: "string" },
               { name: "version_human", type: "string" }
@@ -414,6 +414,12 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 		width: 65,
 		dataIndex: "versions",
 		stateId: "versions"
+	},{
+		text: _("Size"),
+		sortable: true,
+		width: 65,
+		dataIndex: "size",
+		stateId: "size"
 	}],
 
 	initComponent: function() {
@@ -434,7 +440,8 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 					{ name: "sourcefoldername", type: "string" },
 					{ name: "schedule", type: "string" },
 					{ name: "retention", type: "string" },
-					{ name: "versions", type: "string" }
+					{ name: "versions", type: "string" },
+					{ name: "size", type: "string" }
 					]
 				}),
 				proxy: {
@@ -463,15 +470,25 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
       		}
       	}
       	if(ai >= 0){
-      		var tbarRunCtrl = this.queryById(me.getId() + "-run");
-					var tbarRestoreCtrl = this.queryById(me.getId() + "-restore");
-      		if(records.length > 0 && (records[ai].data.running == "Running" || records[ai].data.running == "Restoring")){
-						tbarRunCtrl.disable();
-						tbarRestoreCtrl.disable();
-					}else{
-						tbarRunCtrl.enable();
-						tbarRestoreCtrl.enable();
-					}
+
+		var tbarRunCtrl = me.queryById(me.getId() + "-run");
+		if(records.length > 0)
+		  tbarRunCtrl.enable();
+		else tbarRunCtrl.disable();
+		var tbarRestoreCtrl = me.queryById(me.getId() + "-restore");
+		if(records.length > 0 && records[ai].data.lastcompleted != "N/A")
+			tbarRestoreCtrl.enable();
+		else tbarRestoreCtrl.disable();
+		var tbarConsolidateCtrl = me.queryById(me.getId() + "-consolidate");
+		if(records.length > 0 && records[ai].data.versions > 0)
+			tbarConsolidateCtrl.enable();
+		else tbarConsolidateCtrl.disable();
+		if(records.length > 0 && (records[ai].data.running == "Running" || records[ai].data.running == "Restoring" || records[ai].data.running == "Consolidating" || records[ai].data.running == "Migrating")){
+			tbarRunCtrl.disable();
+			tbarRestoreCtrl.disable();
+			tbarConsolidateCtrl.disable();
+		}
+
       	}
       }
     }, this);
@@ -500,6 +517,15 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 			handler: Ext.Function.bind(me.onRestoreButton, me, [ me ]),
 			scope: me,
 			disabled: true
+		},{
+			id: me.getId() + "-consolidate",
+			xtype: "button",
+			text: _("Consolidate"),
+			icon: "images/rsync.png",
+			iconCls: Ext.baseCSSPrefix + "btn-icon-16x16",
+			handler: Ext.Function.bind(me.onConsolidateButton, me, [ me ]),
+			scope: me,
+			disabled: true
 		}]);
 		return items;
 	},
@@ -509,20 +535,21 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 		me.callParent(arguments);
 		// Process additional buttons.
 		var tbarRunCtrl = me.queryById(me.getId() + "-run");
-		if(records.length <= 0)
-		tbarRunCtrl.disable();
-		else if(records.length == 1)
-			tbarRunCtrl.enable();
-			else
-				tbarRunCtrl.disable();
-				var tbarRestoreCtrl = me.queryById(me.getId() + "-restore");
-				if(records.length > 0 && records[0].data.lastcompleted != "N/A")
-				tbarRestoreCtrl.enable();
-				else
-					tbarRestoreCtrl.disable();
-		if(records.length > 0 && (records[0].data.running == "Running" || records[0].data.running == "Restoring")){
+		if(records.length > 0)
+		  tbarRunCtrl.enable();
+		else 	tbarRunCtrl.disable();
+		var tbarRestoreCtrl = me.queryById(me.getId() + "-restore");
+		if(records.length > 0 && records[0].data.lastcompleted != "N/A")
+			tbarRestoreCtrl.enable();
+		else tbarRestoreCtrl.disable();
+		var tbarConsolidateCtrl = me.queryById(me.getId() + "-consolidate");
+		if(records.length > 0 && records[0].data.versions > 0)
+			tbarConsolidateCtrl.enable();
+		else tbarConsolidateCtrl.disable();
+		if(records.length > 0 && (records[0].data.running == "Running" || records[0].data.running == "Restoring" || records[0].data.running == "Consolidating" || records[0].data.running == "Migrating")){
 			tbarRunCtrl.disable();
 			tbarRestoreCtrl.disable();
+			tbarConsolidateCtrl.disable();
 		}
 	},
 
@@ -588,6 +615,12 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 				}
 			}
 		}).show();
+	},
+	
+	onConsolidateButton: function() {
+		var me = this;
+		var record = me.getSelected();
+		//placeholder
 	},
 
   onRunButton: function() {
