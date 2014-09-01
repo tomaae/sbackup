@@ -1,0 +1,54 @@
+=================================================================
+rm -rf backup.3
+mv backup.2 backup.3
+mv backup.1 backup.2
+mv backup.0 backup.1
+rsync --verbose -aEAX --delete --link-dest=../backup.1 source_directory/  backup.0/
+=================================================================
+
+
+- option to remove version in backup history
+- start restore from backup history
+
+- use same rotating method for single version backup, safety in case of backup failure (half written data)
+- on delete backup, remove all versions, remove log and history retention, no longer needed
+- restore into different location
+- show progress wheel on running like with Filesystes> Status when formating
+
+- settings, only one backup at once > queuing
+- settings, only one backup to one target datastore at once > queuing
+- restart failed backups once
+
+- forbid changing backup source
+- forbid changing backup target, add migration button
+=================================================================
+- "mv" data migration on change target. started with "at", change state to "migrating", creates lockfile with old source for restart in case of failure
+- delete backup store on source change
+- on "edit retention", delete old copies started with "at", change state to "migrating", creates lockfile with old source for restart in case of failure
+
+- backup configuration (backup specifications and backup history) after each backup, restore via settings tab (backup history log copy and omv config import in same way as postinst)
+=================================================================
+
+
+ -c, --checksum              skip based on checksum, not mod-time & size
+
+preview?:
+ -n, --dry-run               perform a trial run with no changes made
+
+excludes?:
+ --exclude=PATTERN       exclude files matching PATTERN
+
+
+ -i, --itemize-changes       output a change-summary for all updates
+     --out-format=FORMAT     output updates using the specified FORMAT
+     --log-file=FILE         log what we're doing to the specified FILE
+     --log-file-format=FMT   log updates using the specified FMT
+     --password-file=FILE    read daemon-access password from FILE
+     --list-only             list the files instead of copying them
+     --bwlimit=KBPS          limit I/O bandwidth; KBytes per second
+     --write-batch=FILE      write a batched update to FILE
+     --only-write-batch=FILE like --write-batch but w/o updating dest
+     --read-batch=FILE       read a batched update from FILE
+     --protocol=NUM          force an older protocol version to be used
+     --iconv=CONVERT_SPEC    request charset conversion of filenames
+     --checksum-seed=NUM     set block/file checksum seed (advanced)
