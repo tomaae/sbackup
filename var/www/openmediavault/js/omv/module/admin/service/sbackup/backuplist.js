@@ -478,14 +478,14 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
       		if(records.length > 0 && records[ai].data.lastcompleted != "N/A")
       			tbarRestoreCtrl.enable();
       		else tbarRestoreCtrl.disable();
-      		var tbarConsolidateCtrl = me.queryById(me.getId() + "-consolidate");
+      		var tbarPurgeCtrl = me.queryById(me.getId() + "-purge");
       		if(records.length > 0 && records[ai].data.versions > 0)
-      			tbarConsolidateCtrl.enable();
-      		else tbarConsolidateCtrl.disable();
-      		if(records.length > 0 && (records[ai].data.running == "Running" || records[ai].data.running == "Restoring" || records[ai].data.running == "Consolidating" || records[ai].data.running == "Migrating")){
+      			tbarPurgeCtrl.enable();
+      		else tbarPurgeCtrl.disable();
+      		if(records.length > 0 && (records[ai].data.running == "Running" || records[ai].data.running == "Restoring" || records[ai].data.running == "Purging" || records[ai].data.running == "Migrating")){
       			tbarRunCtrl.disable();
       			tbarRestoreCtrl.disable();
-      			tbarConsolidateCtrl.disable();
+      			tbarPurgeCtrl.disable();
       		}
       	}
       }
@@ -516,12 +516,12 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 			scope: me,
 			disabled: true
 		},{
-			id: me.getId() + "-consolidate",
+			id: me.getId() + "-purge",
 			xtype: "button",
-			text: _("Consolidate"),
+			text: _("Purge"),
 			icon: "images/rsync.png",
 			iconCls: Ext.baseCSSPrefix + "btn-icon-16x16",
-			handler: Ext.Function.bind(me.onConsolidateButton, me, [ me ]),
+			handler: Ext.Function.bind(me.onPurgeButton, me, [ me ]),
 			scope: me,
 			disabled: true
 		}]);
@@ -540,14 +540,14 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 		if(records.length > 0 && records[0].data.lastcompleted != "N/A")
 			tbarRestoreCtrl.enable();
 		else tbarRestoreCtrl.disable();
-		var tbarConsolidateCtrl = me.queryById(me.getId() + "-consolidate");
+		var tbarPurgeCtrl = me.queryById(me.getId() + "-purge");
 		if(records.length > 0 && records[0].data.versions > 0)
-			tbarConsolidateCtrl.enable();
-		else tbarConsolidateCtrl.disable();
-		if(records.length > 0 && (records[0].data.running == "Running" || records[0].data.running == "Restoring" || records[0].data.running == "Consolidating" || records[0].data.running == "Migrating")){
+			tbarPurgeCtrl.enable();
+		else tbarPurgeCtrl.disable();
+		if(records.length > 0 && (records[0].data.running == "Running" || records[0].data.running == "Restoring" || records[0].data.running == "Purging" || records[0].data.running == "Migrating")){
 			tbarRunCtrl.disable();
 			tbarRestoreCtrl.disable();
-			tbarConsolidateCtrl.disable();
+			tbarPurgeCtrl.disable();
 		}
 	},
 
@@ -615,7 +615,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 		}).show();
 	},
 	
-	onConsolidateButton: function() {
+	onPurgeButton: function() {
 		var me = this;
 		var record = me.getSelected();
 		//placeholder

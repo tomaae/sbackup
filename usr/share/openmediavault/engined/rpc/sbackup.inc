@@ -92,7 +92,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
     			$t_objects[$i]['sessiontype'] = "Backup";#"N/A";
   				if($rows[7] == "backup")$t_objects[$i]['sessiontype'] = "Backup";
   				if($rows[7] == "restore")$t_objects[$i]['sessiontype'] = "Restore";
-  				if($rows[7] == "consolidation")$t_objects[$i]['sessiontype'] = "Consolidation";
+  				if($rows[7] == "purge")$t_objects[$i]['sessiontype'] = "Purge";
 					if($rows[7] == "migration")$t_objects[$i]['sessiontype'] = "Migration";
   				
   				$i++;
@@ -155,7 +155,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 				$rows               = explode("|", $txt_file);
 				if($rows[0] == "backup")$objectv['running'] = "Running";
 				if($rows[0] == "restore")$objectv['running'] = "Restoring";
-				if($rows[0] == "consolidation")$objectv['running'] = "Consolidating";
+				if($rows[0] == "purge")$objectv['running'] = "Purging";
 				if($rows[0] == "migration")$objectv['running'] = "Migrating";
 			}
 			$objectv['versions'] = 0;

@@ -21,12 +21,17 @@ rsync --verbose -aEAX --delete --link-dest=../backup.1 source_directory/  backup
 
 - forbid changing backup source
 - forbid changing backup target, add migration button
+
+- get versions should check if version data dir exists
 =================================================================
-- "mv" data migration on change target. started with "at", change state to "migrating", creates lockfile with old source for restart in case of failure
-- delete backup store on source change
+- "mv" data migration. started with "at", change state to "migrating", creates lockfile with old source for restart in case of failure
 - on "edit retention", delete old copies started with "at", change state to "migrating", creates lockfile with old source for restart in case of failure
+- import backup. save backup configuration within backup_uuid folder
 
 - backup configuration (backup specifications and backup history) after each backup, restore via settings tab (backup history log copy and omv config import in same way as postinst)
+=================================================================
+- schedule Purge
+- checkbox, run purge after backup
 =================================================================
 
 
