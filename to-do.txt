@@ -23,15 +23,48 @@ rsync --verbose -aEAX --delete --link-dest=../backup.1 source_directory/  backup
 - forbid changing backup target, add migration button
 
 - get versions should check if version data dir exists
+
 =================================================================
 - "mv" data migration. started with "at", change state to "migrating", creates lockfile with old source for restart in case of failure
 - on "edit retention", delete old copies started with "at", change state to "migrating", creates lockfile with old source for restart in case of failure
-- import backup. save backup configuration within backup_uuid folder
+- import backup. (save backup configuration within backup_uuid folder), select share point, search subdirectories for configs, show only those which have correct config and are not imported already
 
 - backup configuration (backup specifications and backup history) after each backup, restore via settings tab (backup history log copy and omv config import in same way as postinst)
 =================================================================
+- rename all fields in create bkp window
 - schedule Purge
 - checkbox, run purge after backup
+- job type > backup, purge, copy, verify
+- backuptype > filesystem, sharepoint, mysql, idb
+>purge job, change fields to select job id, log and schedule only
+>copy job, hide for now
+- report checkbox
+- post run job (execute another job after this one finishes), add required backup status for it to execute
+=================================================================
+use --log-file=FILE for realtime updates, after finished, copy it as metadata to backup destination
+=================================================================
+change rm to (rsync -arv --delete ~/empty_local_folder/ /path/to/remote/folder/)
+=================================================================
+Verify:
+
+-Check if there are data directories not present in history log
+-Check if there are data directories preset as failed (except last session)
+-When session log is present(or by metadata), check if all data exists in data directory according to log, check hardlinks(?)
+-md5 data consistency check? metadata based on rsync log saved into /meta_uuid directory (file/md5)
+=================================================================
+-add support to choose to backup to rsync server
+
+Copy a File from a Remote Server to a Local Server with SSH
+[root@tecmint]# rsync -avzhe ssh root@192.168.0.100:/root/install.log /tmp/
+
+Copy a File from a Local Server to a Remote Server with SSH
+[root@tecmint]# rsync -avzhe ssh backup.tar root@192.168.0.100:/backups/
+
+8. Automatically Delete source Files after successful Transfer (copy session)
+[root@tecmint]# rsync --remove-source-files -zvh backup.tar /tmp/backups/
+
+10. Set Bandwidth Limit and Transfer File
+[root@tecmint]# rsync --bwlimit=100 -avzhe ssh  /var/lib/rpm/  root@192.168.0.100:/root/tmprpm/
 =================================================================
 
 
@@ -46,7 +79,7 @@ excludes?:
 
  -i, --itemize-changes       output a change-summary for all updates
      --out-format=FORMAT     output updates using the specified FORMAT
-     --log-file=FILE         log what we're doing to the specified FILE
+>>>>>     --log-file=FILE         log what we're doing to the specified FILE
      --log-file-format=FMT   log updates using the specified FMT
      --password-file=FILE    read daemon-access password from FILE
      --list-only             list the files instead of copying them
