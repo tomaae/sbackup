@@ -293,6 +293,22 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		if($params['source_sharedfolder_uuid'] == $params['target_sharedfolder_uuid']){
 			throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Source and destination targets cannot be the same.");
 		}
+		
+		if($params['post_job'] != ""){
+  		$xpath_post = sprintf("//services/sbackup/backuplist/backup[uuid='%s']",$params['post_job']);
+  		$object_post = $xmlConfig->get($xpath_post);
+  		if(is_null($object_post)) {throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,$xpath_post);}
+  		while($object_post['post_job']){
+  			if($object_post['post_job'] == $params['uuid']){
+  				throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Current post job cannot be set, it would create an infinite loop.");
+  			}
+  			$xpath_post = sprintf("//services/sbackup/backuplist/backup[uuid='%s']",$object_post['post_job']);
+  			$object_post = $xmlConfig->get($xpath_post);
+  			if(is_null($object_post)) {throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,$xpath_post);}
+  		}
+		}
+		
+		
 		$xpath = "//services/sbackup/backuplist/backup";
 		$objects = $xmlConfig->getList($xpath);
 		if(is_null($objects)) {
@@ -301,7 +317,6 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		
 		// Add additional share informations.
 		foreach($objects as $objectk => &$objectv) {
-
 			// Get the shared folder configuration object.
 			if(($objectv['target_sharedfolder_uuid'] && $params['source_sharedfolder_uuid']) && ($objectv['target_sharedfolder_uuid'] == $params['source_sharedfolder_uuid'])){
 				throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Backup source is set as destinations for another backup. Cannot be used.");
