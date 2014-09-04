@@ -27,10 +27,10 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
 		text: _("Type"),
 		sortable: true,
 		width: 90,
-		dataIndex: "sessiontype",
-		stateId: "sessiontype"
+		dataIndex: "job_type",
+		stateId: "job_type"
 	},{
-		text: _("Backup name"),
+		text: _("Job name"),
 		sortable: true,
 		width: 150,
 		dataIndex: "name",
@@ -82,7 +82,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
 					{ name: "fileid", type: "string" },
 					{ name: "id", type: "string" },
 					{ name: "uuid", type: "string" },
-					{ name: "sessiontype", type: "string" },
+					{ name: "job_type", type: "string" },
 					{ name: "name", type: "string" },
 					{ name: "job_status", type: "string" },
 					{ name: "starttime", type: "string" },
@@ -125,7 +125,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
       			tbarRunCtrl.disable();
       		var tbarRestoreCtrl = me.queryById(me.getId() + "-restore");
       		var tbarPurgeCtrl = me.queryById(me.getId() + "-purge");
-      		if(records.length > 0 && (records[ai].data.sessiontype == "Backup")){
+      		if(records.length > 0 && (records[ai].data.job_type == "Backup")){
       			tbarRestoreCtrl.enable();
       			tbarPurgeCtrl.enable();
       		}else{
@@ -184,7 +184,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
 			tbarRunCtrl.disable();
 		var tbarRestoreCtrl = me.queryById(me.getId() + "-restore");
 		var tbarPurgeCtrl = me.queryById(me.getId() + "-purge");
-		if(records.length > 0 && (records[0].data.sessiontype == "Backup")){
+		if(records.length > 0 && (records[0].data.job_type == "Backup")){
 			tbarRestoreCtrl.enable();
 			tbarPurgeCtrl.enable();
 		}else{

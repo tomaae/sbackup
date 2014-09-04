@@ -10,8 +10,6 @@ rsync --verbose -aEAX --delete --link-dest=../backup.1 source_directory/  backup
 - option to remove version in backup history
 - start restore from backup history
 
-- use same rotating method for single version backup, safety in case of backup failure (half written data)
-- on delete backup, remove all versions, remove log and history retention, no longer needed
 - restore into different location
 - restore, show backup type next to version (backup/copy)
 - show progress wheel on running like with Filesystes> Status when formating
@@ -20,8 +18,8 @@ rsync --verbose -aEAX --delete --link-dest=../backup.1 source_directory/  backup
 - settings, only one backup to one target datastore at once > queuing
 - restart failed backups once
 
-- forbid changing backup source
-- forbid changing backup target, add migration button
+- warning on changing backup source
+- warning on changing backup target
 
 - get versions should check if version data dir exists
 
@@ -32,15 +30,9 @@ rsync --verbose -aEAX --delete --link-dest=../backup.1 source_directory/  backup
 
 - backup configuration (backup specifications and backup history) after each backup, restore via settings tab (backup history log copy and omv config import in same way as postinst)
 =================================================================
-- rename all fields in create bkp window
-- schedule Purge
-- checkbox, run purge after backup
-- job type > backup, purge, copy, verify
-- backuptype > filesystem, sharepoint, mysql, idb
 >purge job, change fields to select job id, log and schedule only
 >copy job, hide for now
 - report checkbox
-- post run job (execute another job after this one finishes), add required backup status for it to execute
 =================================================================
 use --log-file=FILE for realtime updates, after finished, copy it as metadata to backup destination
 =================================================================

@@ -19,7 +19,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 		ptype: "configobject"
 	}],
 	width: 570,
-	height: 400,
+	//height: 400,
 
 	getFormItems: function() {
 		var me = this;
@@ -31,8 +31,56 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 		},{
 			xtype: "textfield",
 			name: "name",
-			fieldLabel: _("Backup name"),
+			fieldLabel: _("Job name"),
 			allowBlank: false
+		},{
+			xtype: "combo",
+			name: "job_type",
+			fieldLabel: _("Job type"),
+			queryMode: "local",
+			store: Ext.create("Ext.data.ArrayStore", {
+				fields: [ "value", "text" ],
+				data: [
+				[ "backup", _("Backup") ],
+				//[ "copy",   _("Copy") ],
+				//[ "purge",  _("Purge") ],
+				//[ "verify", _("Verify") ]
+				]
+			}),
+			displayField: "text",
+			valueField: "value",
+			allowBlank: false,
+			editable: false,
+			triggerAction: "all",
+			value: "backup",
+			plugins: [{
+				ptype: "fieldinfo",
+				text: _("Job type.")
+			}]
+		},{
+			xtype: "combo",
+			name: "backup_type",
+			fieldLabel: _("Backup type"),
+			queryMode: "local",
+			store: Ext.create("Ext.data.ArrayStore", {
+				fields: [ "value", "text" ],
+				data: [
+				[ "sharedfolder", _("Shared folder") ],
+				//[ "filesystem",   _("Filesystem") ],
+				//[ "idb",          _("Internal Database") ],
+				//[ "mysql",        _("MySQL") ]
+				]
+			}),
+			displayField: "text",
+			valueField: "value",
+			allowBlank: false,
+			editable: false,
+			triggerAction: "all",
+			value: "sharedfolder",
+			plugins: [{
+				ptype: "fieldinfo",
+				text: _("Backup backup.")
+			}]
 		},{
 			xtype: "sharedfoldercombo",
 			name: "source_sharedfolder_uuid",
@@ -44,7 +92,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 		},{
 			xtype: "sharedfoldercombo",
 			name: "target_sharedfolder_uuid",
-			fieldLabel: _("Destination"),
+			fieldLabel: _("Target"),
 			plugins: [{
 				ptype: "fieldinfo",
 				text: _("Backup destination.")
@@ -52,7 +100,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 		},{
   			xtype: "numberfield",
   			name: "protect_days_job",
-  			fieldLabel: "Backup retention",
+  			fieldLabel: "Retention",
   			minValue: 0,
   			maxValue: 365,
   			value: 1,
@@ -60,7 +108,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
   			allowBlank: true,
   			plugins: [{
 					ptype: "fieldinfo",
-					text: _("Specifies how many days backup should be stored.")
+					text: _("Specifies how many days backup/copy should be stored.")
 				}]
   	},{
 			xtype: "combo",
@@ -149,8 +197,21 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 		},{
 			xtype: "checkbox",
 			name: "sessionlog_save",
-			fieldLabel: _("Save backup log"),
-			checked: true
+			fieldLabel: _("Save session log"),
+			checked: true,
+			plugins: [{
+				ptype: "fieldinfo",
+				text: _("Save detailed session log.")
+			}]
+		},{
+			xtype: "checkbox",
+			name: "post_purge",
+			fieldLabel: _("Purge"),
+			checked: true,
+			plugins: [{
+				ptype: "fieldinfo",
+				text: _("Start purge after successful backup.")
+			}]
 		}];
 	}
 });
@@ -370,7 +431,13 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 		trueIcon: "switch_on.png",
 		falseIcon: "switch_off.png"
 	},{
-		text: _("Backup name"),
+		text: _("Job type"),
+		sortable: true,
+		width: 70,
+		dataIndex: "job_type",
+		stateId: "job_type"
+	},{
+		text: _("Job name"),
 		sortable: true,
 		width: 150,
 		dataIndex: "name",
@@ -393,12 +460,12 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 		dataIndex: "lastcompleted",
 		stateId: "lastcompleted"
 	},{
-		text: _("Backup source"),
+		text: _("Source"),
 		sortable: true,
 		dataIndex: "source_name",
 		stateId: "source_name"
 	},{
-		text: _("Backup target"),
+		text: _("Target"),
 		sortable: true,
 		dataIndex: "target_name",
 		stateId: "target_name"
@@ -433,6 +500,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 					{ name: "uuid", type: "string" },
 					{ name: "target_sharedfolder_uuid", type: "string" },
 					{ name: "enable", type: "boolean" },
+					{ name: "job_type", type: "string" },
 					{ name: "name", type: "string" },
 					{ name: "job_status", type: "string" },
 					{ name: "lastcompleted", type: "string" },

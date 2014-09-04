@@ -89,12 +89,12 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
   					$t_objects[$i]['haslog'] = "no";
   				}
   				if($rows[6]){$t_objects[$i]['backupperf'] = $rows[6];}else{$t_objects[$i]['backupperf'] = "N/A";}
-    			$t_objects[$i]['sessiontype'] = "Backup";#"N/A";
-  				if($rows[7] == "backup")$t_objects[$i]['sessiontype'] = "Backup";
-  				if($rows[7] == "restore")$t_objects[$i]['sessiontype'] = "Restore";
-  				if($rows[7] == "purge")$t_objects[$i]['sessiontype'] = "Purge";
-					if($rows[7] == "migration")$t_objects[$i]['sessiontype'] = "Migration";
-					if($rows[7] == "copy")$t_objects[$i]['sessiontype'] = "Copy";
+    			$t_objects[$i]['job_type'] = "Backup";#"N/A";
+  				if($rows[7] == "backup")$t_objects[$i]['job_type'] = "Backup";
+  				if($rows[7] == "restore")$t_objects[$i]['job_type'] = "Restore";
+  				if($rows[7] == "purge")$t_objects[$i]['job_type'] = "Purge";
+					if($rows[7] == "migration")$t_objects[$i]['job_type'] = "Migration";
+					if($rows[7] == "copy")$t_objects[$i]['job_type'] = "Copy";
   				
   				$i++;
   			}
@@ -147,6 +147,12 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 			if(!is_null($sfobject) && !empty($sfobject)) {
 				$objectv['target_name'] = $sfobject['name'];
 			}
+			
+			// Get last job type
+			if($objectv['job_type'] == "backup")$objectv['job_type'] = "Backup";
+			if($objectv['job_type'] == "copy")  $objectv['job_type'] = "Copy";
+			if($objectv['job_type'] == "purge") $objectv['job_type'] = "Purge";
+			if($objectv['job_type'] == "verify")$objectv['job_type'] = "Verify";
 
 			// Get last job status
 			$objectv['job_status'] = "N/A";
@@ -187,7 +193,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 
 			// Modify result object.
 			$objectv['enable'] = boolval($objectv['enable']);
-			$wdays = array('Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Daily');
+			$wdays = array('Sun','Mon','Tue','Wed','Thu','Fri','Sat','Daily');
 			$objectv['schedule'] = $wdays[$objectv['schedule_wday']]." ".$objectv['schedule_hour'].":".$objectv['schedule_minute'];
 			if($objectv['protect_days_job'] == 0){
 				$objectv['protect_days_job'] = "Single version";
@@ -250,12 +256,15 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		"uuid":{'.$GLOBALS['OMV_JSONSCHEMA_UUID_UNDEFINED'].'},
 		"enable":{"type":"boolean"},
 		"name":{"type":"string"},
+		"job_type":{"type":"string"},
+		"backup_type":{"type":"string"},
 		"source_sharedfolder_uuid":{'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
 		"target_sharedfolder_uuid":{'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
 		"schedule_wday":{"type":"string"},
 		"schedule_hour":{"type":"string"},
 		"schedule_minute":{"type":"string"},
 		"sessionlog_save":{"type":"boolean"},
+		"post_purge":{"type":"boolean"},
 		"protect_days_job":{"type":"integer","minimum":0,"maximum":365}
 		}
 		}');
@@ -265,12 +274,15 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		OMVUtil::uuid() : $params['uuid'],
 		"enable" => array_boolval($params, 'enable'),
 		"name" => $params['name'],
+		"job_type" => $params['job_type'],
+		"backup_type" => $params['backup_type'],
 		"source_sharedfolder_uuid" => $params['source_sharedfolder_uuid'],
 		"target_sharedfolder_uuid" => $params['target_sharedfolder_uuid'],
 		"schedule_wday" => $params['schedule_wday'],
 		"schedule_hour" => $params['schedule_hour'],
 		"schedule_minute" => $params['schedule_minute'],
 		"sessionlog_save" => $params['sessionlog_save'],
+		"post_purge" => $params['post_purge'],
 		"protect_days_job" => $params['protect_days_job']
 		);
 		if($params['source_sharedfolder_uuid'] == $params['target_sharedfolder_uuid']){
