@@ -474,7 +474,15 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
           sorters: [{
             direction: "DESC",
             property: "version"
-          }]
+          }]//,
+//          listeners: {
+//            scope: me,
+//            load: function(combo, records, options){
+//                  //grid.getSelectionModel().select(0, true);
+//                  alert("!"+records.length-1)
+//                  ////this.getSelectionModel().select(records.length-1, true)
+//            }
+//          }
         }),
         displayField: "version_human",
         valueField: "version",
@@ -487,12 +495,7 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
           select: function(combo, records) {
             var record = records[0];
             this.tp.setVersion(record.get("version"));
-          }//,
-//          load: function(combo, records, options){
-//                //grid.getSelectionModel().select(0, true);
-//                alert("!"+records.length-1)
-//                ////this.getSelectionModel().select(records.length-1, true)
-//          }
+          }
         }
 			}]
     });
