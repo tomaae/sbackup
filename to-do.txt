@@ -1,46 +1,61 @@
-=================================================================
-rm -rf backup.3
-mv backup.2 backup.3
-mv backup.1 backup.2
-mv backup.0 backup.1
-rsync --verbose -aEAX --delete --link-dest=../backup.1 source_directory/  backup.0/
-=================================================================
-
-
+==HISTORY========================================================
 - option to remove version in backup history
 - start restore from backup history
+- icons for status (completed, failed)
+=================================================================
 
-- restore into different location
-- show progress wheel on running like with Filesystes> Status when formating
+==BKPLIST========================================================
+- show progress wheel on running like with Filesystem > Status when formating
+- icons for status (completed, failed)
+=================================================================
 
+==BACKUP=========================================================
 - settings, only one backup at once > queuing
 - settings, only one backup to one target datastore at once > queuing
-- restart failed backups once
-
 - warning on changing backup source
 - warning on changing backup target
+- rework schedule (combo checkbox?)
 
-- get versions should check if version data dir exists
+- use --log-file=FILE for realtime updates, after finished, copy it as metadata to backup destination
+- backup configuration (backup specifications and backup history) after each backup, import via settings tab (backup history log copy and omv config import in same way as postinst)
+  import backup. (save backup configuration within backup_uuid folder), select share point, search subdirectories for configs, show only those which have correct config and are not imported already
+- report checkbox
 - LVM snapshot?
 =================================================================
-- "mv" data migration. started with "at", change state to "migrating", creates lockfile with old source for restart in case of failure
-- on "edit retention", delete old copies started with "at", change state to "migrating", creates lockfile with old source for restart in case of failure
-- import backup. (save backup configuration within backup_uuid folder), select share point, search subdirectories for configs, show only those which have correct config and are not imported already
 
-- backup configuration (backup specifications and backup history) after each backup, restore via settings tab (backup history log copy and omv config import in same way as postinst)
-=================================================================
-- report checkbox
-=================================================================
-use --log-file=FILE for realtime updates, after finished, copy it as metadata to backup destination
-=================================================================
-change rm to (rsync -arv --delete ~/empty_local_folder/ /path/to/remote/folder/)
-=================================================================
-Verify:
+==RESTORE========================================================
+- restore into different location
+- get versions should check if version data dir exists
 
+- autoselect latest version
+- browse files
+=================================================================
+
+==VERIFY=========================================================
 -Check if there are data directories not present in history log
 -Check if there are data directories preset as failed (except last session)
 -When session log is present(or by metadata), check if all data exists in data directory according to log, check hardlinks(?)
 -md5 data consistency check? metadata based on rsync log saved into /meta_uuid directory (file/md5)
+=================================================================
+
+==COPY===========================================================
+-fields:
+backup_uuid
+target_type (shared folder, rsync server, ssh) < (rsync: user, pwd, ip), (ssh: user, ip)
+retention
+savelog
+post_purge
+post_job
+
+=================================================================
+
+
+
+
+==FUTURE=========================================================
+- "mv" data migration. started with "at", change state to "migrating", creates lockfile with old source for restart in case of failure
+- restart failed backups once
+- change rm to (rsync -arv --delete ~/empty_local_folder/ /path/to/remote/folder/)
 =================================================================
 -add support to choose to backup to rsync server
 
@@ -60,23 +75,5 @@ Copy a File from a Local Server to a Remote Server with SSH
 
  -c, --checksum              skip based on checksum, not mod-time & size
 
-preview?:
- -n, --dry-run               perform a trial run with no changes made
-
 excludes?:
  --exclude=PATTERN       exclude files matching PATTERN
-
-
- -i, --itemize-changes       output a change-summary for all updates
-     --out-format=FORMAT     output updates using the specified FORMAT
->>>>>     --log-file=FILE         log what we're doing to the specified FILE
-     --log-file-format=FMT   log updates using the specified FMT
-     --password-file=FILE    read daemon-access password from FILE
-     --list-only             list the files instead of copying them
-     --bwlimit=KBPS          limit I/O bandwidth; KBytes per second
-     --write-batch=FILE      write a batched update to FILE
-     --only-write-batch=FILE like --write-batch but w/o updating dest
-     --read-batch=FILE       read a batched update from FILE
-     --protocol=NUM          force an older protocol version to be used
-     --iconv=CONVERT_SPEC    request charset conversion of filenames
-     --checksum-seed=NUM     set block/file checksum seed (advanced)
