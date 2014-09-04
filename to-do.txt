@@ -1,5 +1,7 @@
+In history log, create column for backup without data_uuid (rework all grep "|backup|$" to "|backup|(d*)|$")
+
 ==HISTORY========================================================
-- option to remove version in backup history
+- option to remove version in backup history (create lockfile, delete data_uuid,release lockfile), run with "at now"
 - start restore from backup history
 - icons for status (completed, failed)
 =================================================================
@@ -7,6 +9,8 @@
 ==BKPLIST========================================================
 - show progress wheel on running like with Filesystem > Status when formating
 - icons for status (completed, failed)
+
+- ?abort backup
 =================================================================
 
 ==BACKUP=========================================================
@@ -14,7 +18,9 @@
 - settings, only one backup to one target datastore at once > queuing
 - warning on changing backup source
 - warning on changing backup target
-- rework schedule (combo checkbox?)
+- rework schedule (combo checkbox?), ability to disable schedule
+- restart failed jobs
+- disable will disable getting started as post_job, its copy, purge, verify
 
 - use --log-file=FILE for realtime updates, after finished, copy it as metadata to backup destination
 - backup configuration (backup specifications and backup history) after each backup, import via settings tab (backup history log copy and omv config import in same way as postinst)
@@ -49,12 +55,16 @@ post_job
 
 =================================================================
 
-
+==RESTART========================================================
+-Scheduled every 15 minutes
+-checks history logs for one time failure
+-restart job with "at now" soonest hour after failure
+=================================================================
 
 
 ==FUTURE=========================================================
 - "mv" data migration. started with "at", change state to "migrating", creates lockfile with old source for restart in case of failure
-- restart failed backups once
+
 - change rm to (rsync -arv --delete ~/empty_local_folder/ /path/to/remote/folder/)
 =================================================================
 -add support to choose to backup to rsync server
