@@ -11,7 +11,6 @@ rsync --verbose -aEAX --delete --link-dest=../backup.1 source_directory/  backup
 - start restore from backup history
 
 - restore into different location
-- restore, show backup type next to version (backup/copy)
 - show progress wheel on running like with Filesystes> Status when formating
 
 - settings, only one backup at once > queuing

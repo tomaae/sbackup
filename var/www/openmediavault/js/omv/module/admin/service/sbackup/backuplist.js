@@ -363,7 +363,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			hidden: true,
 			plugins: [{
 				ptype: "fieldinfo",
-				text: _("Start purge after successful backup.")
+				text: _("Start purge after successful backup. Do NOT uncheck unless necessery.")
 			}]
 		},{
 			xtype: "combo",
@@ -426,7 +426,7 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
   "OMV.data.Store",
   "OMV.tree.RestoreDirBrowser"
 	],
-
+  
 	readOnly: false,
 
 	title: _("Restore from backup"),
@@ -469,7 +469,7 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
       				params: {
       					uuid: me.uuid
       				}
-            }
+            },
           },
           sorters: [{
             direction: "DESC",
@@ -487,7 +487,12 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
           select: function(combo, records) {
             var record = records[0];
             this.tp.setVersion(record.get("version"));
-          }
+          }//,
+//          load: function(combo, records, options){
+//                //grid.getSelectionModel().select(0, true);
+//                alert("!"+records.length-1)
+//                ////this.getSelectionModel().select(records.length-1, true)
+//          }
         }
 			}]
     });

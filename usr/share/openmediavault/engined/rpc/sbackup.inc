@@ -727,9 +727,20 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 				if(!$line)continue;
 				$rows = explode("|", $line);
 				if($rows[0] != "0" || $rows[7] != "backup")continue;
+				
+  			$xpath_post = sprintf("//services/sbackup/backuplist/backup[uuid='%s']",$rows[2]);
+  			$object_post = $xmlConfig->get($xpath_post);
+  			if(is_null($object_post)) {throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,$xpath_post);}
+				
+  			if($object_post['job_type'] == "backup") $job_type = "Backup";
+  			if($object_post['job_type'] == "restore")$job_type = "Restore";
+  			if($object_post['job_type'] == "purge")  $job_type = "Purge";
+  			if($object_post['job_type'] == "copy")   $job_type = "Copy";
+  			if($object_post['job_type'] == "verify") $job_type = "Verify";
+				
   			$result[] = array(
   				"version" => $rows[3],
-  				"version_human" => date('r', $rows[3])
+  				"version_human" => $job_type.": ".date('r', $rows[3])
   			);
 				
 			}
