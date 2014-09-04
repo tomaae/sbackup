@@ -94,6 +94,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
   				if($rows[7] == "restore")$t_objects[$i]['sessiontype'] = "Restore";
   				if($rows[7] == "purge")$t_objects[$i]['sessiontype'] = "Purge";
 					if($rows[7] == "migration")$t_objects[$i]['sessiontype'] = "Migration";
+					if($rows[7] == "copy")$t_objects[$i]['sessiontype'] = "Copy";
   				
   				$i++;
   			}
@@ -157,6 +158,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 				if($rows[0] == "restore")$objectv['running'] = "Restoring";
 				if($rows[0] == "purge")$objectv['running'] = "Purging";
 				if($rows[0] == "migration")$objectv['running'] = "Migrating";
+				if($rows[0] == "copy")$objectv['running'] = "Copying";
 			}
 			$objectv['versions'] = 0;
 			$objectv['size']     = 0;
@@ -284,7 +286,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		foreach($objects as $objectk => &$objectv) {
 
 			// Get the shared folder configuration object.
-			if($objectv['sharedfoldertarget'] == $params['sharedfoldersource']){
+			if(($objectv['sharedfoldertarget'] && $params['sharedfoldersource']) && ($objectv['sharedfoldertarget'] == $params['sharedfoldersource'])){
 				throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Backup source is set as destinations for another backup. Cannot be used.");
 			}
 		}

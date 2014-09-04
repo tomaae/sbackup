@@ -13,6 +13,7 @@ rsync --verbose -aEAX --delete --link-dest=../backup.1 source_directory/  backup
 - use same rotating method for single version backup, safety in case of backup failure (half written data)
 - on delete backup, remove all versions, remove log and history retention, no longer needed
 - restore into different location
+- restore, show backup type next to version (backup/copy)
 - show progress wheel on running like with Filesystes> Status when formating
 
 - settings, only one backup at once > queuing
