@@ -33,6 +33,47 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
           "post_purge"
         ],
         properties: ["show"]
+    },{
+        conditions: [
+          {name: "job_type", value: "backup"}
+        ],
+        name: [
+          "source_sharedfolder_uuid",
+          "target_sharedfolder_uuid",
+        ],
+        properties: ["!allowBlank"]
+    },{
+        conditions: [
+          {name: "job_type", value: "purge"}
+        ],
+        name: [
+          "purge_job_uuid"
+        ],
+        properties: ["show"]
+    },{
+        conditions: [
+          {name: "job_type", value: "purge"}
+        ],
+        name: [
+          "purge_job_uuid"
+        ],
+        properties: ["!allowBlank"]
+    },{
+        conditions: [
+          {name: "job_type", value: "verify"}
+        ],
+        name: [
+          "verify_job_uuid"
+        ],
+        properties: ["show"]
+    },{
+        conditions: [
+          {name: "job_type", value: "verify"}
+        ],
+        name: [
+          "verify_job_uuid"
+        ],
+        properties: ["!allowBlank"]
     }]
   }],
 	width: 570,
@@ -60,7 +101,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 				data: [
 				[ "backup", _("Backup") ],
 				//[ "copy",   _("Copy") ],
-				//[ "purge",  _("Purge") ],
+				[ "purge",  _("Purge") ],
 				//[ "verify", _("Verify") ]
 				]
 			}),
@@ -97,13 +138,14 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			value: "sharedfolder",
 			plugins: [{
 				ptype: "fieldinfo",
-				text: _("Backup backup.")
+				text: _("Type of backup source.")
 			}]
 		},{
 			xtype: "sharedfoldercombo",
 			name: "source_sharedfolder_uuid",
 			fieldLabel: _("Source"),
 			hidden: true,
+			allowBlank: true,//switched
 			plugins: [{
 				ptype: "fieldinfo",
 				text: _("Shared folder to backup.")
@@ -113,6 +155,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			name: "target_sharedfolder_uuid",
 			fieldLabel: _("Target"),
 			hidden: true,
+			allowBlank: true,//switched
 			plugins: [{
 				ptype: "fieldinfo",
 				text: _("Backup destination.")
@@ -132,6 +175,94 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 					text: _("Specifies how many days backup/copy should be stored.")
 				}]
   	},{
+			xtype: "combo",
+			name: "purge_job_uuid",
+			fieldLabel: _("Backup"),
+			queryMode: "local",
+			emptyText: _("Select backup ..."),
+			store: Ext.create("Ext.data.ArrayStore", {
+				autoLoad: true,
+				model: OMV.data.Model.createImplicit({
+					idProperty: "postjob",
+					fields: [
+						{ name: "job_name", type: "string" },
+						{ name: "job_uuid", type: "string" }
+					]
+				}),
+				proxy: {
+					type: "rpc",
+					appendSortParams: false,
+					rpcData: {
+						service: "sbackup",
+						method: "getJobList",
+						params: {
+							uuid: me.uuid,
+							jobtype: "backup",
+							jobtype_exclude: "",
+							jobtype_empty: ""
+						}
+					}
+				},
+				sorters: [{
+					direction: "ASC",
+					property: "job_name"
+				}]
+			}),
+			displayField: "job_name",
+			valueField: "job_uuid",
+			editable: false,
+			allowBlank: true,//switched
+			triggerAction: "all",
+			value: "",
+			plugins: [{
+				ptype: "fieldinfo",
+				text: _("Backup job to purge.")
+			}]
+		},{
+			xtype: "combo",
+			name: "verify_job_uuid",
+			fieldLabel: _("Backup"),
+			queryMode: "local",
+			emptyText: _("Select backup ..."),
+			store: Ext.create("Ext.data.ArrayStore", {
+				autoLoad: true,
+				model: OMV.data.Model.createImplicit({
+					idProperty: "postjob",
+					fields: [
+						{ name: "job_name", type: "string" },
+						{ name: "job_uuid", type: "string" }
+					]
+				}),
+				proxy: {
+					type: "rpc",
+					appendSortParams: false,
+					rpcData: {
+						service: "sbackup",
+						method: "getJobList",
+						params: {
+							uuid: me.uuid,
+							jobtype: "backup",
+							jobtype_exclude: "",
+							jobtype_empty: ""
+						}
+					}
+				},
+				sorters: [{
+					direction: "ASC",
+					property: "job_name"
+				}]
+			}),
+			displayField: "job_name",
+			valueField: "job_uuid",
+			editable: false,
+			allowBlank: true,//switched
+			triggerAction: "all",
+			value: "",
+			plugins: [{
+				ptype: "fieldinfo",
+				text: _("Backup job to verify.")
+			}]
+		},{
 			xtype: "combo",
 			name: "schedule_wday",
 			fieldLabel: _("Day"),
@@ -256,7 +387,10 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 						service: "sbackup",
 						method: "getJobList",
 						params: {
-							uuid: me.uuid
+							uuid: me.uuid,
+							jobtype: "all",
+							jobtype_exclude: "me",
+							jobtype_empty: "No job selected"
 						}
 					}
 				},
@@ -617,6 +751,10 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
       			tbarRestoreCtrl.disable();
       			tbarPurgeCtrl.disable();
       		}
+      		if(records[ai].data.job_type != "Backup" ){
+      			tbarRestoreCtrl.disable();
+      			tbarPurgeCtrl.disable();
+      		}
       	}
       }
     }, this);
@@ -676,6 +814,10 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 		else tbarPurgeCtrl.disable();
 		if(records.length > 0 && (records[0].data.job_status == "Running" || records[0].data.job_status == "Restoring" || records[0].data.job_status == "Purging" || records[0].data.job_status == "Migrating" || records[0].data.job_status == "Copying")){
 			tbarRunCtrl.disable();
+			tbarRestoreCtrl.disable();
+			tbarPurgeCtrl.disable();
+		}
+		if(records[0].data.job_type != "Backup" ){
 			tbarRestoreCtrl.disable();
 			tbarPurgeCtrl.disable();
 		}
@@ -756,7 +898,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
   	var record = me.getSelected();
   	OMV.MessageBox.show({
   		title: _("Confirmation"),
-  		msg: _("Do you really want to start backup?"),
+  		msg: _("Do you really want to start this job?"),
   		buttons: Ext.Msg.YESNO,
   		fn: function(answer) {
   			if(answer === "no")

@@ -199,7 +199,7 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
   			${OMV_CONFIG_FILE} | xmlstarlet unesc > "${OMV_SBACKUP_SCRIPTS_DIR}/purge_${uuid}"
   		chmod ${OMV_SBACKUP_SCRIPTS_MASK} "${OMV_SBACKUP_SCRIPTS_DIR}/purge_${uuid}"      
     fi
-    
+
     ##Generate cron
 		xmlstarlet sel -t -m "//services/sbackup/backuplist/backup[uuid='${uuid}']" \
 			-i "enable = 0" -o "#" -b \
@@ -209,8 +209,8 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
       -o " root" \
       -i "job_type = \"backup\"" -o " ${OMV_SBACKUP_SCRIPTS_DIR}/backup_${uuid}" -b \
       -i "job_type = \"copy\""   -o " ${OMV_SBACKUP_SCRIPTS_DIR}/backup_${uuid}" -b \
-      -i "job_type = \"purge\""  -o " ${OMV_SBACKUP_SCRIPTS_DIR}/purge_${uuid}" -b \
-      -i "job_type = \"verify\"" -o " ${OMV_SBACKUP_SCRIPTS_DIR}/verify_${uuid}" -b \
+      -i "job_type = \"purge\""  -o " ${OMV_SBACKUP_SCRIPTS_DIR}/purge_" -v "purge_job_uuid" -b \
+      -i "job_type = \"verify\"" -o " ${OMV_SBACKUP_SCRIPTS_DIR}/verify_" -v "verify_job_uuid" -b \
       ${OMV_CONFIG_FILE} | xmlstarlet unesc >> "${OMV_SBACKUP_CRONFILE}"
 
 done

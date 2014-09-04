@@ -137,47 +137,57 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		foreach($objects as $objectk => &$objectv) {
 
 			// Get the shared folder configuration object.
-			$objectv['source_name'] = gettext("n/a");
+			$objectv['source_name'] = gettext("N/A");
 			$sfobject = $xmlConfig->get("//system/shares/sharedfolder[uuid='{$objectv['source_sharedfolder_uuid']}']");
 			if(!is_null($sfobject) && !empty($sfobject)) {
-				$objectv['source_name'] = $sfobject['name'];
+				$objectv['source_name'] = "S: ".$sfobject['name'];
 			}
 
 			// Get the shared folder configuration object.
-			$objectv['target_name'] = gettext("n/a");
+			$objectv['target_name'] = gettext("N/A");
 			$sfobject = $xmlConfig->get("//system/shares/sharedfolder[uuid='{$objectv['target_sharedfolder_uuid']}']");
 			if(!is_null($sfobject) && !empty($sfobject)) {
-				$objectv['target_name'] = $sfobject['name'];
+				$objectv['target_name'] = "S: ".$sfobject['name'];
 			}
 			
-			// Get last job type
-			if($objectv['job_type'] == "backup")$objectv['job_type']   = "Backup";
-			if($objectv['job_type'] == "restore") $objectv['job_type'] = "Restore";
-			if($objectv['job_type'] == "copy")  $objectv['job_type']   = "Copy";
-			if($objectv['job_type'] == "purge") $objectv['job_type']   = "Purge";
-			if($objectv['job_type'] == "verify")$objectv['job_type']   = "Verify";
-
+			// Changes for purge/verify jobs
+			$use_uuid = $objectv['uuid'];
+			if($objectv['job_type'] == "purge"){
+				$use_uuid = $objectv['purge_job_uuid'];
+				$xpath_post = sprintf("//services/sbackup/backuplist/backup[uuid='%s']",$use_uuid);
+  			$object_post = $xmlConfig->get($xpath_post);
+  			if(is_null($object_post)) {throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,$xpath_post);}
+				$objectv['source_name'] = "B: ".$object_post['name'];
+			}
+			if($objectv['job_type'] == "verify"){
+				$use_uuid = $objectv['verify_job_uuid'];
+				$xpath_post = sprintf("//services/sbackup/backuplist/backup[uuid='%s']",$use_uuid);
+  			$object_post = $xmlConfig->get($xpath_post);
+  			if(is_null($object_post)) {throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,$xpath_post);}
+				$objectv['source_name'] = "B: ".$object_post['name'];
+			}
+			
 			// Get last job status
 			$objectv['job_status'] = "N/A";
 			$objectv['lastcompleted'] = "N/A";
-			if(file_exists(sprintf("/var/run/sbackup_%s", $objectv['uuid']))){
-				$txt_file           = file_get_contents(sprintf("/var/run/sbackup_%s", $objectv['uuid']));
+			if(file_exists(sprintf("/var/run/sbackup_%s", $use_uuid))){
+				$txt_file           = file_get_contents(sprintf("/var/run/sbackup_%s", $use_uuid));
 				$rows               = explode("|", $txt_file);
-				if($rows[0] == "backup")$objectv['job_status'] = "Running";
-				if($rows[0] == "restore")$objectv['job_status'] = "Restoring";
-				if($rows[0] == "purge")$objectv['job_status'] = "Purging";
+				if($rows[0] == "backup")$objectv['job_status']    = "Running";
+				if($rows[0] == "restore")$objectv['job_status']   = "Restoring";
+				if($rows[0] == "purge")$objectv['job_status']     = "Purging";
 				if($rows[0] == "migration")$objectv['job_status'] = "Migrating";
-				if($rows[0] == "copy")$objectv['job_status'] = "Copying";
+				if($rows[0] == "copy")$objectv['job_status']      = "Copying";
 			}
 			$objectv['versions'] = 0;
 			$objectv['size']     = 0;
-			if(file_exists(sprintf("/var/log/sbackup/history_%s", $objectv['uuid']))){
-				$txt_file = file_get_contents(sprintf("/var/log/sbackup/history_%s", $objectv['uuid']));
+			if(file_exists(sprintf("/var/log/sbackup/history_%s", $use_uuid))){
+				$txt_file = file_get_contents(sprintf("/var/log/sbackup/history_%s", $use_uuid));
 				$lines    = explode("\n", $txt_file);
 				foreach($lines as $line){
 					if(!$line)continue;
 					$rows_latest        = explode("|", $line);
-					if($rows_latest[7] != "backup")continue;
+					if($rows_latest[7] != $objectv['job_type'])continue;
 					if($rows_latest[0] == "0"){
 						$objectv['versions']++;
 						$objectv['size']+=$rows_latest[5];
@@ -195,6 +205,12 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 			}
 
 			// Modify result object.
+			if($objectv['job_type'] == "backup")  $objectv['job_type'] = "Backup";
+			if($objectv['job_type'] == "restore") $objectv['job_type'] = "Restore";
+			if($objectv['job_type'] == "copy")    $objectv['job_type'] = "Copy";
+			if($objectv['job_type'] == "purge")   $objectv['job_type'] = "Purge";
+			if($objectv['job_type'] == "verify")  $objectv['job_type'] = "Verify";
+			
 			$objectv['enable'] = boolval($objectv['enable']);
 			$wdays = array('Sun','Mon','Tue','Wed','Thu','Fri','Sat','Daily');
 			$objectv['schedule'] = $wdays[$objectv['schedule_wday']]." ".$objectv['schedule_hour'].":".$objectv['schedule_minute'];
@@ -206,6 +222,11 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 			}
 			if($objectv['protect_days_job'] > 1){
 				$objectv['protect_days_job'] = $objectv['protect_days_job']." days";
+			}
+			if($objectv['job_type'] == "Purge" || $objectv['job_type'] == "Verify"){
+				$objectv['protect_days_job'] = "N/A";
+				$objectv['versions']         = "N/A";
+				$objectv['size']             = "N/A";
 			}
 		}
 
@@ -269,7 +290,9 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		"sessionlog_save":{"type":"boolean"},
 		"post_purge":{"type":"boolean"},
 		"protect_days_job":{"type":"integer","minimum":0,"maximum":365},
-		"post_job":{"type":"string"}
+		"post_job":{"type":"string"},
+		"purge_job_uuid":{"type":"string"},
+		"verify_job_uuid":{"type":"string"}
 		}
 		}');
 		// Prepare the configuration object.
@@ -288,9 +311,11 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		"sessionlog_save" => $params['sessionlog_save'],
 		"post_purge" => $params['post_purge'],
 		"protect_days_job" => $params['protect_days_job'],
-		"post_job" => $params['post_job']
+		"post_job" => $params['post_job'],
+		"purge_job_uuid" => $params['purge_job_uuid'],
+		"verify_job_uuid" => $params['verify_job_uuid']
 		);
-		if($params['source_sharedfolder_uuid'] == $params['target_sharedfolder_uuid']){
+		if($params['source_sharedfolder_uuid'] && $params['source_sharedfolder_uuid'] == $params['target_sharedfolder_uuid']){
 			throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Source and destination targets cannot be the same.");
 		}
 		
@@ -389,8 +414,23 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		// updated until now.
 		if($this->isModuleDirty("sbackup"))
 		throw new OMVException(OMVErrorMsg::E_CONFIG_DIRTY);
+		
+		$xpath = sprintf("//services/sbackup/backuplist/backup[uuid='%s']",$params['uuid']);
+  	$object = $xmlConfig->get($xpath);
+  	
+  	
+  	$job_uuid = $params['uuid'];
+		if($object['job_type'] == "backup") $job_type = "backup";
+		if($object['job_type'] == "restore")$job_type = "restore";
+		if($object['job_type'] == "purge")  $job_type = "purge";
+		if($object['job_type'] == "copy")   $job_type = "backup";
+		if($object['job_type'] == "verify") $job_type = "verify";
+		
+  	if($object['job_type'] == "purge")  $job_uuid = $object['purge_job_uuid'];
+  	if($object['job_type'] == "verify") $job_uuid = $object['verify_job_uuid'];
+  	
 		// Execute process.
-		$cmd = "/usr/bin/at -f /var/lib/openmediavault/sbackup.d/backup_".$params['uuid']." now";
+		$cmd = "/usr/bin/at -f /var/lib/openmediavault/sbackup.d/".$job_type."_".$job_uuid." now";
 		if(0 !== $this->exec($cmd, $output)) {
 			throw new OMVException(OMVErrorMsg::E_EXEC_FAILED,
 			$cmd, implode("\n", $output));
@@ -708,7 +748,10 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		$this->validateMethodParams($params, '{
 		"type":"object",
 		"properties":{
-		"uuid":{"type":"string"}
+		"uuid":{"type":"string"},
+		"jobtype":{"type":"string"},
+		"jobtype_exclude":{"type":"string"},
+		"jobtype_empty":{"type":"string"}
 		}
 		}');
   	
@@ -723,13 +766,20 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 			$xpath);
 		}
 		// Add additional share informations.
-		$result[] = array(
-			"job_uuid" => "",
-			"job_name" => "No job selected"
-		);
+		if($params['jobtype_empty']){
+  		$result[] = array(
+  			"job_uuid" => "",
+  			"job_name" => $params['jobtype_empty']
+  		);
+		}
 		foreach($objects as $objectk => &$objectv) {
 			$job_type = "N/A";
-			if($objectv['uuid'] == $params['uuid'])continue;
+			if($params['jobtype'] == "backup"  && $objectv['job_type'] != "backup")continue;
+			if($params['jobtype'] == "restore" && $objectv['job_type'] != "restore")continue;
+			if($params['jobtype'] == "purge"   && $objectv['job_type'] != "purge")continue;
+			if($params['jobtype'] == "copy"    && $objectv['job_type'] != "copy")continue;
+			if($params['jobtype'] == "verify"  && $objectv['job_type'] != "verify")continue;
+			if($params['jobtype_exclude'] == "me" && $objectv['uuid'] == $params['uuid'])continue;
 			if($objectv['job_type'] == "backup") $job_type = "Backup";
 			if($objectv['job_type'] == "restore")$job_type = "Restore";
 			if($objectv['job_type'] == "purge")  $job_type = "Purge";
