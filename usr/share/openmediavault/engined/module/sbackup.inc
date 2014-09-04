@@ -34,9 +34,9 @@ implements OMVINotifyListener {
 	*/
 	final public function onSharedFolder($type, $path, $object) {
 		global $xmlConfig;
-		$xpath = sprintf("//services/sbackup/backuplist/backup[sharedfoldersource='%s']", $object['uuid']);
+		$xpath = sprintf("//services/sbackup/backuplist/backup[source_sharedfolder_uuid='%s']", $object['uuid']);
 		if(TRUE === $xmlConfig->exists($xpath))$this->setDirty();
-		$xpath = sprintf("//services/sbackup/backuplist/backup[sharedfoldertarget='%s']", $object['uuid']);
+		$xpath = sprintf("//services/sbackup/backuplist/backup[target_sharedfolder_uuid='%s']", $object['uuid']);
 		if(TRUE === $xmlConfig->exists($xpath))$this->setDirty();
 	}
 

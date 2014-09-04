@@ -35,7 +35,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			allowBlank: false
 		},{
 			xtype: "sharedfoldercombo",
-			name: "sharedfoldersource",
+			name: "source_sharedfolder_uuid",
 			fieldLabel: _("Source"),
 			plugins: [{
 				ptype: "fieldinfo",
@@ -43,7 +43,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			}]
 		},{
 			xtype: "sharedfoldercombo",
-			name: "sharedfoldertarget",
+			name: "target_sharedfolder_uuid",
 			fieldLabel: _("Destination"),
 			plugins: [{
 				ptype: "fieldinfo",
@@ -51,7 +51,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			}]
 		},{
   			xtype: "numberfield",
-  			name: "retention",
+  			name: "protect_days_job",
   			fieldLabel: "Backup retention",
   			minValue: 0,
   			maxValue: 365,
@@ -64,7 +64,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 				}]
   	},{
 			xtype: "combo",
-			name: "wday",
+			name: "schedule_wday",
 			fieldLabel: _("Day"),
 			queryMode: "local",
 			store: Ext.create("Ext.data.ArrayStore", {
@@ -88,7 +88,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			value: "7"
 		},{
 			xtype: "combo",
-			name: "hour",
+			name: "schedule_hour",
 			fieldLabel: _("Hour"),
 			queryMode: "local",
 			store: Ext.create("Ext.data.ArrayStore", {
@@ -128,7 +128,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			value: "00"
 		},{
 			xtype: "combo",
-			name: "minute",
+			name: "schedule_minute",
 			fieldLabel: _("Minute"),
 			queryMode: "local",
 			store: Ext.create("Ext.data.ArrayStore", {
@@ -148,7 +148,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			value: "00"
 		},{
 			xtype: "checkbox",
-			name: "savelog",
+			name: "sessionlog_save",
 			fieldLabel: _("Save backup log"),
 			checked: true
 		}];
@@ -242,7 +242,7 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
 			width: 700,
 			height: 400,
 			collapsible: false,
-			uuid: me.sharedfoldertarget,
+			uuid: me.target_sharedfolder_uuid,
 			backupuuid: me.uuid,
 			version: "",
 			rootVisible: true      
@@ -263,7 +263,7 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
     		boxLabel: _("Delete all data from source")
     	},{
     		xtype: "checkbox",
-    		name: "savelog",
+    		name: "sessionlog_save",
     		fieldLabel: _("Log"),
     		checked: true,
     		boxLabel: _("Save restore log")
@@ -323,7 +323,7 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
         				uuid: me.uuid,
         				dir: dir,
         				deleteold: options.deleteold,
-        				savelog: options.savelog,
+        				sessionlog_save: options.sessionlog_save,
         				version: version.version
         			}
         		}
@@ -384,8 +384,8 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 	},{
 		text: _("Status"),
 		sortable: true,
-		dataIndex: "running",
-		stateId: "running"
+		dataIndex: "job_status",
+		stateId: "job_status"
 	},{
 		text: _("Last completed"),
 		sortable: true,
@@ -395,19 +395,19 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 	},{
 		text: _("Backup source"),
 		sortable: true,
-		dataIndex: "sourcefoldername",
-		stateId: "sourcefoldername"
+		dataIndex: "source_name",
+		stateId: "source_name"
 	},{
 		text: _("Backup target"),
 		sortable: true,
-		dataIndex: "targetfoldername",
-		stateId: "targetfoldername"
+		dataIndex: "target_name",
+		stateId: "target_name"
 	},{
 		text: _("Retention"),
 		sortable: true,
 		width: 80,
-		dataIndex: "retention",
-		stateId: "retention"
+		dataIndex: "protect_days_job",
+		stateId: "protect_days_job"
 	},{
 		text: _("Versions"),
 		sortable: true,
@@ -431,15 +431,15 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 					idProperty: "uuid",
 					fields: [
 					{ name: "uuid", type: "string" },
-					{ name: "sharedfoldertarget", type: "string" },
+					{ name: "target_sharedfolder_uuid", type: "string" },
 					{ name: "enable", type: "boolean" },
 					{ name: "name", type: "string" },
-					{ name: "running", type: "string" },
+					{ name: "job_status", type: "string" },
 					{ name: "lastcompleted", type: "string" },
-					{ name: "targetfoldername", type: "string" },
-					{ name: "sourcefoldername", type: "string" },
+					{ name: "target_name", type: "string" },
+					{ name: "source_name", type: "string" },
 					{ name: "schedule", type: "string" },
-					{ name: "retention", type: "string" },
+					{ name: "protect_days_job", type: "string" },
 					{ name: "versions", type: "string" },
 					{ name: "size", type: "string" }
 					]
@@ -482,7 +482,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
       		if(records.length > 0 && records[ai].data.versions > 0)
       			tbarPurgeCtrl.enable();
       		else tbarPurgeCtrl.disable();
-      		if(records.length > 0 && (records[ai].data.running == "Running" || records[ai].data.running == "Restoring" || records[ai].data.running == "Purging" || records[ai].data.running == "Migrating")){
+      		if(records.length > 0 && (records[ai].data.job_status == "Running" || records[ai].data.job_status == "Restoring" || records[ai].data.job_status == "Purging" || records[ai].data.job_status == "Migrating" || records[ai].data.job_status == "Copying")){
       			tbarRunCtrl.disable();
       			tbarRestoreCtrl.disable();
       			tbarPurgeCtrl.disable();
@@ -544,7 +544,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 		if(records.length > 0 && records[0].data.versions > 0)
 			tbarPurgeCtrl.enable();
 		else tbarPurgeCtrl.disable();
-		if(records.length > 0 && (records[0].data.running == "Running" || records[0].data.running == "Restoring" || records[0].data.running == "Purging" || records[0].data.running == "Migrating")){
+		if(records.length > 0 && (records[0].data.job_status == "Running" || records[0].data.job_status == "Restoring" || records[0].data.job_status == "Purging" || records[0].data.job_status == "Migrating" || records[0].data.job_status == "Copying")){
 			tbarRunCtrl.disable();
 			tbarRestoreCtrl.disable();
 			tbarPurgeCtrl.disable();
@@ -602,8 +602,8 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 		Ext.create("OMV.module.admin.service.sbackup.restore", {
 			title: _("Restore from backup"),
 			uuid: record.get("uuid"),
-			sharedfoldertarget: record.get("sharedfoldertarget"),
-			sourcefoldername: record.get("sourcefoldername"),
+			target_sharedfolder_uuid: record.get("target_sharedfolder_uuid"),
+			source_name: record.get("source_name"),
 			listeners: {
 				scope: me,
 				close: function() {

@@ -72,12 +72,12 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
   				$t_objects[$i]['uuid'] = $objectv['uuid'];
   				$t_objects[$i]['name'] = $objectv['name'];
   				if($rows[0] == "0"){
-  					$t_objects[$i]['running'] = "Completed";
+  					$t_objects[$i]['job_status'] = "Completed";
   				}else{
-  					$t_objects[$i]['running'] = "Error:".$rows[0];
+  					$t_objects[$i]['job_status'] = "Error:".$rows[0];
   				}
   				if($rows[0] == "running"){
-  					$t_objects[$i]['running'] = "Running";
+  					$t_objects[$i]['job_status'] = "Running";
   				}
   				if($rows[3]){$t_objects[$i]['starttime'] = date('r', $rows[3]);}else{$t_objects[$i]['starttime'] = "N/A";}
   				if($rows[4]){$t_objects[$i]['endtime'] = date('r', $rows[4]);}else{$t_objects[$i]['endtime'] = "N/A";}
@@ -135,30 +135,30 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		foreach($objects as $objectk => &$objectv) {
 
 			// Get the shared folder configuration object.
-			$objectv['sourcefoldername'] = gettext("n/a");
-			$sfobject = $xmlConfig->get("//system/shares/sharedfolder[uuid='{$objectv['sharedfoldersource']}']");
+			$objectv['source_name'] = gettext("n/a");
+			$sfobject = $xmlConfig->get("//system/shares/sharedfolder[uuid='{$objectv['source_sharedfolder_uuid']}']");
 			if(!is_null($sfobject) && !empty($sfobject)) {
-				$objectv['sourcefoldername'] = $sfobject['name'];
+				$objectv['source_name'] = $sfobject['name'];
 			}
 
 			// Get the shared folder configuration object.
-			$objectv['targetfoldername'] = gettext("n/a");
-			$sfobject = $xmlConfig->get("//system/shares/sharedfolder[uuid='{$objectv['sharedfoldertarget']}']");
+			$objectv['target_name'] = gettext("n/a");
+			$sfobject = $xmlConfig->get("//system/shares/sharedfolder[uuid='{$objectv['target_sharedfolder_uuid']}']");
 			if(!is_null($sfobject) && !empty($sfobject)) {
-				$objectv['targetfoldername'] = $sfobject['name'];
+				$objectv['target_name'] = $sfobject['name'];
 			}
 
 			// Get last job status
-			$objectv['running'] = "N/A";
+			$objectv['job_status'] = "N/A";
 			$objectv['lastcompleted'] = "N/A";
 			if(file_exists(sprintf("/var/run/sbackup_%s", $objectv['uuid']))){
 				$txt_file           = file_get_contents(sprintf("/var/run/sbackup_%s", $objectv['uuid']));
 				$rows               = explode("|", $txt_file);
-				if($rows[0] == "backup")$objectv['running'] = "Running";
-				if($rows[0] == "restore")$objectv['running'] = "Restoring";
-				if($rows[0] == "purge")$objectv['running'] = "Purging";
-				if($rows[0] == "migration")$objectv['running'] = "Migrating";
-				if($rows[0] == "copy")$objectv['running'] = "Copying";
+				if($rows[0] == "backup")$objectv['job_status'] = "Running";
+				if($rows[0] == "restore")$objectv['job_status'] = "Restoring";
+				if($rows[0] == "purge")$objectv['job_status'] = "Purging";
+				if($rows[0] == "migration")$objectv['job_status'] = "Migrating";
+				if($rows[0] == "copy")$objectv['job_status'] = "Copying";
 			}
 			$objectv['versions'] = 0;
 			$objectv['size']     = 0;
@@ -175,11 +175,11 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 						$rows_completed = explode("|", $line);
 					}
 				}
-    			if($objectv['running'] == "N/A" ){
+    			if($objectv['job_status'] == "N/A" ){
     				if($rows_latest[0] == "0"){
-    					$objectv['running'] = "Completed";
+    					$objectv['job_status'] = "Completed";
     				}else{
-    					if($rows_latest[0] != "")$objectv['running'] = "Error:".$rows_latest[0];
+    					if($rows_latest[0] != "")$objectv['job_status'] = "Error:".$rows_latest[0];
     				}
   				}
   				if($rows_completed[3])$objectv['lastcompleted'] = date('r', $rows_completed[3]);
@@ -188,15 +188,15 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 			// Modify result object.
 			$objectv['enable'] = boolval($objectv['enable']);
 			$wdays = array('Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Daily');
-			$objectv['schedule'] = $wdays[$objectv['wday']]." ".$objectv['hour'].":".$objectv['minute'];
-			if($objectv['retention'] == 0){
-				$objectv['retention'] = "Single version";
+			$objectv['schedule'] = $wdays[$objectv['schedule_wday']]." ".$objectv['schedule_hour'].":".$objectv['schedule_minute'];
+			if($objectv['protect_days_job'] == 0){
+				$objectv['protect_days_job'] = "Single version";
 			}
-			if($objectv['retention'] == 1){
-				$objectv['retention'] = $objectv['retention']." day";
+			if($objectv['protect_days_job'] == 1){
+				$objectv['protect_days_job'] = $objectv['protect_days_job']." day";
 			}
-			if($objectv['retention'] > 1){
-				$objectv['retention'] = $objectv['retention']." days";
+			if($objectv['protect_days_job'] > 1){
+				$objectv['protect_days_job'] = $objectv['protect_days_job']." days";
 			}
 		}
 
@@ -250,13 +250,13 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		"uuid":{'.$GLOBALS['OMV_JSONSCHEMA_UUID_UNDEFINED'].'},
 		"enable":{"type":"boolean"},
 		"name":{"type":"string"},
-		"sharedfoldersource":{'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
-		"sharedfoldertarget":{'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
-		"wday":{"type":"string"},
-		"hour":{"type":"string"},
-		"minute":{"type":"string"},
-		"savelog":{"type":"boolean"},
-		"retention":{"type":"integer","minimum":0,"maximum":365}
+		"source_sharedfolder_uuid":{'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
+		"target_sharedfolder_uuid":{'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
+		"schedule_wday":{"type":"string"},
+		"schedule_hour":{"type":"string"},
+		"schedule_minute":{"type":"string"},
+		"sessionlog_save":{"type":"boolean"},
+		"protect_days_job":{"type":"integer","minimum":0,"maximum":365}
 		}
 		}');
 		// Prepare the configuration object.
@@ -265,15 +265,15 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		OMVUtil::uuid() : $params['uuid'],
 		"enable" => array_boolval($params, 'enable'),
 		"name" => $params['name'],
-		"sharedfoldersource" => $params['sharedfoldersource'],
-		"sharedfoldertarget" => $params['sharedfoldertarget'],
-		"wday" => $params['wday'],
-		"hour" => $params['hour'],
-		"minute" => $params['minute'],
-		"savelog" => $params['savelog'],
-		"retention" => $params['retention']
+		"source_sharedfolder_uuid" => $params['source_sharedfolder_uuid'],
+		"target_sharedfolder_uuid" => $params['target_sharedfolder_uuid'],
+		"schedule_wday" => $params['schedule_wday'],
+		"schedule_hour" => $params['schedule_hour'],
+		"schedule_minute" => $params['schedule_minute'],
+		"sessionlog_save" => $params['sessionlog_save'],
+		"protect_days_job" => $params['protect_days_job']
 		);
-		if($params['sharedfoldersource'] == $params['sharedfoldertarget']){
+		if($params['source_sharedfolder_uuid'] == $params['target_sharedfolder_uuid']){
 			throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Source and destination targets cannot be the same.");
 		}
 		$xpath = "//services/sbackup/backuplist/backup";
@@ -286,7 +286,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		foreach($objects as $objectk => &$objectv) {
 
 			// Get the shared folder configuration object.
-			if(($objectv['sharedfoldertarget'] && $params['sharedfoldersource']) && ($objectv['sharedfoldertarget'] == $params['sharedfoldersource'])){
+			if(($objectv['target_sharedfolder_uuid'] && $params['source_sharedfolder_uuid']) && ($objectv['target_sharedfolder_uuid'] == $params['source_sharedfolder_uuid'])){
 				throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Backup source is set as destinations for another backup. Cannot be used.");
 			}
 		}
@@ -381,7 +381,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		"uuid":{'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
 		"version":{"type":"string"},
 		"dir":{"type":"string"},
-		"savelog":{"type":"boolean"},
+		"sessionlog_save":{"type":"boolean"},
 		"deleteold":{"type":"boolean"}
 		}
 		}');
@@ -399,13 +399,13 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 			throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,$xpath);
 		}
 
-		$xpath_tmp = sprintf("//system/shares/sharedfolder[uuid='%s']",$object['sharedfoldersource']);$object_tmp = $xmlConfig->get($xpath_tmp);if(is_null($object_tmp)){throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,$xpath_tmp);}
+		$xpath_tmp = sprintf("//system/shares/sharedfolder[uuid='%s']",$object['source_sharedfolder_uuid']);$object_tmp = $xmlConfig->get($xpath_tmp);if(is_null($object_tmp)){throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,$xpath_tmp);}
 		$GET_SOURCE_PATH = $object_tmp['reldirpath'];
 		$xpath_tmp = sprintf("//system/fstab/mntent[uuid='%s']",$object_tmp['mntentref']);$object_tmp = $xmlConfig->get($xpath_tmp);if(is_null($object_tmp)){throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,$xpath_tmp);}
 		$GET_SOURCE_MNT = $object_tmp['dir'];
 		$GET_SOURCE_PATH = $GET_SOURCE_MNT."/".$GET_SOURCE_PATH."/";
 		
-		$xpath_tmp = sprintf("//system/shares/sharedfolder[uuid='%s']",$object['sharedfoldertarget']);$object_tmp = $xmlConfig->get($xpath_tmp);if(is_null($object_tmp)){throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,$xpath_tmp);}
+		$xpath_tmp = sprintf("//system/shares/sharedfolder[uuid='%s']",$object['target_sharedfolder_uuid']);$object_tmp = $xmlConfig->get($xpath_tmp);if(is_null($object_tmp)){throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,$xpath_tmp);}
 		$GET_TARGET_PATH = $object_tmp['reldirpath'];
 		$xpath_tmp = sprintf("//system/fstab/mntent[uuid='%s']",$object_tmp['mntentref']);$object_tmp = $xmlConfig->get($xpath_tmp);if(is_null($object_tmp)){throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,$xpath_tmp);}
 		$GET_TARGET_MNT = $object_tmp['dir'];
@@ -448,7 +448,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
     fwrite($scriptfile, "  fi\n");
 		fwrite($scriptfile, "  cat \"".$OMV_SBACKUP_LOGFILE."\"|sed \"s/^running|\(.*\)|\(.*\)|\${SB_TIMESTART}||||restore|/\${SB_ECODE}|\\1|\\2|\${SB_TIMESTART}|\${SB_TIMEEND}|\${RSSIZE}|\${RSPERF}|restore|/g\" > \"".$OMV_SBACKUP_LOGFILE.".new\"\n");
     fwrite($scriptfile, "  mv \"".$OMV_SBACKUP_LOGFILE.".new\" \"".$OMV_SBACKUP_LOGFILE."\"\n");
-		if($params['savelog'])fwrite($scriptfile, "  echo \"Backup name: ".$object['name']."\nUUID: ".$params['uuid']."\n\n\$RSOUT\n\nStart time: \$(date -d @\${SB_TIMESTART})\nEnd time: \$(date -d @\${SB_TIMEEND})\nStatus: \${SB_ECODE}\" > \"".$OMV_SBACKUP_SESLOGDIR."/".$params['uuid']."_\${SB_TIMESTART}.log\"\n");
+		if($params['sessionlog_save'])fwrite($scriptfile, "  echo \"Backup name: ".$object['name']."\nUUID: ".$params['uuid']."\n\n\$RSOUT\n\nStart time: \$(date -d @\${SB_TIMESTART})\nEnd time: \$(date -d @\${SB_TIMEEND})\nStatus: \${SB_ECODE}\" > \"".$OMV_SBACKUP_SESLOGDIR."/".$params['uuid']."_\${SB_TIMESTART}.log\"\n");
     fwrite($scriptfile, "  rm -f \"".$runfile."\"\n");
     fwrite($scriptfile, "  exit 0\n");
     fwrite($scriptfile, "}\n");
@@ -577,8 +577,8 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
        throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,$xpath);
     }
     
-    $object['backuplogretention'] = intval($object['backuplogretention']);
-    $object['sessionlogretention'] = intval($object['sessionlogretention']);
+    $object['protect_days_history'] = intval($object['protect_days_history']);
+    $object['protect_days_sessionlog'] = intval($object['protect_days_sessionlog']);
 
     return $object;
   }
@@ -592,13 +592,13 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
     $this->validateMethodParams($params, '{
       "type":"object",
       "properties":{
-        "backuplogretention":{"type":"integer","minimum":0,"maximum":365},
-        "sessionlogretention":{"type":"integer","minimum":0,"maximum":365}
+        "protect_days_history":{"type":"integer","minimum":0,"maximum":365},
+        "protect_days_sessionlog":{"type":"integer","minimum":0,"maximum":365}
         }
       }'
     );
     
-    if($params['backuplogretention'] < $params['sessionlogretention']){
+    if($params['protect_days_history'] < $params['protect_days_sessionlog']){
     	throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Log retention cannot be longer then history retention.");
     }
     
@@ -611,8 +611,8 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
  
     // Update the configuration object.
     $object = array(
-      "backuplogretention" => $params['backuplogretention'],
-      "sessionlogretention" => $params['sessionlogretention']
+      "protect_days_history" => $params['protect_days_history'],
+      "protect_days_sessionlog" => $params['protect_days_sessionlog']
     );
 
     // Update the xmlConfig file. If it fails then generate an error

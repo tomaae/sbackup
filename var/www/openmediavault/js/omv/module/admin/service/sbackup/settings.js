@@ -15,7 +15,7 @@ Ext.define("OMV.module.admin.service.sbackup.settings", {
   		},
   		items: [{
   			xtype: "numberfield",
-  			name: "backuplogretention",
+  			name: "protect_days_history",
   			fieldLabel: "History retention",
   			minValue: 0,
   			maxValue: 365,
@@ -27,7 +27,7 @@ Ext.define("OMV.module.admin.service.sbackup.settings", {
 				}]
   		},{
   			xtype: "numberfield",
-  			name: "sessionlogretention",
+  			name: "protect_days_sessionlog",
   			fieldLabel: "Log retention",
   			minValue: 0,
   			maxValue: 365,
