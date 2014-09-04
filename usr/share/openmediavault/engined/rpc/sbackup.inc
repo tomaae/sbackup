@@ -30,6 +30,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		$this->registerMethod("getSettings");
 		$this->registerMethod("setSettings");
 		$this->registerMethod("getVersions");
+		$this->registerMethod("getJobList");
 	}
 
 	/**
@@ -95,6 +96,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
   				if($rows[7] == "purge")$t_objects[$i]['job_type'] = "Purge";
 					if($rows[7] == "migration")$t_objects[$i]['job_type'] = "Migration";
 					if($rows[7] == "copy")$t_objects[$i]['job_type'] = "Copy";
+  				if($rows[7] == "verify")$t_objects[$i]['job_type'] = "Verify";
   				
   				$i++;
   			}
@@ -149,10 +151,11 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 			}
 			
 			// Get last job type
-			if($objectv['job_type'] == "backup")$objectv['job_type'] = "Backup";
-			if($objectv['job_type'] == "copy")  $objectv['job_type'] = "Copy";
-			if($objectv['job_type'] == "purge") $objectv['job_type'] = "Purge";
-			if($objectv['job_type'] == "verify")$objectv['job_type'] = "Verify";
+			if($objectv['job_type'] == "backup")$objectv['job_type']   = "Backup";
+			if($objectv['job_type'] == "restore") $objectv['job_type'] = "Restore";
+			if($objectv['job_type'] == "copy")  $objectv['job_type']   = "Copy";
+			if($objectv['job_type'] == "purge") $objectv['job_type']   = "Purge";
+			if($objectv['job_type'] == "verify")$objectv['job_type']   = "Verify";
 
 			// Get last job status
 			$objectv['job_status'] = "N/A";
@@ -265,7 +268,8 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		"schedule_minute":{"type":"string"},
 		"sessionlog_save":{"type":"boolean"},
 		"post_purge":{"type":"boolean"},
-		"protect_days_job":{"type":"integer","minimum":0,"maximum":365}
+		"protect_days_job":{"type":"integer","minimum":0,"maximum":365},
+		"post_job":{"type":"string"}
 		}
 		}');
 		// Prepare the configuration object.
@@ -283,7 +287,8 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		"schedule_minute" => $params['schedule_minute'],
 		"sessionlog_save" => $params['sessionlog_save'],
 		"post_purge" => $params['post_purge'],
-		"protect_days_job" => $params['protect_days_job']
+		"protect_days_job" => $params['protect_days_job'],
+		"post_job" => $params['post_job']
 		);
 		if($params['source_sharedfolder_uuid'] == $params['target_sharedfolder_uuid']){
 			throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Source and destination targets cannot be the same.");
@@ -674,6 +679,54 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 				
 			}
 		}
+  	return $result;
+  }
+  /**
+	* getJobList
+	*/
+  public function getJobList($params, $context) {
+  	global $xmlConfig;
+  	// Validate the RPC caller context.
+  	$this->validateMethodContext($context, array(
+  	"role" => OMV_ROLE_ADMINISTRATOR
+  	));
+		$this->validateMethodParams($params, '{
+		"type":"object",
+		"properties":{
+		"uuid":{"type":"string"}
+		}
+		}');
+  	
+  	// Prepare the result list.
+  	$result = array();
+  	
+		// Get the configuration objects.
+		$xpath = "//services/sbackup/backuplist/backup";
+		$objects = $xmlConfig->getList($xpath);
+		if(is_null($objects)) {
+			throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,
+			$xpath);
+		}
+		// Add additional share informations.
+		$result[] = array(
+			"job_uuid" => "",
+			"job_name" => "No job selected"
+		);
+		foreach($objects as $objectk => &$objectv) {
+			$job_type = "N/A";
+			if($objectv['uuid'] == $params['uuid'])continue;
+			if($objectv['job_type'] == "backup") $job_type = "Backup";
+			if($objectv['job_type'] == "restore")$job_type = "Restore";
+			if($objectv['job_type'] == "purge")  $job_type = "Purge";
+			if($objectv['job_type'] == "copy")   $job_type = "Copy";
+			if($objectv['job_type'] == "verify") $job_type = "Verify";
+			
+			$result[] = array(
+				"job_uuid" => $objectv['uuid'],
+				"job_name" => $job_type.": ".$objectv['name']
+			);
+		}
+  	
   	return $result;
   }
 

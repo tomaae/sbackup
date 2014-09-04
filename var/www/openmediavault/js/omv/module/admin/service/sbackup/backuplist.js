@@ -1,3 +1,4 @@
+
 /**
 * Backup modal
 */
@@ -6,7 +7,8 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 	requires: [
 	"OMV.data.Store",
 	"OMV.data.Model",
-	"OMV.data.proxy.Rpc"
+	"OMV.data.proxy.Rpc",
+	"OMV.form.plugin.LinkedFields"
 	],
 	uses: [
 	"OMV.workspace.window.plugin.ConfigObject"
@@ -17,7 +19,22 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 	rpcSetMethod: "set",
 	plugins: [{
 		ptype: "configobject"
-	}],
+	},{
+    ptype: "linkedfields",
+    correlations: [{
+        conditions: [
+          {name: "job_type", value: "backup"}
+        ],
+        name: [
+          "backup_type",
+          "source_sharedfolder_uuid",
+          "target_sharedfolder_uuid",
+          "protect_days_job",
+          "post_purge"
+        ],
+        properties: ["show"]
+    }]
+  }],
 	width: 570,
 	//height: 400,
 
@@ -73,6 +90,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			}),
 			displayField: "text",
 			valueField: "value",
+			hidden: true,
 			allowBlank: false,
 			editable: false,
 			triggerAction: "all",
@@ -85,6 +103,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			xtype: "sharedfoldercombo",
 			name: "source_sharedfolder_uuid",
 			fieldLabel: _("Source"),
+			hidden: true,
 			plugins: [{
 				ptype: "fieldinfo",
 				text: _("Shared folder to backup.")
@@ -93,6 +112,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			xtype: "sharedfoldercombo",
 			name: "target_sharedfolder_uuid",
 			fieldLabel: _("Target"),
+			hidden: true,
 			plugins: [{
 				ptype: "fieldinfo",
 				text: _("Backup destination.")
@@ -106,6 +126,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
   			value: 1,
   			allowDecimals: false,
   			allowBlank: true,
+  			hidden: true,
   			plugins: [{
 					ptype: "fieldinfo",
 					text: _("Specifies how many days backup/copy should be stored.")
@@ -197,7 +218,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 		},{
 			xtype: "checkbox",
 			name: "sessionlog_save",
-			fieldLabel: _("Save session log"),
+			fieldLabel: _("Save log"),
 			checked: true,
 			plugins: [{
 				ptype: "fieldinfo",
@@ -208,9 +229,50 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			name: "post_purge",
 			fieldLabel: _("Purge"),
 			checked: true,
+			hidden: true,
 			plugins: [{
 				ptype: "fieldinfo",
 				text: _("Start purge after successful backup.")
+			}]
+		},{
+			xtype: "combo",
+			name: "post_job",
+			fieldLabel: _("Post job"),
+			queryMode: "local",
+			emptyText: _("No job selected"),
+			store: Ext.create("Ext.data.ArrayStore", {
+				autoLoad: true,
+				model: OMV.data.Model.createImplicit({
+					idProperty: "postjob",
+					fields: [
+						{ name: "job_name", type: "string" },
+						{ name: "job_uuid", type: "string" }
+					]
+				}),
+				proxy: {
+					type: "rpc",
+					appendSortParams: false,
+					rpcData: {
+						service: "sbackup",
+						method: "getJobList",
+						params: {
+							uuid: me.uuid
+						}
+					}
+				},
+				sorters: [{
+					direction: "ASC",
+					property: "job_name"
+				}]
+			}),
+			displayField: "job_name",
+			valueField: "job_uuid",
+			editable: false,
+			triggerAction: "all",
+			value: "",
+			plugins: [{
+				ptype: "fieldinfo",
+				text: _("Start another job after successful completion.")
 			}]
 		}];
 	}
