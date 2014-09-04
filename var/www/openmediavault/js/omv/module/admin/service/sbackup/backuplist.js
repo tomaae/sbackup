@@ -449,6 +449,7 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
     	items: [{
         xtype: "combo",
         name: "version",
+        id: "versioncombo",
         fieldLabel: _("Version"),
         emptyText: _("Select version ..."),
         store: Ext.create("OMV.data.Store", {
@@ -474,13 +475,15 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
           sorters: [{
             direction: "DESC",
             property: "version"
-          }]//,
+          }],
 //          listeners: {
 //            scope: me,
-//            load: function(combo, records, options){
-//                  //grid.getSelectionModel().select(0, true);
-//                  alert("!"+records.length-1)
-//                  ////this.getSelectionModel().select(records.length-1, true)
+//            load: function(combo, records){
+//                  var sel = Ext.getCmp('versioncombo');
+//
+//                  sel.select(combo.data.items[0].data.version)
+//                  var record = sel.getStore().findRecord('version', combo.data.items[0].data.version);
+//                  sel.fireEvent('select', sel, [record]);
 //            }
 //          }
         }),
