@@ -764,7 +764,28 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 		text: _("Status"),
 		sortable: true,
 		dataIndex: "job_status",
-		stateId: "job_status"
+		stateId: "job_status",
+	  renderer: function(value) {
+    	switch(value) {
+    		case "Running":
+    		case "Restoring":
+    		case "Purging":
+    		case "Migrating":
+    		case "Copying":	
+    			value = "<img border='0' src='images/wait.gif' height='12' width='12'> " + value;
+    			break;  
+    		case "Completed":	
+    			value = "<img border='0' src='images/yes.png' height='12' width='12'> " + value;
+    			break;  
+    		case "N/A":	
+    		value = "<img border='0' src='images/info.png' height='12' width='12'> " + value;
+    		  break;	
+    		default:
+    		value = "<img border='0' src='images/no.png' height='12' width='12'> " + value;
+    		  break;
+    	}
+    	return value;
+	  }
 	},{
 		text: _("Last completed"),
 		sortable: true,
