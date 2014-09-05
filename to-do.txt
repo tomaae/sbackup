@@ -1,8 +1,8 @@
 In history log, create column for backup without data_uuid (rework all grep "|backup|$" to "|backup|(d*)|$")
 
 ==HISTORY========================================================
-- option to remove version in backup history (create lockfile, delete data_uuid,release lockfile), run with "at now"
-- start restore from backup history
+[]- option to remove version in backup history (create lockfile, delete data_uuid,release lockfile), run with "at now"
+[]- start restore from backup history
 - icons for status (completed, failed)
 =================================================================
 
@@ -10,31 +10,32 @@ In history log, create column for backup without data_uuid (rework all grep "|ba
 - show progress wheel on running like with Filesystem > Status when formating
 - icons for status (completed, failed)
 
-- ?abort backup
+- ?abort job
+- ?running job status
 =================================================================
 
 ==BACKUP=========================================================
 - restart failed jobs
 - warning on changing backup source (same as for changing filesystem in shared folders)
 - warning on changing backup target (same as for changing filesystem in shared folders)
-- settings, only one backup at once > queuing
-- settings, only one backup to one target datastore at once > queuing
+[]- settings, only one backup at once > queuing
+[]- settings, only one backup to one target datastore at once > queuing
 
 - rework schedule (combo checkbox?), ability to disable schedule
 - disable will disable getting started as post_job, its copy, purge, verify
 
-- use --log-file=FILE for realtime updates, after finished, copy it as metadata to backup destination
+[]- use --log-file=FILE for realtime updates, after finished, copy it as metadata to backup destination
 - backup configuration (backup specifications and backup history) after each backup, import via settings tab (backup history log copy and omv config import in same way as postinst)
   import backup. (save backup configuration within backup_uuid folder), select share point, search subdirectories for configs, show only those which have correct config and are not imported already
-- report checkbox
-- LVM snapshot?
+[]- report checkbox
+[]- LVM snapshot?
 =================================================================
 
 ==RESTORE========================================================
 - restore into different location
 
-- autoselect latest version
-- browse files
+[]- autoselect latest version
+[]- browse files
 =================================================================
 
 ==VERIFY=========================================================

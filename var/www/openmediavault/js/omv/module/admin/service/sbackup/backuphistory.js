@@ -159,7 +159,8 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
 			iconCls: Ext.baseCSSPrefix + "btn-icon-16x16",
 			handler: Ext.Function.bind(me.onRestoreVersionButton, me, [ me ]),
 			scope: me,
-			disabled: true
+			disabled: true,
+			hidden: true
 		},{
 			id: me.getId() + "-purge",
 			xtype: "button",
@@ -168,7 +169,8 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
 			iconCls: Ext.baseCSSPrefix + "btn-icon-16x16",
 			handler: Ext.Function.bind(me.onPurgeVersionButton, me, [ me ]),
 			scope: me,
-			disabled: true
+			disabled: true,
+			hidden: true
 		}]);
 		return items;
 	},
