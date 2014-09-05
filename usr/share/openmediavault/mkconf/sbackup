@@ -85,11 +85,11 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
   			-o "  echo \"backup|completed|\" > ${runfile}" -n \
   			-i "post_purge = 1" -o "  \"" -o ${OMV_SBACKUP_SCRIPTS_DIR} -o "/purge_" -v "uuid" -o "\"" -b -n \
         -o "  [ -e \"${runfile}\" ] && rm -f \"${runfile}\"" -n \
-        -i "post_job != \"\" and //services/sbackup/backuplist/backup[uuid=current()/post_job]/job_type = \"backup\"" -o "  \"" -o ${OMV_SBACKUP_SCRIPTS_DIR} -o "/backup_" -v "post_job" -o "\"" -b -n \
-        -i "post_job != \"\" and //services/sbackup/backuplist/backup[uuid=current()/post_job]/job_type = \"restore\"" -o "  \"" -o ${OMV_SBACKUP_SCRIPTS_DIR} -o "/restore_" -v "post_job" -o "\"" -b -n \
-        -i "post_job != \"\" and //services/sbackup/backuplist/backup[uuid=current()/post_job]/job_type = \"purge\"" -o "  \"" -o ${OMV_SBACKUP_SCRIPTS_DIR} -o "/purge_" -v "post_job" -o "\"" -b -n \
-        -i "post_job != \"\" and //services/sbackup/backuplist/backup[uuid=current()/post_job]/job_type = \"copy\"" -o "  \"" -o ${OMV_SBACKUP_SCRIPTS_DIR} -o "/backup_" -v "post_job" -o "\"" -b -n \
-        -i "post_job != \"\" and //services/sbackup/backuplist/backup[uuid=current()/post_job]/job_type = \"verify\"" -o "  \"" -o ${OMV_SBACKUP_SCRIPTS_DIR} -o "/verify_" -v "post_job" -o "\"" -b -n \
+        -i "post_job != \"\" and //services/sbackup/backuplist/backup[uuid=current()/post_job]/job_type = \"backup\""  -o "  [ \"\${SB_ECODE}\" = \"0\" ] && \"" -o ${OMV_SBACKUP_SCRIPTS_DIR} -o "/backup_" -v "post_job" -o "\"" -b -n \
+        -i "post_job != \"\" and //services/sbackup/backuplist/backup[uuid=current()/post_job]/job_type = \"restore\"" -o "  [ \"\${SB_ECODE}\" = \"0\" ] && \"" -o ${OMV_SBACKUP_SCRIPTS_DIR} -o "/restore_" -v "post_job" -o "\"" -b -n \
+        -i "post_job != \"\" and //services/sbackup/backuplist/backup[uuid=current()/post_job]/job_type = \"purge\""   -o "  [ \"\${SB_ECODE}\" = \"0\" ] && \"" -o ${OMV_SBACKUP_SCRIPTS_DIR} -o "/purge_" -v "post_job" -o "\"" -b -n \
+        -i "post_job != \"\" and //services/sbackup/backuplist/backup[uuid=current()/post_job]/job_type = \"copy\""    -o "  [ \"\${SB_ECODE}\" = \"0\" ] && \"" -o ${OMV_SBACKUP_SCRIPTS_DIR} -o "/backup_" -v "post_job" -o "\"" -b -n \
+        -i "post_job != \"\" and //services/sbackup/backuplist/backup[uuid=current()/post_job]/job_type = \"verify\""  -o "  [ \"\${SB_ECODE}\" = \"0\" ] && \"" -o ${OMV_SBACKUP_SCRIPTS_DIR} -o "/verify_" -v "post_job" -o "\"" -b -n \
         -o "  exit 0" -n \
         -o "}" -n \
         -o "# Check if backup is already running." -n \
