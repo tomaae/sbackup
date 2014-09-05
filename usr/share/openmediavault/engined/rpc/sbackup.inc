@@ -520,7 +520,14 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		"deleteold":{"type":"boolean"}
 		}
 		}');
+		
 
+//		"restore_dir":{"type":"string"},
+//		"restore_sharedfolder_uuid":{"type":"string"}
+		
+    #throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Path: \"".$params['restore_sharedfolder_uuid']."\" / \"".$params['restore_dir']."\"");
+    
+    
 		// Check if the module is marked as dirty. This can be an indication
 		// that the samba recycle bin cron script has not been created or
 		// updated until now.

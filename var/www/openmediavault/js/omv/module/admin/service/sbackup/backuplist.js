@@ -516,6 +516,24 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
 			rootVisible: true      
  		});
 
+//    me.dp = Ext.create("OMV.form.Panel", {
+//    	title: _("Restore redirection"),
+//    	region: "south",
+//    	split: false,
+//    	collapsible: true,
+//    	bodyPadding: "5 5 0",
+//    	border: true,
+//    	items: [{
+//      	xtype: "sharedfoldercombo",
+//      	name: "mntentref",
+//      	fieldLabel: _("Target"),
+//      	emptyText: _("Select a shared point ..."),
+//      	allowBlank: true,
+//      	allowNone: true,
+//      	editable: false
+//      }]
+//    });
+
     me.fp = Ext.create("OMV.form.Panel", {
     	title: _("Options"),
     	region: "south",
@@ -550,6 +568,7 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
 				scope: me
 			}],
 			items: [ me.vp, me.tp, me.fp ]
+			//items: [ me.vp, me.tp, me.dp, me.fp ]
 		});
 		me.callParent(arguments);
 	},
@@ -557,6 +576,7 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
   onApplyButton: function() {
   	var me = this;
   	var node = me.tp.getSelectionModel().getSelection()[0];
+  	//var redirect = me.dp.getValues();
   	var options = me.fp.getValues();
   	var version = me.vp.getValues();
     if(version.version != parseInt(version.version) || typeof node === 'undefined'){
@@ -592,7 +612,9 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
         				dir: dir,
         				deleteold: options.deleteold,
         				sessionlog_save: options.sessionlog_save,
-        				version: version.version
+        				version: version.version,
+        				//restore_sharedfolder_uuid: redirect.mntentref,
+        				//restore_dir: redirect.reldirpath
         			}
         		}
         	});
@@ -647,7 +669,7 @@ Ext.define("OMV.module.admin.service.sbackup.purge", {
   			allowBlank: true,
   			plugins: [{
 					ptype: "fieldinfo",
-					text: _("How many days to keep?.")
+					text: _("How many days should be kept. 0 will leave only last completed session.")
 				}]
   		},{
     		xtype: "checkbox",
