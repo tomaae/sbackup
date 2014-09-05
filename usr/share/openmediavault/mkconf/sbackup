@@ -16,6 +16,7 @@ rm -f ${OMV_SBACKUP_SCRIPTS_DIR}/backup_*
 rm -f ${OMV_SBACKUP_SCRIPTS_DIR}/purge_*
 rm -f ${OMV_SBACKUP_SCRIPTS_DIR}/verify_*
 rm -f ${OMV_SBACKUP_SCRIPTS_DIR}/restore_*
+rm -f ${OMV_SBACKUP_SCRIPTS_DIR}/manual_*
 
 
 OMV_SBACKUP_CRONFILE=${OMV_SBACKUP_CRONFILE:-"/etc/cron.d/sbackup"}

@@ -25,6 +25,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		$this->registerMethod("delete");
 		$this->registerMethod("showLog");
 		$this->registerMethod("runBackup");
+		$this->registerMethod("runPurge");
 		$this->registerMethod("runRestore");
 		$this->registerMethod("getRestoreDirBrowser");
 		$this->registerMethod("getSettings");
@@ -214,17 +215,18 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 			$objectv['enable'] = boolval($objectv['enable']);
 			$wdays = array('Sun','Mon','Tue','Wed','Thu','Fri','Sat','Daily');
 			$objectv['schedule'] = $wdays[$objectv['schedule_wday']]." ".$objectv['schedule_hour'].":".$objectv['schedule_minute'];
+			
 			if($objectv['protect_days_job'] == 0){
-				$objectv['protect_days_job'] = "Single version";
+				$objectv['retention'] = "Single version";
 			}
 			if($objectv['protect_days_job'] == 1){
-				$objectv['protect_days_job'] = $objectv['protect_days_job']." day";
+				$objectv['retention'] = $objectv['protect_days_job']." day";
 			}
 			if($objectv['protect_days_job'] > 1){
-				$objectv['protect_days_job'] = $objectv['protect_days_job']." days";
+				$objectv['retention'] = $objectv['protect_days_job']." days";
 			}
 			if($objectv['job_type'] == "Purge" || $objectv['job_type'] == "Verify"){
-				$objectv['protect_days_job'] = "N/A";
+				$objectv['retention']        = "N/A";
 				$objectv['versions']         = "N/A";
 				$objectv['size']             = "N/A";
 			}
@@ -453,6 +455,52 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 	}
 	
 	/**
+	* runPurge
+	*/
+	public function runPurge($params, $context) {
+		global $xmlConfig;
+		// Validate the RPC caller context.
+		$this->validateMethodContext($context, array(
+		"role" => OMV_ROLE_ADMINISTRATOR
+		));
+		// Validate the parameters of the RPC service method.
+		$this->validateMethodParams($params, '{
+		"type":"object",
+		"properties":{
+		"uuid":{'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
+		"retention":{"type":"integer"},
+		"sessionlog_save":{"type":"boolean"}
+		}
+		}');
+		// Check if the module is marked as dirty. This can be an indication
+		// that the samba recycle bin cron script has not been created or
+		// updated until now.
+		if($this->isModuleDirty("sbackup"))
+		throw new OMVException(OMVErrorMsg::E_CONFIG_DIRTY);
+		
+		$xpath = sprintf("//services/sbackup/backuplist/backup[uuid='%s']",$params['uuid']);
+  	$object = $xmlConfig->get($xpath);
+  	
+  	$job_uuid = $params['uuid'];
+		if($object['job_type'] == "backup") $job_type = "backup";
+		if($object['job_type'] == "restore")throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Restore job cannot be purged");
+		//if($object['job_type'] == "purge")  throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Purge job cannot be purged");
+		if($object['job_type'] == "copy")   $job_type = "backup";
+		//if($object['job_type'] == "verify") throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Verify job cannot be purged");
+		
+  	if($object['job_type'] == "purge")  $job_uuid = $object['purge_job_uuid'];
+  	if($object['job_type'] == "verify") $job_uuid = $object['verify_job_uuid'];
+  	
+		// Execute process.
+		//$cmd = "/usr/bin/at -f /var/lib/openmediavault/sbackup.d/purge_".$job_uuid." ".$params['retention']." now";
+		$cmd = "echo /var/lib/openmediavault/sbackup.d/purge_".$job_uuid." ".$params['retention']."|/usr/bin/at now";
+		if(0 !== $this->exec($cmd, $output)) {
+			throw new OMVException(OMVErrorMsg::E_EXEC_FAILED,
+			$cmd, implode("\n", $output));
+		}
+	}
+	
+	/**
 	* runRestore
 	*/
 	public function runRestore($params, $context) {
@@ -514,7 +562,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		$OMV_SBACKUP_SESLOGDIR  = "/var/log/sbackup/sessionlogs";
 		$OMV_SBACKUP_LOGFILE = "/var/log/sbackup/history_".$params['uuid'];
 		$runfile="/var/run/sbackup_".$params['uuid'];
-		$filename = "/var/lib/openmediavault/sbackup.d/restore_".$params['uuid'];
+		$filename = "/var/lib/openmediavault/sbackup.d/manual_restore_".$params['uuid'];
 		$scriptfile = fopen($filename, "w");
 		fwrite($scriptfile, "#!/bin/sh\n");
     fwrite($scriptfile, "# This configuration file is auto-generated.\n");

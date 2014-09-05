@@ -605,6 +605,111 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
 });
 
 /**
+* Purge modal
+*/
+Ext.define("OMV.module.admin.service.sbackup.purge", {
+	extend: "OMV.window.Window",
+	uses: [
+	"OMV.Rpc",
+	"OMV.util.Format",
+	"OMV.data.Model",
+  "OMV.data.Store"
+	],
+  
+	readOnly: false,
+
+	title: _("Purge versions from backup"),
+	width: 700,
+	height: 159,
+	layout: "border",
+	modal: true,
+	buttonAlign: "center",
+	border: false,
+
+	initComponent: function() {
+		var me = this;
+		
+    me.fp = Ext.create("OMV.form.Panel", {
+    	title: _("Options"),
+    	region: "south",
+    	split: false,
+    	collapsible: false,
+    	bodyPadding: "5 5 0",
+    	border: true,
+    	items: [{
+  			xtype: "numberfield",
+  			name: "retention",
+  			fieldLabel: "Retention",
+  			minValue: 0,
+  			maxValue: 365,
+  			value:me.retention,
+  			allowDecimals: false,
+  			allowBlank: true,
+  			plugins: [{
+					ptype: "fieldinfo",
+					text: _("How many days to keep?.")
+				}]
+  		},{
+    		xtype: "checkbox",
+    		name: "sessionlog_save",
+    		fieldLabel: _("Log"),
+    		checked: true,
+    		boxLabel: _("Save restore log")
+    	}]
+    });
+		
+		Ext.apply(me, {
+			buttons: [{
+				text: _("Start purge"),
+				handler: me.onApplyButton,
+				scope: me,
+				disabled: me.readOnly
+			},{
+				text: _("Close"),
+				handler: me.close,
+				scope: me
+			}],
+			items: [ me.fp ]
+		});
+		me.callParent(arguments);
+	},
+	
+  onApplyButton: function() {
+  	var me = this;
+  	var options = me.fp.getValues();
+
+  	OMV.MessageBox.show({
+  		title: _("Confirmation"),
+  		msg: _("Do you really want to start purge?"),
+  		buttons: Ext.Msg.YESNO,
+  		fn: function(answer) {
+  			if(answer === "no")
+  			return;
+      	// Execute RPC
+      	OMV.Rpc.request({
+      		scope: me,
+      		callback: function(id, success, response) {
+      			this.close();
+      		},
+      		relayErrors: false,
+      		rpcData: {
+      			service: "sbackup",
+      			method: "runPurge",
+      			params: {
+      				uuid: me.uuid,
+      				sessionlog_save: options.sessionlog_save,
+      				retention: options.retention
+      			}
+      		}
+      	});
+  		},
+  		scope: me,
+  		icon: Ext.Msg.QUESTION
+  	});
+	}
+});
+
+/**
 * backuplist
 */
 Ext.define("OMV.module.admin.service.sbackup.backuplist", {
@@ -680,8 +785,8 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 		text: _("Retention"),
 		sortable: true,
 		width: 80,
-		dataIndex: "protect_days_job",
-		stateId: "protect_days_job"
+		dataIndex: "retention",
+		stateId: "retention"
 	},{
 		text: _("Versions"),
 		sortable: true,
@@ -705,6 +810,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 					idProperty: "uuid",
 					fields: [
 					{ name: "uuid", type: "string" },
+					{ name: "retention", type: "string" },
 					{ name: "target_sharedfolder_uuid", type: "string" },
 					{ name: "enable", type: "boolean" },
 					{ name: "job_type", type: "string" },
@@ -901,7 +1007,19 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 	onPurgeButton: function() {
 		var me = this;
 		var record = me.getSelected();
-		//placeholder
+		Ext.create("OMV.module.admin.service.sbackup.purge", {
+			title: _("Purge versions from backup"),
+			uuid: record.get("uuid"),
+			target_sharedfolder_uuid: record.get("target_sharedfolder_uuid"),
+			retention:record.get("protect_days_job"),
+			source_name: record.get("source_name"),
+			listeners: {
+				scope: me,
+				close: function() {
+					this.doReload();
+				}
+			}
+		}).show();
 	},
 
   onRunButton: function() {
