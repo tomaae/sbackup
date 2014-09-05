@@ -732,9 +732,21 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		}
 		}');
   	
-  	// Prepare the result list.
+  	// Prepare the result list.	
   	$result = array();
-  	
+  	  	
+		$xpath_post = sprintf("//services/sbackup/backuplist/backup[uuid='%s']",$params['uuid']);
+		$object_post = $xmlConfig->get($xpath_post);
+		if(is_null($object_post)) {throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,$xpath_post);}
+  	  	
+
+		$xpath_tmp = sprintf("//system/shares/sharedfolder[uuid='%s']",$object_post['target_sharedfolder_uuid']);$object_tmp = $xmlConfig->get($xpath_tmp);if(is_null($object_tmp)){throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,$xpath_tmp);}
+		$GET_TARGET_PATH = $object_tmp['reldirpath'];
+		$xpath_tmp = sprintf("//system/fstab/mntent[uuid='%s']",$object_tmp['mntentref']);$object_tmp = $xmlConfig->get($xpath_tmp);if(is_null($object_tmp)){throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,$xpath_tmp);}
+		$GET_TARGET_DEST = $object_tmp['dir']."/".$GET_TARGET_PATH."/sbackup_".$params['uuid']."/";
+		
+		if(!file_exists($GET_TARGET_DEST))throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,"backup directory not accessible: ".$GET_TARGET_DEST);
+  	  	
 		if(file_exists("/var/log/sbackup/history_".$params['uuid'])){
 			$txt_file = file_get_contents("/var/log/sbackup/history_".$params['uuid']);
 			$lines    = explode("\n", $txt_file);
@@ -743,21 +755,18 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 				$rows = explode("|", $line);
 				if($rows[0] != "0" || $rows[7] != "backup")continue;
 				
-  			$xpath_post = sprintf("//services/sbackup/backuplist/backup[uuid='%s']",$rows[2]);
-  			$object_post = $xmlConfig->get($xpath_post);
-  			if(is_null($object_post)) {throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,$xpath_post);}
-				
   			if($object_post['job_type'] == "backup") $job_type = "Backup";
   			if($object_post['job_type'] == "restore")$job_type = "Restore";
   			if($object_post['job_type'] == "purge")  $job_type = "Purge";
   			if($object_post['job_type'] == "copy")   $job_type = "Copy";
   			if($object_post['job_type'] == "verify") $job_type = "Verify";
-				
-  			$result[] = array(
-  				"version" => $rows[3],
-  				"version_human" => $job_type.": ".date('r', $rows[3])
-  			);
-				
+  			
+				if(file_exists($GET_TARGET_DEST."/data_".$rows[3]."/")){
+    			$result[] = array(
+    				"version" => $rows[3],
+    				"version_human" => $job_type.": ".date('r', $rows[3])
+    			);
+    		}
 			}
 		}
   	return $result;

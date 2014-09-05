@@ -19,6 +19,7 @@ In history log, create column for backup without data_uuid (rework all grep "|ba
 - warning on changing backup target (same as for changing filesystem in shared folders)
 - settings, only one backup at once > queuing
 - settings, only one backup to one target datastore at once > queuing
+
 - rework schedule (combo checkbox?), ability to disable schedule
 - disable will disable getting started as post_job, its copy, purge, verify
 
@@ -31,7 +32,6 @@ In history log, create column for backup without data_uuid (rework all grep "|ba
 
 ==RESTORE========================================================
 - restore into different location
-- get versions should check if version data dir exists
 
 - autoselect latest version
 - browse files
