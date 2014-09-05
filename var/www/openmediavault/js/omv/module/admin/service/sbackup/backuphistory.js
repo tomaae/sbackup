@@ -48,16 +48,16 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
     		case "Purging":
     		case "Migrating":
     		case "Copying":	
-    			value = "<img border='0' src='images/wait.gif' height='14' width='14'> " + value;
+    			value = "<img border='0' src='images/wait.gif' height='14' width='14'> <span style='top:-3px;position:relative;'>" + value + "</span>";
     			break;  
     		case "Completed":	
-    			value = "<img border='0' src='images/led_green.png' height='14' width='14'> " + value;
+    			value = "<img border='0' src='images/led_green.png' height='14' width='14'> <span style='top:-3px;position:relative;'>" + value + "</span>";
     			break;  
     		case "N/A":	
-    		value = "<img border='0' src='images/led_gray.png' height='14' width='14'> " + value;
+    		value = "<img border='0' src='images/led_gray.png' height='14' width='14'> <span style='top:-3px;position:relative;'>" + value + "</span>";
     		  break;	
     		default:
-    		value = "<img border='0' src='images/led_red.png' height='14' width='14'> " + value;
+    		value = "<img border='0' src='images/led_red.png' height='14' width='14'> <span style='top:-3px;position:relative;'>" + value + "</span>";
     		  break;
     	}
     	return value;

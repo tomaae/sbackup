@@ -772,16 +772,16 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
     		case "Purging":
     		case "Migrating":
     		case "Copying":	
-    			value = "<img border='0' src='images/wait.gif' height='14' width='14'> " + value;
+    			value = "<img border='0' src='images/wait.gif' height='14' width='14'> <span style='top:-3px;position:relative;'>" + value + "</span>";
     			break;  
     		case "Completed":	
-    			value = "<img border='0' src='images/led_green.png' height='14' width='14'> " + value;
+    			value = "<img border='0' src='images/led_green.png' height='14' width='14' /> <span style='top:-3px;position:relative;'>" + value + "</span>";
     			break;  
     		case "N/A":	
-    		value = "<img border='0' src='images/led_gray.png' height='14' width='14'> " + value;
+    		value = "<img border='0' src='images/led_gray.png' height='14' width='14'> <span style='top:-3px;position:relative;'>" + value + "</span>";
     		  break;	
     		default:
-    		value = "<img border='0' src='images/led_red.png' height='14' width='14'> " + value;
+    		value = "<img border='0' src='images/led_red.png' height='14' width='14'> <span style='top:-3px;position:relative;'>" + value + "</span>";
     		  break;
     	}
     	return value;
@@ -800,10 +800,10 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 		renderer: function(value) {
     	switch(value.substr(0, 3)) {
     		case "S: ":	
-    			value = "<img border='0' src='images/share.png' height='14' width='14' title='Shared folder'> " + value.replace(/^S: /, "");
+    			value = "<img border='0' src='images/share.png' height='14' width='14' title='Shared folder'> <span style='top:-3px;position:relative;'>" + value.replace(/^S: /, "") + "</span>";
     			break;  
     		case "B: ":	
-    			value = "<img border='0' src='images/hdd.png' height='14' width='14' title='Backup'> " + value.replace(/^B: /, "");
+    			value = "<img border='0' src='images/hdd.png' height='14' width='14' title='Backup'> <span style='top:-3px;position:relative;'>" + value.replace(/^B: /, "") + "</span>";
     			break;  
     	}
     	return value;
@@ -816,10 +816,10 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 		renderer: function(value) {
     	switch(value.substr(0, 3)) {
     		case "S: ":	
-    			value = "<img border='0' src='images/share.png' height='14' width='14' title='Shared folder'> " + value.replace(/^S: /, "");
+    			value = "<img border='0' src='images/share.png' height='14' width='14' title='Shared folder'> <span style='top:-3px;position:relative;'>" + value.replace(/^S: /, "") + "</span>";
     			break;  
     		case "B: ":	
-    			value = "<img border='0' src='images/hdd.png' height='14' width='14' title='Backup'> " + value.replace(/^B: /, "");
+    			value = "<img border='0' src='images/hdd.png' height='14' width='14' title='Backup'> <span style='top:-3px;position:relative;'>" + value.replace(/^B: /, "") + "</span>";
     			break;  
     	}
     	return value;
