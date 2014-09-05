@@ -24,7 +24,7 @@ In history log, create column for backup without data_uuid (rework all grep "|ba
 - backup configuration (backup specifications and backup history) after each backup, import via settings tab (backup history log copy and omv config import in same way as postinst)
   import backup. (save backup configuration within backup_uuid folder), select share point, search subdirectories for configs, show only those which have correct config and are not imported already
 []- report checkbox
-[]- LVM snapshot (fields: checkbox enable, %sizeslider:sliderfield)
+[]- LVM snapshot (fields: checkbox enable, allow fallback, %sizeslider:sliderfield)
 =================================================================
 
 ==RESTORE========================================================
@@ -124,6 +124,7 @@ root@nc-nas3:~# lvdisplay /dev/mapper/vg_b-lv_4
 
 lvcreate -l50%FREE -s -n lv_4_snap /dev/vg_b/lv_4
 mount /dev/vg_b/lv_4_snap /mnt -oro
+ << check if snapshot is mounted, allow fallback?
  << BACKUP
 umount /dev/vg_b/lv_4_snap
 lvremove -f /dev/vg_b/lv_4_snap

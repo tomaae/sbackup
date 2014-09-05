@@ -772,16 +772,16 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
     		case "Purging":
     		case "Migrating":
     		case "Copying":	
-    			value = "<img border='0' src='images/wait.gif' height='12' width='12'> " + value;
+    			value = "<img border='0' src='images/wait.gif' height='14' width='14'> " + value;
     			break;  
     		case "Completed":	
-    			value = "<img border='0' src='images/yes.png' height='12' width='12'> " + value;
+    			value = "<img border='0' src='images/led_green.png' height='14' width='14'> " + value;
     			break;  
     		case "N/A":	
-    		value = "<img border='0' src='images/info.png' height='12' width='12'> " + value;
+    		value = "<img border='0' src='images/led_gray.png' height='14' width='14'> " + value;
     		  break;	
     		default:
-    		value = "<img border='0' src='images/no.png' height='12' width='12'> " + value;
+    		value = "<img border='0' src='images/led_red.png' height='14' width='14'> " + value;
     		  break;
     	}
     	return value;
@@ -796,12 +796,34 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 		text: _("Source"),
 		sortable: true,
 		dataIndex: "source_name",
-		stateId: "source_name"
+		stateId: "source_name",
+		renderer: function(value) {
+    	switch(value.substr(0, 3)) {
+    		case "S: ":	
+    			value = "<img border='0' src='images/share.png' height='14' width='14' title='Shared folder'> " + value.replace(/^S: /, "");
+    			break;  
+    		case "B: ":	
+    			value = "<img border='0' src='images/hdd.png' height='14' width='14' title='Backup'> " + value.replace(/^B: /, "");
+    			break;  
+    	}
+    	return value;
+	  }
 	},{
 		text: _("Target"),
 		sortable: true,
 		dataIndex: "target_name",
-		stateId: "target_name"
+		stateId: "target_name",
+		renderer: function(value) {
+    	switch(value.substr(0, 3)) {
+    		case "S: ":	
+    			value = "<img border='0' src='images/share.png' height='14' width='14' title='Shared folder'> " + value.replace(/^S: /, "");
+    			break;  
+    		case "B: ":	
+    			value = "<img border='0' src='images/hdd.png' height='14' width='14' title='Backup'> " + value.replace(/^B: /, "");
+    			break;  
+    	}
+    	return value;
+	  }
 	},{
 		text: _("Retention"),
 		sortable: true,

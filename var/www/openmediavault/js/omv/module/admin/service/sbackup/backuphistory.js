@@ -48,16 +48,16 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
     		case "Purging":
     		case "Migrating":
     		case "Copying":	
-    			value = "<img border='0' src='images/wait.gif' height='12' width='12'> " + value;
+    			value = "<img border='0' src='images/wait.gif' height='14' width='14'> " + value;
     			break;  
     		case "Completed":	
-    			value = "<img border='0' src='images/yes.png' height='12' width='12'> " + value;
+    			value = "<img border='0' src='images/led_green.png' height='14' width='14'> " + value;
     			break;  
     		case "N/A":	
-    		value = "<img border='0' src='images/info.png' height='12' width='12'> " + value;
+    		value = "<img border='0' src='images/led_gray.png' height='14' width='14'> " + value;
     		  break;	
     		default:
-    		value = "<img border='0' src='images/no.png' height='12' width='12'> " + value;
+    		value = "<img border='0' src='images/led_red.png' height='14' width='14'> " + value;
     		  break;
     	}
     	return value;
@@ -89,7 +89,18 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
 		sortable: true,
 		width: 35,
 		dataIndex: "haslog",
-		stateId: "haslog"
+		stateId: "haslog",
+		renderer: function(value) {
+    	switch(value) {
+    		case "yes":	
+    		value = "<img border='0' src='images/yes.png' height='14' width='14'>";
+    		  break;	
+    		default:
+    		value = "";
+    		  break;
+    	}
+    	return value;
+	  }
 	}],
 
 	initComponent: function() {
