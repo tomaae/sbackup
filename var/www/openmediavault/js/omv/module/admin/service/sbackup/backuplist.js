@@ -762,7 +762,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
       			tbarRestoreCtrl.disable();
       			tbarPurgeCtrl.disable();
       		}
-      		if(records[ai].data.job_type != "Backup" ){
+      		if(records.length > 0 && records[ai].data.job_type != "Backup" ){
       			tbarRestoreCtrl.disable();
       			tbarPurgeCtrl.disable();
       		}
@@ -828,7 +828,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 			tbarRestoreCtrl.disable();
 			tbarPurgeCtrl.disable();
 		}
-		if(records[0].data.job_type != "Backup" ){
+		if(records.length > 0 && records[0].data.job_type != "Backup" ){
 			tbarRestoreCtrl.disable();
 			tbarPurgeCtrl.disable();
 		}

@@ -375,6 +375,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 	* delete
 	*/
 	public function delete($params, $context) {
+		global $xmlConfig;
 		// Validate the RPC caller context.
 		$this->validateMethodContext($context, array(
 		"role" => OMV_ROLE_ADMINISTRATOR
@@ -386,6 +387,20 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		"uuid":{'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'}
 		}
 		}');
+		// Tests
+		$xpath = "//services/sbackup/backuplist/backup";
+		$objects = $xmlConfig->getList($xpath);
+		if(is_null($objects)) {
+			throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,	$xpath);
+		}
+		
+		foreach($objects as $objectk => &$objectv) {
+			if($objectv['post_job'] && $objectv['post_job'] == $params['uuid'])throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Job cannot be deleted, it is used as post job by \"".$objectv['name']."\"");
+			if($objectv['job_type'] == "copy"   && $objectv['copy_job_uuid'] == $params['uuid'])  throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Job cannot be deleted, it does have copy job \"".$objectv['name']."\"");
+			if($objectv['job_type'] == "purge"  && $objectv['purge_job_uuid'] == $params['uuid']) throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Job cannot be deleted, it does have purge job \"".$objectv['name']."\"");
+			if($objectv['job_type'] == "verify" && $objectv['verify_job_uuid'] == $params['uuid'])throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Job cannot be deleted, it does have verify job \"".$objectv['name']."\"");
+		}
+
 		// Delete the configuration object.
 		$xpath = sprintf("//services/sbackup/backuplist/backup[uuid='%s']",
 		$params['uuid']);

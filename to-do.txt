@@ -15,7 +15,6 @@ In history log, create column for backup without data_uuid (rework all grep "|ba
 
 ==BACKUP=========================================================
 - restart failed jobs
-- job cannot be deleted while its still in post_job of another job
 - warning on changing backup source (same as for changing filesystem in shared folders)
 - warning on changing backup target (same as for changing filesystem in shared folders)
 - settings, only one backup at once > queuing
