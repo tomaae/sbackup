@@ -231,7 +231,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
 		var me = this;
 		var record = me.getSelected();
 		Ext.create("OMV.window.Execute", {
-			title: _("Backup session log"),
+			title: _("Session log"),
 			hideStopButton: true,
 			rpcService: "sbackup",
 			rpcMethod: "showLog",

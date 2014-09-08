@@ -20,7 +20,6 @@
 
 - backup configuration (backup specifications and backup history) after each backup, import via settings tab (backup history log copy and omv config import in same way as postinst)
   import backup. (save backup configuration within backup_uuid folder), select share point, search subdirectories for configs, show only those which have correct config and are not imported already
-+[]- use >> --log-file=FILE for realtime updates, after finished, copy it as metadata to backup destination
 *[]- report checkbox
 *[]- LVM snapshot (fields: checkbox enable, allow fallback, %sizeslider:sliderfield)
 =================================================================

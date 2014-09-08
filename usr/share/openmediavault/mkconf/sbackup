@@ -67,19 +67,15 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
         -o "SB_TIMESTART=\$(date +\"%s\")" -n \
         -o "cleanup() {" -n \
         -o "  omv_kill_children \$\$" -n \
-        -o "  IFS='" -n \
-        -o "'" -n \
-        -o "  for line in \`echo \"\$RSOUT\"\`; do " -n \
-        -o "    RSSIZE=\$(echo \${line}|awk '/^total size is / {print \$4}')" -n \
-        -o "    RSPERF=\$(echo \${line}|awk '/^total size is / {print \$7}')" -n \
-  			-o "  done" -n \
+        -o "  RSSIZE=\$(cat \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"|awk '/^total size is / {print \$4}')" -n \
+        -o "  RSPERF=\$(cat \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"|awk '/^total size is / {print \$7}')" -n \
   			-o "  SB_TIMEEND=\$(date +\"%s\")" -n \
   			-o "  if [ \"\${SB_ECODE}\" = \"\" ]; then" -n \
   			-o "    SB_ECODE=-1" -n \
   			-o "  fi" -n \
   			-o "  cat \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"|sed \"s/^running|\(.*\)|\(.*\)|\${SB_TIMESTART}||||backup|/\${SB_ECODE}|\1|\2|\${SB_TIMESTART}|\${SB_TIMEEND}|\${RSSIZE}|\${RSPERF}|backup|/g\" > \"" -o ${OMV_SBACKUP_LOGFILE} -o ".new\"" -n \
   			-o "  mv \"" -o ${OMV_SBACKUP_LOGFILE} -o ".new\" \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
-  			-o "  echo \"Backup name: " -v "name" -o "\nUUID: " -v "uuid" -o "\n\n\$RSOUT\n\nStart time: \$(date -d @\${SB_TIMESTART})\nEnd time: \$(date -d @\${SB_TIMEEND})\nStatus: \${SB_ECODE}\" > \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"" -n \
+  			-o "  echo \"\n\nEnd time: \$(date -d @\${SB_TIMEEND})\nStatus: \${SB_ECODE}\" >> \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"" -n \
   			-o "  echo \"backup|completed|\" > ${runfile}" -n \
   			-i "post_purge = 1" -o "  \"" -o ${OMV_SBACKUP_SCRIPTS_DIR} -o "/purge_" -v "uuid" -o "\"" -b -n \
         -o "  [ -e \"${runfile}\" ] && rm -f \"${runfile}\"" -n \
@@ -101,7 +97,6 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
         -o "  echo \"Target not mounted|" -v "name" -o "|" -v "uuid" -o "|\${SB_TIMESTART}||||backup|\" >> \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
         -o "  exit 1" -n \
         -o "fi" -n \
-        -o "trap cleanup 0 1 2 5 9 15" -n \
         -o "echo \"backup|\" > ${runfile}" -n \
         -o "# Run backup" -n \
         -o "[ -e \"" -o ${OMV_SBACKUP_LOGFILE} -o "\" ] && LASTERR=\$(cat \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"|grep \"|backup|$\"|tail -1|awk -F \"|\" '{print \$1}')" -n \
@@ -109,7 +104,9 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
   			-o "  if [ \"\${LASTERR}\" != \"0\" ]; then" -n \
   			-o "    LASTSTAMP=\$(cat \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"|grep \"|backup|$\"|tail -1|awk -F \"|\" '{print \$4}')" -n \
   			-o "    if [ -d \"" ${GET_TARGET_DEST} -o "/data_\${LASTSTAMP}\" ]; then" -n \
+  			-o "      echo \"Restarting backup from \$(date -d @\${LASTSTAMP}) \n\n\" >> \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"" -n \
   			-o "      mv \"" ${GET_TARGET_DEST} -o "/data_\${LASTSTAMP}\" \"" ${GET_TARGET_DEST} -o "/data_\${SB_TIMESTART}\"" -n \
+  			-o "      [ -d \"" ${GET_TARGET_DEST} -o "/meta_\${LASTSTAMP}\" ] && rm -r \"" ${GET_TARGET_DEST} -o "/meta_\${LASTSTAMP}\"" -n \
   			-o "    fi" -n \
         -o "  fi" -n \
         -o "  LASTSTAMP=\$(cat \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"|grep \"|backup|$\"|grep \"^0|\"|tail -1|awk -F \"|\" '{print \$4}')" -n \
@@ -124,9 +121,11 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
         -o "mkdir -p \"" ${GET_TARGET_DEST} -o "/data_\${SB_TIMESTART}/\"" -n \
         -o "chmod 777 \"" ${GET_TARGET_DEST} -o "/data_\${SB_TIMESTART}/\"" -n \
         -o "echo \"running|" -v "name" -o "|" -v "uuid" -o "|\${SB_TIMESTART}||||backup|\" >> \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
-        -o "RSOUT=\$(rsync --verbose --stats" \
+        -o "echo \"Backup name: " -v "name" -o "\nUUID: " -v "uuid" -o "\nStart time: \$(date -d @\${SB_TIMESTART})\n\n\" > \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"" -n \
+        -o "trap cleanup 0 1 2 5 9 15" -n \
+        -o "rsync --verbose --stats" \
         -o " -aEAX --delete \${INCR}" \
-        -o " \"" ${GET_SOURCE_PATH} -o "\"" -o " \"" ${GET_TARGET_DEST} -o "/data_\${SB_TIMESTART}/\" 2>&1)" -n \
+        -o " \"" ${GET_SOURCE_PATH} -o "\"" -o " \"" ${GET_TARGET_DEST} -o "/data_\${SB_TIMESTART}/\" 2>&1 >> \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"" -n \
         -o "SB_ECODE=\$(echo \$?)" -n \
         -o "sleep 5" -n \
       	${OMV_CONFIG_FILE} | xmlstarlet unesc > "${OMV_SBACKUP_SCRIPTS_DIR}/backup_${uuid}"
@@ -172,7 +171,7 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
         -o "SB_TIMEEND=\$(date +\"%s\")" -n \
   			-o "cat \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"|sed \"s/^running|\(.*\)|\(.*\)|\${SB_TIMESTART}||||purge|/0|\1|\2|\${SB_TIMESTART}|\${SB_TIMEEND}|0|0.00|purge|/g\" > \"" -o ${OMV_SBACKUP_LOGFILE} -o ".new\"" -n \
   			-o "mv \"" -o ${OMV_SBACKUP_LOGFILE} -o ".new\" \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
-  			-o "echo \"Purging finished\" >> \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"" -n \
+  			-o "echo \"Purging completed\" >> \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"" -n \
   			-o "sleep 5" -n \
   			-o "rm -f \"${runfile}\"" -n \
   			-o "exit 0" -n \
