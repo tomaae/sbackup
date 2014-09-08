@@ -79,7 +79,7 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
   			-o "  fi" -n \
   			-o "  cat \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"|sed \"s/^running|\(.*\)|\(.*\)|\${SB_TIMESTART}||||backup|/\${SB_ECODE}|\1|\2|\${SB_TIMESTART}|\${SB_TIMEEND}|\${RSSIZE}|\${RSPERF}|backup|/g\" > \"" -o ${OMV_SBACKUP_LOGFILE} -o ".new\"" -n \
   			-o "  mv \"" -o ${OMV_SBACKUP_LOGFILE} -o ".new\" \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
-  			-i "sessionlog_save = 1" -o "  echo \"Backup name: " -v "name" -o "\nUUID: " -v "uuid" -o "\n\n\$RSOUT\n\nStart time: \$(date -d @\${SB_TIMESTART})\nEnd time: \$(date -d @\${SB_TIMEEND})\nStatus: \${SB_ECODE}\" > \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"" -b -n \
+  			-o "  echo \"Backup name: " -v "name" -o "\nUUID: " -v "uuid" -o "\n\n\$RSOUT\n\nStart time: \$(date -d @\${SB_TIMESTART})\nEnd time: \$(date -d @\${SB_TIMEEND})\nStatus: \${SB_ECODE}\" > \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"" -n \
   			-o "  echo \"backup|completed|\" > ${runfile}" -n \
   			-i "post_purge = 1" -o "  \"" -o ${OMV_SBACKUP_SCRIPTS_DIR} -o "/purge_" -v "uuid" -o "\"" -b -n \
         -o "  [ -e \"${runfile}\" ] && rm -f \"${runfile}\"" -n \
@@ -144,7 +144,7 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
   			-o "fi" -n \
   			-o "echo \"purge|\" > \"${runfile}\"" -n \
   			-o "echo \"running|" -v "name" -o "|" -v "uuid" -o "|\${SB_TIMESTART}||||purge|\" >> \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
-  			-i "sessionlog_save = 1" -o "  echo \"Backup name: " -v "name" -o "\nUUID: " -v "uuid" -o "\nStart time: \$(date -d @\${SB_TIMESTART})\n\" > \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"" -b -n \
+  			-o "echo \"Backup name: " -v "name" -o "\nUUID: " -v "uuid" -o "\nStart time: \$(date -d @\${SB_TIMESTART})\n\" > \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"" -n \
         -o "[ \"\$1\" != \"\" ] && PURGEDAYS=\${1}" -n \
         -o "if [ -e \"" -o $OMV_SBACKUP_LOGFILE -o "\" ];then" -n \
         -o "  #Get last backup" -n \
@@ -154,43 +154,25 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
         -o "    [ ! -d \"" ${GET_TARGET_DEST} -o "/data_\${r_start}/\" ] && continue" -n \
         -o "    LAST_BACKUP=\${r_start}" -n \
         -o "  done < " -o $OMV_SBACKUP_LOGFILE -n \
-        -o "  #Cleanup" -n \
+        -o "  #Cleanup backup data" -n \
         -o "  PURGETIME=\$((SB_TIMESTART-(" -v "protect_days_job" -o "*86400)))" -n \
-        -o "  PURGELOGTIME=\$((SB_TIMESTART-(" ${SESSLOG_RETENTION} -o "*86400)))" -n \
-        -o "  PURGEHISTTIME=\$((SB_TIMESTART-(" ${HISTORY_RETENTION} -o "*86400)))" -n \
         -o "  [ \"\${PURGEDAYS}\" != \"\" ] && PURGETIME=\$((SB_TIMESTART-(\${PURGEDAYS}*86400)))" -n \
-        -o "  [ \"\${PURGEHISTTIME}\" -gt \"\${PURGETIME}\" ] && PURGEHISTTIME=\${PURGETIME}" -n \
         -o "  while IFS='|', read r_status d d r_start d d d r_type; do" -n \
         -o "		[ \"\${r_start}\" -lt \"100\" ] && continue" -n \
         -o "		[ \"\${r_start}\" -gt \"\${PURGETIME}\" ] && continue" -n \
         -o "		[ \"\${r_start}\" = \"\${LAST_BACKUP}\" ] && continue" -n \
-        -o "    #Purge logs" -n \
-        -o "    if [ \"\${r_start}\" -lt \"\$PURGELOGTIME\" ] && [ -e \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${r_start}" -o ".log\" ];then" -n \
-        -i "sessionlog_save = 1" -o "  echo \"Purging log \$(date -d @\${r_start})\" >> \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"" -b -n \
-        -o "      rm \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${r_start}" -o ".log\"" -n \
-        -o "    fi" -n \
-        -o "    #Purge backups sessions" -n \
-        -o "    [ \"\${r_status}\" != \"0\" ] && continue" -n \
-        -o "    [ \"\${r_type}\" != \"backup\" ] && continue" -n \
-        -o "    [ ! -d \"" ${GET_TARGET_DEST} -o "/data_\${r_start}/\" ] && continue" -n \
-        -o "    echo Deleting version \$(date -d @\${r_start})" -n \
-        -i "sessionlog_save = 1" -o "  echo \"Purging version \$(date -d @\${r_start})\" >> \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"" -b -n \
-        -o "    rm -r \"" ${GET_TARGET_DEST} -o "/data_\${r_start}/\"" -n \
-        -o "  done < " -o $OMV_SBACKUP_LOGFILE -n \
-        -o "  #Cleanup versions from history" -n \
-        -o "  while IFS='|', read r_status d d r_start d d d r_type; do" -n \
-        -o "		[ \"\${r_start}\" -lt \"100\" ] && continue" -n \
-        -o "		[ \"\${r_start}\" -gt \"\${PURGEHISTTIME}\" ] && continue" -n \
-        -o "		[ \"\${r_start}\" = \"\${LAST_BACKUP}\" ] && continue" -n \
-        -o "    [ \"\${r_type}\" = \"backup\" ] && [ -d \"" ${GET_TARGET_DEST} -o "/data_\${r_start}/\" ] && continue" -n \
-        -i "sessionlog_save = 1" -o "  echo \"Purging version history \$(date -d @\${r_start})\" >> \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"" -b -n \
-  			-o "    cat \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"|grep \"^\${r_status}|\(.*\)|\(.*\)|\${r_start}|\(.*\)|\(.*\)|\(.*\)|\${r_type}|\" > \"" -o ${OMV_SBACKUP_LOGFILE} -o ".new\"" -n \
+        -o "    echo \"Purging version \$(date -d @\${r_start})\" >> \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"" -n \
+        -o "    [ -d \"" ${GET_TARGET_DEST} -o "/data_\${r_start}/\" ] && rm -r \"" ${GET_TARGET_DEST} -o "/data_\${r_start}/\"" -n \
+        -o "    [ -d \"" ${GET_TARGET_DEST} -o "/data_\${r_start}/\" ] && continue" -n \
+        -o "    [ -e \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${r_start}" -o ".log\" ] && rm \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${r_start}" -o ".log\"" -n \
+				-o "    cat \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"|grep -v \"^\${r_status}|\(.*\)|\(.*\)|\${r_start}|\(.*\)|\(.*\)|\(.*\)|\${r_type}|\" > \"" -o ${OMV_SBACKUP_LOGFILE} -o ".new\"" -n \
   			-o "    mv \"" -o ${OMV_SBACKUP_LOGFILE} -o ".new\" \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
         -o "  done < " -o $OMV_SBACKUP_LOGFILE -n \
         -o "fi" -n \
         -o "SB_TIMEEND=\$(date +\"%s\")" -n \
   			-o "cat \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"|sed \"s/^running|\(.*\)|\(.*\)|\${SB_TIMESTART}||||purge|/0|\1|\2|\${SB_TIMESTART}|\${SB_TIMEEND}|0|0.00|purge|/g\" > \"" -o ${OMV_SBACKUP_LOGFILE} -o ".new\"" -n \
   			-o "mv \"" -o ${OMV_SBACKUP_LOGFILE} -o ".new\" \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
+  			-o "echo \"Purging finished\" >> \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"" -n \
   			-o "sleep 5" -n \
   			-o "rm -f \"${runfile}\"" -n \
   			-o "exit 0" -n \
