@@ -348,15 +348,6 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			value: "00"
 		},{
 			xtype: "checkbox",
-			name: "sessionlog_save",
-			fieldLabel: _("Save log"),
-			checked: true,
-			plugins: [{
-				ptype: "fieldinfo",
-				text: _("Save detailed session log.")
-			}]
-		},{
-			xtype: "checkbox",
 			name: "post_purge",
 			fieldLabel: _("Purge"),
 			checked: true,
@@ -547,12 +538,6 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
     		fieldLabel: _("Delete source"),
     		checked: false,
     		boxLabel: _("Delete all data from source")
-    	},{
-    		xtype: "checkbox",
-    		name: "sessionlog_save",
-    		fieldLabel: _("Log"),
-    		checked: true,
-    		boxLabel: _("Save restore log")
     	}]
     });
 		
@@ -611,7 +596,6 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
         				uuid: me.uuid,
         				dir: dir,
         				deleteold: options.deleteold,
-        				sessionlog_save: options.sessionlog_save,
         				version: version.version,
         				//restore_sharedfolder_uuid: redirect.mntentref,
         				//restore_dir: redirect.reldirpath
@@ -642,7 +626,7 @@ Ext.define("OMV.module.admin.service.sbackup.purge", {
 
 	title: _("Purge versions from backup"),
 	width: 700,
-	height: 159,
+	height: 132,
 	layout: "border",
 	modal: true,
 	buttonAlign: "center",
@@ -671,13 +655,7 @@ Ext.define("OMV.module.admin.service.sbackup.purge", {
 					ptype: "fieldinfo",
 					text: _("How many days should be kept. 0 will leave only last completed session.")
 				}]
-  		},{
-    		xtype: "checkbox",
-    		name: "sessionlog_save",
-    		fieldLabel: _("Log"),
-    		checked: true,
-    		boxLabel: _("Save restore log")
-    	}]
+  		}]
     });
 		
 		Ext.apply(me, {
@@ -719,7 +697,6 @@ Ext.define("OMV.module.admin.service.sbackup.purge", {
       			method: "runPurge",
       			params: {
       				uuid: me.uuid,
-      				sessionlog_save: options.sessionlog_save,
       				retention: options.retention
       			}
       		}

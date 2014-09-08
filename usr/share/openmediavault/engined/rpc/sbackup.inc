@@ -287,7 +287,6 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		"schedule_wday":{"type":"string"},
 		"schedule_hour":{"type":"string"},
 		"schedule_minute":{"type":"string"},
-		"sessionlog_save":{"type":"boolean"},
 		"post_purge":{"type":"boolean"},
 		"protect_days_job":{"type":"integer","minimum":0,"maximum":365},
 		"post_job":{"type":"string"},
@@ -308,7 +307,6 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		"schedule_wday" => $params['schedule_wday'],
 		"schedule_hour" => $params['schedule_hour'],
 		"schedule_minute" => $params['schedule_minute'],
-		"sessionlog_save" => $params['sessionlog_save'],
 		"post_purge" => $params['post_purge'],
 		"protect_days_job" => $params['protect_days_job'],
 		"post_job" => $params['post_job'],
@@ -466,8 +464,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		"type":"object",
 		"properties":{
 		"uuid":{'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
-		"retention":{"type":"integer"},
-		"sessionlog_save":{"type":"boolean"}
+		"retention":{"type":"integer"}
 		}
 		}');
 		// Check if the module is marked as dirty. This can be an indication
@@ -514,7 +511,6 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		"uuid":{'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
 		"version":{"type":"string"},
 		"dir":{"type":"string"},
-		"sessionlog_save":{"type":"boolean"},
 		"deleteold":{"type":"boolean"}
 		}
 		}');
@@ -588,7 +584,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
     fwrite($scriptfile, "  fi\n");
 		fwrite($scriptfile, "  cat \"".$OMV_SBACKUP_LOGFILE."\"|sed \"s/^running|\(.*\)|\(.*\)|\${SB_TIMESTART}||||restore|/\${SB_ECODE}|\\1|\\2|\${SB_TIMESTART}|\${SB_TIMEEND}|\${RSSIZE}|\${RSPERF}|restore|/g\" > \"".$OMV_SBACKUP_LOGFILE.".new\"\n");
     fwrite($scriptfile, "  mv \"".$OMV_SBACKUP_LOGFILE.".new\" \"".$OMV_SBACKUP_LOGFILE."\"\n");
-		if($params['sessionlog_save'])fwrite($scriptfile, "  echo \"Backup name: ".$object['name']."\nUUID: ".$params['uuid']."\n\n\$RSOUT\n\nStart time: \$(date -d @\${SB_TIMESTART})\nEnd time: \$(date -d @\${SB_TIMEEND})\nStatus: \${SB_ECODE}\" > \"".$OMV_SBACKUP_SESLOGDIR."/".$params['uuid']."_\${SB_TIMESTART}.log\"\n");
+		fwrite($scriptfile, "  echo \"Backup name: ".$object['name']."\nUUID: ".$params['uuid']."\n\n\$RSOUT\n\nStart time: \$(date -d @\${SB_TIMESTART})\nEnd time: \$(date -d @\${SB_TIMEEND})\nStatus: \${SB_ECODE}\" > \"".$OMV_SBACKUP_SESLOGDIR."/".$params['uuid']."_\${SB_TIMESTART}.log\"\n");
     fwrite($scriptfile, "  rm -f \"".$runfile."\"\n");
     fwrite($scriptfile, "  exit 0\n");
     fwrite($scriptfile, "}\n");
