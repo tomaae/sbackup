@@ -4,6 +4,8 @@
 =================================================================
 
 ==BKPLIST========================================================
+- import backup. (save backup configuration within backup_uuid folder), select share point, search subdirectories for configs, show only those which have correct config and are not imported already
+
 []- ?abort job
 []- ?running job status
 =================================================================
@@ -18,8 +20,6 @@
 *- rework schedule (combo checkbox?), ability to disable schedule
 - disable will disable getting started as post_job, its copy, purge, verify
 
-- backup configuration (backup specifications and backup history) after each backup, import via settings tab (backup history log copy and omv config import in same way as postinst)
-  import backup. (save backup configuration within backup_uuid folder), select share point, search subdirectories for configs, show only those which have correct config and are not imported already
 *[]- report checkbox
 *[]- LVM snapshot (fields: checkbox enable, allow fallback, %sizeslider:sliderfield)
 =================================================================
@@ -46,7 +46,6 @@
 backup_uuid
 target_type (shared folder, rsync server, ssh) < (rsync: user, pwd, ip), (ssh: user, ip)
 retention
-savelog
 post_purge
 post_job
 
