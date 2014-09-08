@@ -76,6 +76,24 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
   			-o "  cat \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"|sed \"s/^running|\(.*\)|\(.*\)|\${SB_TIMESTART}||||backup|/\${SB_ECODE}|\1|\2|\${SB_TIMESTART}|\${SB_TIMEEND}|\${RSSIZE}|\${RSPERF}|backup|/g\" > \"" -o ${OMV_SBACKUP_LOGFILE} -o ".new\"" -n \
   			-o "  mv \"" -o ${OMV_SBACKUP_LOGFILE} -o ".new\" \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
   			-o "  echo \"\n\nEnd time: \$(date -d @\${SB_TIMEEND})\nStatus: \${SB_ECODE}\" >> \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"" -n \
+  			-o "  if [ \"\${SB_ECODE}\" = \"0\" ]; then" -n \
+        -o "    mkdir -p \"" ${GET_TARGET_DEST} -o "/meta_\${SB_TIMESTART}/\"" -n \
+        -o "    chmod 777 \"" ${GET_TARGET_DEST} -o "/meta_\${SB_TIMESTART}/\"" -n \
+        -o "    cp \"" -o ${OMV_SBACKUP_LOGFILE} -o "\" \"" ${GET_TARGET_DEST} -o "/meta_\${SB_TIMESTART}/\"" -n \
+        -o "    cp \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\" \"" ${GET_TARGET_DEST} -o "/meta_\${SB_TIMESTART}/\"" -n \
+        -o "    [ -e \"" ${GET_TARGET_DEST} -o "/data_latest\" ] && rm \"" ${GET_TARGET_DEST} -o "/data_latest\"" -n \
+        -o "    ln -s \"" ${GET_TARGET_DEST} -o "/data_\${SB_TIMESTART}/\" \"" ${GET_TARGET_DEST} -o "/data_latest\"" -n \
+        -o "    [ -e \"" ${GET_TARGET_DEST} -o "/meta_latest\" ] && rm \"" ${GET_TARGET_DEST} -o "/meta_latest\"" -n \
+        -o "    ln -s \"" ${GET_TARGET_DEST} -o "/meta_\${SB_TIMESTART}/\" \"" ${GET_TARGET_DEST} -o "/meta_latest\"" -n \
+        -o "    echo \"#!/bin/sh\" > \"" ${GET_TARGET_DEST} -o "/meta_\${SB_TIMESTART}/import.sh\"" -n \
+        -o "    echo \". /etc/default/openmediavault\" >> \"" ${GET_TARGET_DEST} -o "/meta_\${SB_TIMESTART}/import.sh\"" -n \
+        -o "    echo \". /usr/share/openmediavault/scripts/helper-functions\" >> \"" ${GET_TARGET_DEST} -o "/meta_\${SB_TIMESTART}/import.sh\"" -n \
+        -o "    echo \"if ! omv_config_exists \\\"/config/services/sbackup/backuplist/backup[uuid='" -v "uuid" -o "']\\\"; then\"  >> \"" ${GET_TARGET_DEST} -o "/meta_\${SB_TIMESTART}/import.sh\"" -n \
+        -o "    echo \"  object=\\\"<uuid>" -v "uuid" -o "</uuid><enable>" -v "enable" -o "</enable><name>" -v "name" -o "</name><job_type>" -v "job_type" -o "</job_type><backup_type>" -v "backup_type" -o "</backup_type><source_sharedfolder_uuid>" -v "source_sharedfolder_uuid" -o "</source_sharedfolder_uuid><target_sharedfolder_uuid>" -v "target_sharedfolder_uuid" -o "</target_sharedfolder_uuid><schedule_wday>" -v "schedule_wday" -o "</schedule_wday><schedule_hour>" -v "schedule_hour" -o "</schedule_hour><schedule_minute>" -v "schedule_minute" -o "</schedule_minute><post_purge>" -v "post_purge" -o "</post_purge><protect_days_job>" -v "protect_days_job" -o "</protect_days_job><post_job>" -v "post_job" -o "</post_job><purge_job_uuid>" -v "purge_job_uuid" -o "</purge_job_uuid><verify_job_uuid>" -v "verify_job_uuid" -o "</verify_job_uuid>\\\"\" >> \"" ${GET_TARGET_DEST} -o "/meta_\${SB_TIMESTART}/import.sh\"" -n \
+        -o "    echo \"  omv_config_add_element \\\"/config/services/sbackup/backuplist\\\" \\\"backup\\\" \\\"\\\${object}\\\" true\" >> \"" ${GET_TARGET_DEST} -o "/meta_\${SB_TIMESTART}/import.sh\"" -n \
+        -o "    echo \"  echo Import completed\" >> \"" ${GET_TARGET_DEST} -o "/meta_\${SB_TIMESTART}/import.sh\"" -n \
+        -o "    echo \"fi\" >> \"" ${GET_TARGET_DEST} -o "/meta_\${SB_TIMESTART}/import.sh\"" -n \
+  			-o "  fi" -n \
   			-o "  echo \"backup|completed|\" > ${runfile}" -n \
   			-i "post_purge = 1" -o "  \"" -o ${OMV_SBACKUP_SCRIPTS_DIR} -o "/purge_" -v "uuid" -o "\"" -b -n \
         -o "  [ -e \"${runfile}\" ] && rm -f \"${runfile}\"" -n \
@@ -162,7 +180,9 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
         -o "		[ \"\${r_start}\" = \"\${LAST_BACKUP}\" ] && continue" -n \
         -o "    echo \"Purging version \$(date -d @\${r_start})\" >> \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"" -n \
         -o "    [ -d \"" ${GET_TARGET_DEST} -o "/data_\${r_start}/\" ] && rm -r \"" ${GET_TARGET_DEST} -o "/data_\${r_start}/\"" -n \
+        -o "    [ -d \"" ${GET_TARGET_DEST} -o "/meta_\${r_start}/\" ] && rm -r \"" ${GET_TARGET_DEST} -o "/meta_\${r_start}/\"" -n \
         -o "    [ -d \"" ${GET_TARGET_DEST} -o "/data_\${r_start}/\" ] && continue" -n \
+        -o "    [ -d \"" ${GET_TARGET_DEST} -o "/meta_\${r_start}/\" ] && continue" -n \
         -o "    [ -e \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${r_start}" -o ".log\" ] && rm \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${r_start}" -o ".log\"" -n \
 				-o "    cat \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"|grep -v \"^\${r_status}|\(.*\)|\(.*\)|\${r_start}|\(.*\)|\(.*\)|\(.*\)|\${r_type}|\" > \"" -o ${OMV_SBACKUP_LOGFILE} -o ".new\"" -n \
   			-o "    mv \"" -o ${OMV_SBACKUP_LOGFILE} -o ".new\" \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
