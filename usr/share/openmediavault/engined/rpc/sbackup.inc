@@ -28,8 +28,6 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		$this->registerMethod("runPurge");
 		$this->registerMethod("runRestore");
 		$this->registerMethod("getRestoreDirBrowser");
-		$this->registerMethod("getSettings");
-		$this->registerMethod("setSettings");
 		$this->registerMethod("getVersions");
 		$this->registerMethod("getJobList");
 	}
@@ -707,70 +705,6 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		}
 	}
 
-	/**
-	* getSettings
-	*/
-  public function getSettings($params, $context) {
-  	global $xmlConfig;
-  	$this->validateMethodContext($context, array("role" => OMV_ROLE_ADMINISTRATOR));
-  	$xpath = "//services/sbackup/settings";
-    $object = $xmlConfig->get($xpath);
-    if(is_null($object)) {
-       throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,$xpath);
-    }
-    
-    $object['protect_days_history'] = intval($object['protect_days_history']);
-    $object['protect_days_sessionlog'] = intval($object['protect_days_sessionlog']);
-
-    return $object;
-  }
-  
-  /**
-	* setSettings
-	*/
-  public function setSettings($params, $context) {
-  	global $xmlConfig;
-    $this->validateMethodContext($context, array("role" => OMV_ROLE_ADMINISTRATOR)); 
-    $this->validateMethodParams($params, '{
-      "type":"object",
-      "properties":{
-        "protect_days_history":{"type":"integer","minimum":0,"maximum":365},
-        "protect_days_sessionlog":{"type":"integer","minimum":0,"maximum":365}
-        }
-      }'
-    );
-    
-    if($params['protect_days_history'] < $params['protect_days_sessionlog']){
-    	throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Log retention cannot be longer then history retention.");
-    }
-    
-    // Get the existing configuration object.
-    $xpath = "//services/sbackup/settings";
-    $oldObject = $xmlConfig->get($xpath);
-    if(is_null($oldObject)) {
-       throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,$xpath);
-    }
- 
-    // Update the configuration object.
-    $object = array(
-      "protect_days_history" => $params['protect_days_history'],
-      "protect_days_sessionlog" => $params['protect_days_sessionlog']
-    );
-
-    // Update the xmlConfig file. If it fails then generate an error
-    
-    if(FALSE === $xmlConfig->replace("//services/sbackup/settings", $object)) {
-        throw new OMVException(OMVErrorMsg::E_CONFIG_SET_OBJECT_FAILED);
-    }
-
-    // Notify configuration changes.
-    $dispatcher = &OMVNotifyDispatcher::getInstance();
-    $dispatcher->notify(OMV_NOTIFY_MODIFY, "org.openmediavault.services.sbackup.settings", $object);
-
-    // Return the configuration object.
-    return $object;
-  }
-  
   /**
 	* getVersions
 	*/
