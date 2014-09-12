@@ -74,10 +74,18 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
           "verify_job_uuid"
         ],
         properties: ["!allowBlank"]
+    },{
+        conditions: [
+          {name: "schedule_enable", value: true}
+        ],
+        name: [
+          "schedule_mon","schedule_tue","schedule_wed","schedule_thu","schedule_fri","schedule_sat","schedule_sun","schedule_hour","schedule_minute"
+        ],
+        properties: ["show"]
     }]
   }],
 	width: 570,
-	//height: 400,
+	height: 500,
 
 	getFormItems: function() {
 		var me = this;
@@ -263,29 +271,63 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 				text: _("Backup job to verify.")
 			}]
 		},{
-			xtype: "combo",
-			name: "schedule_wday",
-			fieldLabel: _("Day"),
-			queryMode: "local",
-			store: Ext.create("Ext.data.ArrayStore", {
-				fields: [ "value", "text" ],
-				data: [
-				[ "7", _("Daily") ],
-				[ "1", _("Monday") ],
-				[ "2", _("Tuesday") ],
-				[ "3", _("Wednesday") ],
-				[ "4", _("Thursday") ],
-				[ "5", _("Friday") ],
-				[ "6", _("Saturday") ],
-				[ "0", _("Sunday") ]
-				]
-			}),
-			displayField: "text",
-			valueField: "value",
-			allowBlank: false,
-			editable: false,
-			triggerAction: "all",
-			value: "7"
+			xtype: "checkbox",
+			name: "schedule_enable",
+			fieldLabel: _("Scheduled"),
+			checked: true,
+			plugins: [{
+				ptype: "fieldinfo",
+				text: _("Enable job schedule. If disabled, job can be started manually or as post job.")
+			}]
+		},{
+			xtype: "checkbox",
+			name: "schedule_mon",
+			fieldLabel: _(" "),
+			boxLabel: _("Monday"),
+			checked: false,
+			hidden: true,
+		},{
+			xtype: "checkbox",
+			name: "schedule_tue",
+			fieldLabel: _(" "),
+			boxLabel: _("Tuesday"),
+			checked: false,
+			hidden: true,
+		},{
+			xtype: "checkbox",
+			name: "schedule_wed",
+			fieldLabel: _(" "),
+			boxLabel: _("Wednesday"),
+			checked: false,
+			hidden: true,
+		},{
+			xtype: "checkbox",
+			name: "schedule_thu",
+			fieldLabel: _(" "),
+			boxLabel: _("Thursday"),
+			checked: false,
+			hidden: true,
+		},{
+			xtype: "checkbox",
+			name: "schedule_fri",
+			fieldLabel: _(" "),
+			boxLabel: _("Friday"),
+			checked: false,
+			hidden: true,
+		},{
+			xtype: "checkbox",
+			name: "schedule_sat",
+			fieldLabel: _(" "),
+			boxLabel: _("Saturday"),
+			checked: false,
+			hidden: true,
+		},{
+			xtype: "checkbox",
+			name: "schedule_sun",
+			fieldLabel: _(" "),
+			boxLabel: _("Sunday"),
+			checked: false,
+			hidden: true,
 		},{
 			xtype: "combo",
 			name: "schedule_hour",
@@ -324,6 +366,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			valueField: "value",
 			allowBlank: false,
 			editable: false,
+			hidden: true,
 			triggerAction: "all",
 			value: "00"
 		},{
@@ -343,6 +386,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			displayField: "text",
 			valueField: "value",
 			allowBlank: false,
+			hidden: true,
 			editable: false,
 			triggerAction: "all",
 			value: "00"

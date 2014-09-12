@@ -17,9 +17,6 @@
 []- settings, only one backup at once > queuing
 []- settings, only one backup to one target datastore at once > queuing
 
-*- rework schedule (combo checkbox?), ability to disable schedule
-- disable will disable getting started as post_job, its copy, purge, verify
-
 *[]- report checkbox
 *[]- LVM snapshot (fields: checkbox enable, allow fallback, %sizeslider:sliderfield)
 =================================================================
@@ -140,3 +137,7 @@ lvremove -f /dev/vg_b/lv_4_snap
                                 submitValue: false,
                                 value: 10
 }
+
+
+
+throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Source and destination targets cannot be the same.");

@@ -211,8 +211,23 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 			if($objectv['job_type'] == "verify")  $objectv['job_type'] = "Verify";
 			
 			$objectv['enable'] = boolval($objectv['enable']);
-			$wdays = array('Sun','Mon','Tue','Wed','Thu','Fri','Sat','Daily');
-			$objectv['schedule'] = $wdays[$objectv['schedule_wday']]." ".$objectv['schedule_hour'].":".$objectv['schedule_minute'];
+			$objectv['schedule'] = "";
+		  if($objectv['schedule_enable'] == 0){
+		  	$objectv['schedule'] = "Disabled";
+		  }else{
+		  	$objectv['schedule'] .= $objectv['schedule_hour'].":".$objectv['schedule_minute']." ";
+		  	$val = explode(",", $objectv['schedule_wday']);
+		  	if(count($val) == 7)$objectv['schedule'] .= "Daily";
+		  	if(count($val) < 7){
+      		$wdays = array('Sun','Mon','Tue','Wed','Thu','Fri','Sat');
+      		if(count($val) > 3)$wdays = array('S','M','T','W','T','F','S');
+      		for($i=0;$i < count($val);$i++){
+      			$objectv['schedule'] .= $wdays[$val[$i]].",";
+      		}
+  				$objectv['schedule'] = trim($objectv['schedule'], ",");    		
+				}
+			}
+			
 			
 			if($objectv['protect_days_job'] == 0){
 				$objectv['retention'] = "Single version";
@@ -261,6 +276,18 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		}
 		// Modify result object.
 		$object['enable'] = boolval($object['enable']);
+		$object['schedule_enable'] = boolval($object['schedule_enable']);
+		$val = explode(",", $object['schedule_wday']);
+		for($i=0;$i < count($val);$i++){
+			if($val[$i] == 1)$object['schedule_mon'] = 1;
+			if($val[$i] == 2)$object['schedule_tue'] = 1;
+			if($val[$i] == 3)$object['schedule_wed'] = 1;
+			if($val[$i] == 4)$object['schedule_thu'] = 1;
+			if($val[$i] == 5)$object['schedule_fri'] = 1;
+			if($val[$i] == 6)$object['schedule_sat'] = 1;
+			if($val[$i] == 0)$object['schedule_sun'] = 1;
+		}
+		
 		return $object;
 	}
 
@@ -284,7 +311,14 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		"backup_type":{"type":"string"},
 		"source_sharedfolder_uuid":{'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
 		"target_sharedfolder_uuid":{'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
-		"schedule_wday":{"type":"string"},
+		"schedule_enable":{"type":"boolean"},
+		"schedule_mon":{"type":"boolean"},
+		"schedule_tue":{"type":"boolean"},
+		"schedule_wed":{"type":"boolean"},
+		"schedule_thu":{"type":"boolean"},
+		"schedule_fri":{"type":"boolean"},
+		"schedule_sat":{"type":"boolean"},
+		"schedule_sun":{"type":"boolean"},
 		"schedule_hour":{"type":"string"},
 		"schedule_minute":{"type":"string"},
 		"post_purge":{"type":"boolean"},
@@ -294,6 +328,20 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		"verify_job_uuid":{"type":"string"}
 		}
 		}');
+		
+		if($params['schedule_enable'] == "1"){
+			if($params['schedule_mon'] == "0" && $params['schedule_tue'] == "0" && $params['schedule_wed'] == "0" && $params['schedule_thu'] == "0" && $params['schedule_fri'] == "0" && $params['schedule_sat'] == "0" && $params['schedule_sun'] == "0")
+			  throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Schedule enabled but no day set.");
+		}
+		$params['schedule_wday'] = "";
+		if($params['schedule_mon'])$params['schedule_wday'] .= "1,";
+		if($params['schedule_tue'])$params['schedule_wday'] .= "2,";
+		if($params['schedule_wed'])$params['schedule_wday'] .= "3,";
+		if($params['schedule_thu'])$params['schedule_wday'] .= "4,";
+		if($params['schedule_fri'])$params['schedule_wday'] .= "5,";
+		if($params['schedule_sat'])$params['schedule_wday'] .= "6,";
+		if($params['schedule_sun'])$params['schedule_wday'] .= "0,";
+		
 		// Prepare the configuration object.
 		$object = array(
 		"uuid" => ($params['uuid'] == $GLOBALS['OMV_UUID_UNDEFINED']) ?
@@ -304,7 +352,8 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		"backup_type" => $params['backup_type'],
 		"source_sharedfolder_uuid" => $params['source_sharedfolder_uuid'],
 		"target_sharedfolder_uuid" => $params['target_sharedfolder_uuid'],
-		"schedule_wday" => $params['schedule_wday'],
+		"schedule_enable" => $params['schedule_enable'],
+		"schedule_wday" => trim($params['schedule_wday'], ","),
 		"schedule_hour" => $params['schedule_hour'],
 		"schedule_minute" => $params['schedule_minute'],
 		"post_purge" => $params['post_purge'],
