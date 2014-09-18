@@ -219,8 +219,10 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		  	$val = explode(",", $objectv['schedule_wday']);
 		  	if(count($val) == 7)$objectv['schedule'] .= "Daily";
 		  	if(count($val) < 7){
-      		$wdays = array('Sun','Mon','Tue','Wed','Thu','Fri','Sat');
-      		if(count($val) > 3)$wdays = array('S','M','T','W','T','F','S');
+		  		$wdays = array('Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday');
+      		if(count($val) > 1)$wdays = array('Sun','Mon','Tue','Wed','Thu','Fri','Sat');
+      		if(count($val) > 3)$wdays = array('Su','Mo','Tu','We','Th','Fr','Sa');
+      		if(count($val) > 4)$wdays = array('S','M','T','W','T','F','S');
       		for($i=0;$i < count($val);$i++){
       			$objectv['schedule'] .= $wdays[$val[$i]].",";
       		}
