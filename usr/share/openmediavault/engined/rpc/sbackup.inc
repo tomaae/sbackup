@@ -183,13 +183,15 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 			if(file_exists(sprintf("/var/log/sbackup/history_%s", $use_uuid))){
 				$txt_file = file_get_contents(sprintf("/var/log/sbackup/history_%s", $use_uuid));
 				$lines    = explode("\n", $txt_file);
+				$rows_latest = array();
 				foreach($lines as $line){
 					if(!$line)continue;
-					$rows_latest        = explode("|", $line);
-					if($rows_latest[7] != $objectv['job_type'])continue;
-					if($rows_latest[0] == "0"){
+					$rows_current        = explode("|", $line);
+					if($rows_current[7] != $objectv['job_type'])continue;
+					$rows_latest = $rows_current;
+					if($rows_current[0] == "0"){
 						$objectv['versions']++;
-						$objectv['size']+=$rows_latest[5];
+						$objectv['size']+=$rows_current[5];
 						$rows_completed = explode("|", $line);
 					}
 				}
