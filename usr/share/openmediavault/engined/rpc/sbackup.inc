@@ -667,7 +667,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
     fwrite($scriptfile, "rsync --verbose --stats -aEAX");
     if($params['deleteold'])fwrite($scriptfile, " --delete");
     fwrite($scriptfile, " \"".$GET_TARGET_DEST."\" \"".$GET_SOURCE_PATH."\" 2>&1 >> \"".$OMV_SBACKUP_SESLOGDIR."/".$params['uuid']."_\${SB_TIMESTART}.log\"\n");
-    fwrite($scriptfile, "SB_ECODE=\$(echo \$?)\n sleep 5");
+    fwrite($scriptfile, "SB_ECODE=\$(echo \$?)");
 		fclose($scriptfile);
 		
 		$cmd = "chmod 755 \"$filename\"";

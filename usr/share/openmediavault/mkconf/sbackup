@@ -147,7 +147,6 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
         -o " -aEAX --delete \${INCR}" \
         -o " \"" ${GET_SOURCE_PATH} -o "\"" -o " \"" ${GET_TARGET_DEST} -o "/data_\${SB_TIMESTART}/\" 2>&1 >> \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"" -n \
         -o "SB_ECODE=\$(echo \$?)" -n \
-        -o "sleep 5" -n \
       	${OMV_CONFIG_FILE} | xmlstarlet unesc > "${OMV_SBACKUP_SCRIPTS_DIR}/backup_${uuid}"
       chmod ${OMV_SBACKUP_SCRIPTS_MASK} "${OMV_SBACKUP_SCRIPTS_DIR}/backup_${uuid}"
       
@@ -194,7 +193,6 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
   			-o "cat \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"|sed \"s/^running|\(.*\)|\(.*\)|\${SB_TIMESTART}||||purge|/0|\1|\2|\${SB_TIMESTART}|\${SB_TIMEEND}|0|0.00|purge|/g\" > \"" -o ${OMV_SBACKUP_LOGFILE} -o ".new\"" -n \
   			-o "mv \"" -o ${OMV_SBACKUP_LOGFILE} -o ".new\" \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
   			-o "echo \"Purging completed\" >> \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"" -n \
-  			-o "sleep 5" -n \
   			-o "rm -f \"${runfile}\"" -n \
   			-o "exit 0" -n \
   			${OMV_CONFIG_FILE} | xmlstarlet unesc > "${OMV_SBACKUP_SCRIPTS_DIR}/purge_${uuid}"
@@ -212,6 +210,7 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
       -i "job_type = \"purge\""  -o " ${OMV_SBACKUP_SCRIPTS_DIR}/purge_" -v "purge_job_uuid" -b \
       -i "job_type = \"verify\"" -o " ${OMV_SBACKUP_SCRIPTS_DIR}/verify_" -v "verify_job_uuid" -b \
       ${OMV_CONFIG_FILE} | xmlstarlet unesc >> "${OMV_SBACKUP_CRONFILE}"
+    chmod 644 "${OMV_SBACKUP_CRONFILE}"   
 
 
 
