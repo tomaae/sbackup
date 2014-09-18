@@ -321,6 +321,12 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		"schedule_sun":{"type":"boolean"},
 		"schedule_hour":{"type":"string"},
 		"schedule_minute":{"type":"string"},
+		"lvmsnap_enable":{"type":"boolean"},
+		"lvmsnap_size":{"type":"integer","minimum":10,"maximum":100},
+		"lvmsnap_fallback":{"type":"boolean"},
+		"queue":{"type":"boolean"},
+		"autorestart":{"type":"boolean"},
+		"report":{"type":"boolean"},
 		"post_purge":{"type":"boolean"},
 		"protect_days_job":{"type":"integer","minimum":0,"maximum":365},
 		"post_job":{"type":"string"},
@@ -356,6 +362,12 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		"schedule_wday" => trim($params['schedule_wday'], ","),
 		"schedule_hour" => $params['schedule_hour'],
 		"schedule_minute" => $params['schedule_minute'],
+		"lvmsnap_enable" => $params['lvmsnap_enable'],
+		"lvmsnap_fallback" => $params['lvmsnap_fallback'],
+		"lvmsnap_size" => $params['lvmsnap_size'],
+		"queue" => $params['queue'],
+		"autorestart" => $params['autorestart'],
+		"report" => $params['report'],
 		"post_purge" => $params['post_purge'],
 		"protect_days_job" => $params['protect_days_job'],
 		"post_job" => $params['post_job'],
@@ -443,8 +455,8 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		
 		foreach($objects as $objectk => &$objectv) {
 			if($objectv['post_job'] && $objectv['post_job'] == $params['uuid'])throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Job cannot be deleted, it is used as post job by \"".$objectv['name']."\"");
-			if($objectv['job_type'] == "copy"   && $objectv['copy_job_uuid'] == $params['uuid'])  throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Job cannot be deleted, it does have copy job \"".$objectv['name']."\"");
-			if($objectv['job_type'] == "purge"  && $objectv['purge_job_uuid'] == $params['uuid']) throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Job cannot be deleted, it does have purge job \"".$objectv['name']."\"");
+			if($objectv['job_type'] == "copy"   && $objectv['copy_job_uuid']   == $params['uuid'])throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Job cannot be deleted, it does have copy job \"".$objectv['name']."\"");
+			if($objectv['job_type'] == "purge"  && $objectv['purge_job_uuid']  == $params['uuid'])throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Job cannot be deleted, it does have purge job \"".$objectv['name']."\"");
 			if($objectv['job_type'] == "verify" && $objectv['verify_job_uuid'] == $params['uuid'])throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Job cannot be deleted, it does have verify job \"".$objectv['name']."\"");
 		}
 

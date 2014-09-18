@@ -11,14 +11,13 @@
 =================================================================
 
 ==BACKUP=========================================================
-*- restart failed jobs
+[*]- restart failed jobs
 - warning on changing backup source (same as for changing filesystem in shared folders)
 - warning on changing backup target (same as for changing filesystem in shared folders)
-[]- settings, only one backup at once > queuing
-[]- settings, only one backup to one target datastore at once > queuing
+[*]- settings, only one backup at once > queuing
 
-*[]- report checkbox
-*[]- LVM snapshot (fields: checkbox enable, allow fallback, %sizeslider:sliderfield)
+[*]- report checkbox
+[*]- LVM snapshot (fields: checkbox enable, allow fallback, %sizeslider:sliderfield)
 =================================================================
 
 ==RESTORE========================================================
@@ -125,19 +124,3 @@ mount /dev/vg_b/lv_4_snap /mnt -oro
 umount /dev/vg_b/lv_4_snap
 lvremove -f /dev/vg_b/lv_4_snap
 =================================================================
-,{
-                                xtype: "sliderfield",
-                                name: "sizeslider",
-                                minValue: 1,
-                                maxValue: 100,
-                                decimalPrecision: 0,
-                                useTips: false,
-                                disabled: true,
-                                flex: 1,
-                                submitValue: false,
-                                value: 10
-}
-
-
-
-throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Source and destination targets cannot be the same.");

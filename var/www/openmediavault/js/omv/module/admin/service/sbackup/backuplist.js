@@ -30,6 +30,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
           "source_sharedfolder_uuid",
           "target_sharedfolder_uuid",
           "protect_days_job",
+          "lvmsnap_enable",
           "post_purge"
         ],
         properties: ["show"]
@@ -80,6 +81,14 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
         ],
         name: [
           "schedule_mon","schedule_tue","schedule_wed","schedule_thu","schedule_fri","schedule_sat","schedule_sun","schedule_hour","schedule_minute"
+        ],
+        properties: ["show"]
+    },{
+        conditions: [
+          {name: "lvmsnap_enable", value: true}
+        ],
+        name: [
+          "lvmsnap_fallback","lvmsnap_size"
         ],
         properties: ["show"]
     }]
@@ -390,6 +399,66 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			editable: false,
 			triggerAction: "all",
 			value: "00"
+		},{
+			xtype: "checkbox",
+			name: "lvmsnap_enable",
+			fieldLabel: _("LVM snapshot"),
+			checked: false,
+			plugins: [{
+				ptype: "fieldinfo",
+				text: _("Enable LVM snapshots.")
+			}]
+		},{
+      xtype: "sliderfield",
+      name: "lvmsnap_size",
+      fieldLabel: _("Use % free space for snapshot"),
+      minValue: 10,
+      maxValue: 100,
+      decimalPrecision: 0,
+      useTips: true,
+      hidden: true,
+      flex: 1,
+      value: 10,
+			plugins: [{
+				ptype: "fieldinfo",
+				text: _("Use % free space for snapshot.")
+			}]
+		},{
+			xtype: "checkbox",
+			name: "lvmsnap_fallback",
+			fieldLabel: _("LVM snapshot fallback"),
+			checked: false,
+			plugins: [{
+				ptype: "fieldinfo",
+				text: _("Backup will continue even with snapshot creation failes.")
+			}]
+		},{
+			xtype: "checkbox",
+			name: "queue",
+			fieldLabel: _("Queue"),
+			checked: false,
+			plugins: [{
+				ptype: "fieldinfo",
+				text: _("This job will start only when no other jobs are running, otherwise it will queue.")
+			}]
+		},{
+			xtype: "checkbox",
+			name: "autorestart",
+			fieldLabel: _("Restart"),
+			checked: false,
+			plugins: [{
+				ptype: "fieldinfo",
+				text: _("Automatically restart job on failure. Onyl one restart attempt will be done.")
+			}]
+		},{
+			xtype: "checkbox",
+			name: "report",
+			fieldLabel: _("Reporting"),
+			checked: false,
+			plugins: [{
+				ptype: "fieldinfo",
+				text: _("Include job in aggregated report.")
+			}]
 		},{
 			xtype: "checkbox",
 			name: "post_purge",
