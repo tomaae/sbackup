@@ -184,6 +184,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 				$txt_file = file_get_contents(sprintf("/var/log/sbackup/history_%s", $use_uuid));
 				$lines    = explode("\n", $txt_file);
 				$rows_latest = array();
+				$rows_completed = array();
 				foreach($lines as $line){
 					if(!$line)continue;
 					$rows_current        = explode("|", $line);
