@@ -127,11 +127,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			allowBlank: false,
 			editable: false,
 			triggerAction: "all",
-			value: "backup",
-			plugins: [{
-				ptype: "fieldinfo",
-				text: _("Job type.")
-			}]
+			value: "backup"
 		},{
 			xtype: "combo",
 			name: "backup_type",
@@ -411,7 +407,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 		},{
       xtype: "sliderfield",
       name: "lvmsnap_size",
-      fieldLabel: _("Use % free space for snapshot"),
+      fieldLabel: _(" "),
       minValue: 10,
       maxValue: 100,
       decimalPrecision: 0,
@@ -421,16 +417,16 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
       value: 10,
 			plugins: [{
 				ptype: "fieldinfo",
-				text: _("Use % free space for snapshot.")
+				text: _("Use % of available free space for snapshot.")
 			}]
 		},{
 			xtype: "checkbox",
 			name: "lvmsnap_fallback",
-			fieldLabel: _("LVM snapshot fallback"),
+			fieldLabel: _(" "),
 			checked: false,
 			plugins: [{
 				ptype: "fieldinfo",
-				text: _("Backup will continue even with snapshot creation failes.")
+				text: _("Snapshot fallback (Backup will continue even when snapshot creation fails)")
 			}]
 		},{
 			xtype: "checkbox",
@@ -448,7 +444,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			checked: false,
 			plugins: [{
 				ptype: "fieldinfo",
-				text: _("Automatically restart job on failure. Onyl one restart attempt will be done.")
+				text: _("Automatically restart job on failure. Only one restart attempt will be done.")
 			}]
 		},{
 			xtype: "checkbox",
@@ -467,7 +463,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			hidden: true,
 			plugins: [{
 				ptype: "fieldinfo",
-				text: _("Start purge after successful backup. Do NOT uncheck unless necessery.")
+				text: _("Start purge after successful backup. Do NOT uncheck unless necessary.")
 			}]
 		},{
 			xtype: "combo",
