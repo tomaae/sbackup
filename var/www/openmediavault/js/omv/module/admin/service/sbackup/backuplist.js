@@ -30,8 +30,8 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
           "source_sharedfolder_uuid",
           "target_sharedfolder_uuid",
           "protect_days_job",
-          "lvmsnap_enable",
-          "post_purge"
+          "post_purge",
+          //"lvmsnap_enable",
         ],
         properties: ["show"]
     },{
@@ -400,6 +400,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			name: "lvmsnap_enable",
 			fieldLabel: _("LVM snapshot"),
 			checked: false,
+			hidden: true,
 			plugins: [{
 				ptype: "fieldinfo",
 				text: _("Enable LVM snapshots.")
@@ -424,6 +425,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			name: "lvmsnap_fallback",
 			fieldLabel: _(" "),
 			checked: false,
+			hidden: true,
 			plugins: [{
 				ptype: "fieldinfo",
 				text: _("Snapshot fallback (Backup will continue even when snapshot creation fails)")
@@ -433,6 +435,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			name: "queue",
 			fieldLabel: _("Queue"),
 			checked: false,
+			hidden: true,
 			plugins: [{
 				ptype: "fieldinfo",
 				text: _("This job will start only when no other jobs are running, otherwise it will queue.")
@@ -442,6 +445,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			name: "autorestart",
 			fieldLabel: _("Restart"),
 			checked: false,
+			hidden: true,
 			plugins: [{
 				ptype: "fieldinfo",
 				text: _("Automatically restart job on failure. Only one restart attempt will be done.")
@@ -451,6 +455,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			name: "report",
 			fieldLabel: _("Reporting"),
 			checked: false,
+			hidden: true,
 			plugins: [{
 				ptype: "fieldinfo",
 				text: _("Include job in aggregated report.")
