@@ -881,6 +881,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 	  renderer: function(value) {
     	switch(value) {
     		case "Running":
+    		case "Queuing":
     		case "Restoring":
     		case "Purging":
     		case "Migrating":
@@ -1016,7 +1017,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
       
           	if(records[ai].data.lastcompleted == "N/A")tbarBtnDisabled["restore"] = true;
           	if(records[ai].data.versions < 1)tbarBtnDisabled["purge"] = true;
-          	if(records[ai].data.job_status == "Running" || records[ai].data.job_status == "Restoring" || records[ai].data.job_status == "Purging" || records[ai].data.job_status == "Migrating" || records[ai].data.job_status == "Copying"){
+          	if(records[ai].data.job_status == "Running" || records[ai].data.job_status == "Restoring" || records[ai].data.job_status == "Purging" || records[ai].data.job_status == "Migrating" || records[ai].data.job_status == "Copying" || records[ai].data.job_status == "Queuing"){
           		tbarBtnDisabled["run"] = true;
           		tbarBtnDisabled["restore"] = true;
           		tbarBtnDisabled["purge"] = true;
@@ -1102,7 +1103,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 
     	if(records[0].data.lastcompleted == "N/A")tbarBtnDisabled["restore"] = true;
     	if(records[0].data.versions < 1)tbarBtnDisabled["purge"] = true;
-    	if(records[0].data.job_status == "Running" || records[0].data.job_status == "Restoring" || records[0].data.job_status == "Purging" || records[0].data.job_status == "Migrating" || records[0].data.job_status == "Copying"){
+    	if(records[0].data.job_status == "Running" || records[0].data.job_status == "Restoring" || records[0].data.job_status == "Purging" || records[0].data.job_status == "Migrating" || records[0].data.job_status == "Copying" || records[0].data.job_status == "Queuing"){
     		tbarBtnDisabled["run"] = true;
     		tbarBtnDisabled["restore"] = true;
     		tbarBtnDisabled["purge"] = true;

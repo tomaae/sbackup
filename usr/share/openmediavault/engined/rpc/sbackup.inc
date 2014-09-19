@@ -179,6 +179,9 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 			// Get last job status
 			$objectv['job_status'] = "N/A";
 			$objectv['lastcompleted'] = "N/A";
+			if(file_exists(sprintf("/var/run/sbackup_queuing_%s", $use_uuid))){
+				$objectv['job_status']   = "Queuing";
+			}
 			if(file_exists(sprintf("/var/run/sbackup_%s", $use_uuid))){
 				$txt_file           = file_get_contents(sprintf("/var/run/sbackup_%s", $use_uuid));
 				$rows               = explode("|", $txt_file);
