@@ -1007,27 +1007,36 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
       		}
       	}
       	if(ai >= 0){
-      		var tbarRunCtrl = me.queryById(me.getId() + "-run");
-      		if(records.length > 0)
-      		  tbarRunCtrl.enable();
-      		else tbarRunCtrl.disable();
-      		var tbarRestoreCtrl = me.queryById(me.getId() + "-restore");
-      		if(records.length > 0 && records[ai].data.lastcompleted != "N/A")
-      			tbarRestoreCtrl.enable();
-      		else tbarRestoreCtrl.disable();
-      		var tbarPurgeCtrl = me.queryById(me.getId() + "-purge");
-      		if(records.length > 0 && records[ai].data.versions > 0)
-      			tbarPurgeCtrl.enable();
-      		else tbarPurgeCtrl.disable();
-      		if(records.length > 0 && (records[ai].data.job_status == "Running" || records[ai].data.job_status == "Restoring" || records[ai].data.job_status == "Purging" || records[ai].data.job_status == "Migrating" || records[ai].data.job_status == "Copying")){
-      			tbarRunCtrl.disable();
-      			tbarRestoreCtrl.disable();
-      			tbarPurgeCtrl.disable();
-      		}
-      		if(records.length > 0 && records[ai].data.job_type != "Backup" ){
-      			tbarRestoreCtrl.disable();
-      			tbarPurgeCtrl.disable();
-      		}
+      		var tbarBtnDisabled = {
+      			"delete": true,
+      			"run": true,
+      			"restore": true,
+      			"purge": true
+    			};
+    			
+          if(records.length > 0) {
+          	tbarBtnDisabled["run"] = false;
+          	tbarBtnDisabled["restore"] = false;
+          	tbarBtnDisabled["purge"] = false;
+          	tbarBtnDisabled["delete"] = false;
+      
+          	if(records[ai].data.lastcompleted == "N/A")tbarBtnDisabled["restore"] = true;
+          	if(records[ai].data.versions < 1)tbarBtnDisabled["purge"] = true;
+          	if(records[ai].data.job_status == "Running" || records[ai].data.job_status == "Restoring" || records[ai].data.job_status == "Purging" || records[ai].data.job_status == "Migrating" || records[ai].data.job_status == "Copying"){
+          		tbarBtnDisabled["run"] = true;
+          		tbarBtnDisabled["restore"] = true;
+          		tbarBtnDisabled["purge"] = true;
+          		tbarBtnDisabled["delete"] = true;
+          	}
+          	if(records[ai].data.job_type != "Backup" ){
+          		tbarBtnDisabled["restore"] = true;
+          		tbarBtnDisabled["purge"] = true;
+          	}
+          }
+      		
+      		Ext.Object.each(tbarBtnDisabled, function(key, value) {
+            this.setToolbarButtonDisabled(key, value);
+          }, me);
       	}
       }
     }, this);
@@ -1073,27 +1082,36 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 		var me = this;
 		me.callParent(arguments);
 		// Process additional buttons.
-		var tbarRunCtrl = me.queryById(me.getId() + "-run");
-		if(records.length > 0)
-		  tbarRunCtrl.enable();
-		else 	tbarRunCtrl.disable();
-		var tbarRestoreCtrl = me.queryById(me.getId() + "-restore");
-		if(records.length > 0 && records[0].data.lastcompleted != "N/A")
-			tbarRestoreCtrl.enable();
-		else tbarRestoreCtrl.disable();
-		var tbarPurgeCtrl = me.queryById(me.getId() + "-purge");
-		if(records.length > 0 && records[0].data.versions > 0)
-			tbarPurgeCtrl.enable();
-		else tbarPurgeCtrl.disable();
-		if(records.length > 0 && (records[0].data.job_status == "Running" || records[0].data.job_status == "Restoring" || records[0].data.job_status == "Purging" || records[0].data.job_status == "Migrating" || records[0].data.job_status == "Copying")){
-			tbarRunCtrl.disable();
-			tbarRestoreCtrl.disable();
-			tbarPurgeCtrl.disable();
-		}
-		if(records.length > 0 && records[0].data.job_type != "Backup" ){
-			tbarRestoreCtrl.disable();
-			tbarPurgeCtrl.disable();
-		}
+		var tbarBtnDisabled = {
+      "delete": true,
+      "run": true,
+      "restore": true,
+      "purge": true
+    };
+    
+    if(records.length > 0) {
+    	tbarBtnDisabled["run"] = false;
+    	tbarBtnDisabled["restore"] = false;
+    	tbarBtnDisabled["purge"] = false;
+    	tbarBtnDisabled["delete"] = false;
+
+    	if(records[0].data.lastcompleted == "N/A")tbarBtnDisabled["restore"] = true;
+    	if(records[0].data.versions < 1)tbarBtnDisabled["purge"] = true;
+    	if(records[0].data.job_status == "Running" || records[0].data.job_status == "Restoring" || records[0].data.job_status == "Purging" || records[0].data.job_status == "Migrating" || records[0].data.job_status == "Copying"){
+    		tbarBtnDisabled["run"] = true;
+    		tbarBtnDisabled["restore"] = true;
+    		tbarBtnDisabled["purge"] = true;
+    		tbarBtnDisabled["delete"] = true;
+    	}
+    	if(records[0].data.job_type != "Backup" ){
+    		tbarBtnDisabled["restore"] = true;
+    		tbarBtnDisabled["purge"] = true;
+    	}
+    }
+		
+		Ext.Object.each(tbarBtnDisabled, function(key, value) {
+      this.setToolbarButtonDisabled(key, value);
+    }, me);
 	},
 
 	onAddButton: function() {
