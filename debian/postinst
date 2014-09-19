@@ -22,4 +22,6 @@ case "$1" in
     ;;
 esac
 
+/usr/sbin/omv-mkconf sbackup
+
 exit 0
