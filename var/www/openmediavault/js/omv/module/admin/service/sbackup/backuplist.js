@@ -1021,9 +1021,9 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
           		tbarBtnDisabled["restore"] = true;
           		tbarBtnDisabled["purge"] = true;
           		tbarBtnDisabled["delete"] = true;
-          		tbarBtnDisabled["abort"] = false;
+          		if(records[ai].data.job_type == "Backup" || records[ai].data.job_type == "Copy")tbarBtnDisabled["abort"] = false;
           	}
-          	if(records[ai].data.job_type != "Backup" ){
+          	if(records[ai].data.job_type != "Backup"){
           		tbarBtnDisabled["restore"] = true;
           		tbarBtnDisabled["purge"] = true;
           	}
@@ -1107,7 +1107,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
     		tbarBtnDisabled["restore"] = true;
     		tbarBtnDisabled["purge"] = true;
     		tbarBtnDisabled["delete"] = true;
-    		tbarBtnDisabled["abort"] = false;
+    		if(records[0].data.job_type == "Backup" || records[0].data.job_type == "Copy")tbarBtnDisabled["abort"] = false;
     	}
     	if(records[0].data.job_type != "Backup" ){
     		tbarBtnDisabled["restore"] = true;
