@@ -638,7 +638,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
     fwrite($scriptfile, "SB_TIMESTART=\$(date +\"%s\")\n");
     fwrite($scriptfile, "cleanup() {\n");
     fwrite($scriptfile, "  omv_kill_children \$\$\n");
-    fwrite($scriptfile, "  RSSIZE=\$(cat \"".$OMV_SBACKUP_SESLOGDIR."/".$params['uuid']."_\${SB_TIMESTART}.log\"|awk '/^Total file size: / {print \$5}')\n");
+    fwrite($scriptfile, "  RSSIZE=\$(cat \"".$OMV_SBACKUP_SESLOGDIR."/".$params['uuid']."_\${SB_TIMESTART}.log\"|awk '/^Total file size: / {print \$4}')\n");
     fwrite($scriptfile, "  RSPERF=\$(cat \"".$OMV_SBACKUP_SESLOGDIR."/".$params['uuid']."_\${SB_TIMESTART}.log\"|awk '/ bytes\/sec\$/ {print \$(NF-1)}')\n");
     fwrite($scriptfile, "  SB_TIMEEND=\$(date +\"%s\")\n");
     fwrite($scriptfile, "  if [ \"\${SB_ECODE}\" = \"\" ]; then\n");
@@ -661,7 +661,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
     fwrite($scriptfile, "  echo \"Target not mounted|".$object['name']."|".$params['uuid']."|\${SB_TIMESTART}||||restore|\" >> \"".$OMV_SBACKUP_LOGFILE."\"\n");
     fwrite($scriptfile, "  exit 1\n");
     fwrite($scriptfile, "fi\n");
-    fwrite($scriptfile, "echo \"restore|\" > \"".$runfile."\"\n");
+    fwrite($scriptfile, "echo \"restore|\$\$|\" > \"".$runfile."\"\n");
     fwrite($scriptfile, "# Create target directory.\n");
     fwrite($scriptfile, "mkdir -p \"".$GET_SOURCE_PATH."\"\n");
     fwrite($scriptfile, "echo \"running|".$object['name']."|".$params['uuid']."|\${SB_TIMESTART}||||restore|\" >> \"".$OMV_SBACKUP_LOGFILE."\"\n");

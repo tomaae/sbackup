@@ -1,6 +1,5 @@
 -change Size to human readable format
 -on disabled, show if backup is triggered as post job
--add job pid to lockfile, needed for abort
 
 ==HISTORY========================================================
 []- option to remove version in backup history (create lockfile, delete data_uuid,release lockfile), run with "at now"

@@ -67,7 +67,7 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
         -o "SB_TIMESTART=\$(date +\"%s\")" -n \
         -o "cleanup() {" -n \
         -o "  omv_kill_children \$\$" -n \
-        -o "  RSSIZE=\$(cat \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"|awk '/^Total file size: / {print \$5}')" -n \
+        -o "  RSSIZE=\$(cat \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"|awk '/^Total file size: / {print \$4}')" -n \
         -o "  RSPERF=\$(cat \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"|awk '/ bytes\/sec\$/ {print \$(NF-1)}')" -n \
   			-o "  SB_TIMEEND=\$(date +\"%s\")" -n \
   			-o "  if [ \"\${SB_ECODE}\" = \"\" ]; then" -n \
@@ -117,7 +117,7 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
         -o "  echo \"Target not mounted|" -v "name" -o "|" -v "uuid" -o "|\${SB_TIMESTART}||||backup|\" >> \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
         -o "  exit 1" -n \
         -o "fi" -n \
-        -o "echo \"backup|\" > ${runfile}" -n \
+        -o "echo \"backup|\$\$|\" > ${runfile}" -n \
         -o "# Run backup" -n \
         -o "[ -e \"" -o ${OMV_SBACKUP_LOGFILE} -o "\" ] && LASTERR=\$(cat \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"|grep \"|backup|$\"|tail -1|awk -F \"|\" '{print \$1}')" -n \
         -o "if [ \"\${LASTERR}\" != \"\" ]; then" -n \
@@ -160,7 +160,7 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
   			-o "  LSTATUS=\$(cat \"" -o ${runfile} -o "\"|head -1|cut -d \| -f2)" -n \
   			-o "  [ \"\${LSTATUS}\" != \"completed\" ] && exit 1" -n \
   			-o "fi" -n \
-  			-o "echo \"purge|\" > \"${runfile}\"" -n \
+  			-o "echo \"purge|\$\$|\" > \"${runfile}\"" -n \
   			-o "echo \"running|" -v "name" -o "|" -v "uuid" -o "|\${SB_TIMESTART}||||purge|\" >> \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
   			-o "echo \"Backup name: " -v "name" -o "\nUUID: " -v "uuid" -o "\nStart time: \$(date -d @\${SB_TIMESTART})\n\" > \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"" -n \
         -o "[ \"\$1\" != \"\" ] && PURGEDAYS=\${1}" -n \
