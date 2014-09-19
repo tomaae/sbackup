@@ -67,8 +67,8 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
         -o "SB_TIMESTART=\$(date +\"%s\")" -n \
         -o "cleanup() {" -n \
         -o "  omv_kill_children \$\$" -n \
-        -o "  RSSIZE=\$(cat \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"|awk '/^total size is / {print \$4}')" -n \
-        -o "  RSPERF=\$(cat \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"|awk '/^total size is / {print \$7}')" -n \
+        -o "  RSSIZE=\$(cat \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"|awk '/^Total file size: / {print \$5}')" -n \
+        -o "  RSPERF=\$(cat \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"|awk '/ bytes\/sec\$/ {print \$(NF-1)}')" -n \
   			-o "  SB_TIMEEND=\$(date +\"%s\")" -n \
   			-o "  if [ \"\${SB_ECODE}\" = \"\" ]; then" -n \
   			-o "    SB_ECODE=-1" -n \

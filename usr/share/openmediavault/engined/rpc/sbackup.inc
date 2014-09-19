@@ -638,8 +638,8 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
     fwrite($scriptfile, "SB_TIMESTART=\$(date +\"%s\")\n");
     fwrite($scriptfile, "cleanup() {\n");
     fwrite($scriptfile, "  omv_kill_children \$\$\n");
-    fwrite($scriptfile, "  RSSIZE=\$(cat \"".$OMV_SBACKUP_SESLOGDIR."/".$params['uuid']."_\${SB_TIMESTART}.log\"|awk '/^total size is / {print \$4}')\n");
-    fwrite($scriptfile, "  RSPERF=\$(cat \"".$OMV_SBACKUP_SESLOGDIR."/".$params['uuid']."_\${SB_TIMESTART}.log\"|awk '/^total size is / {print \$7}')\n");
+    fwrite($scriptfile, "  RSSIZE=\$(cat \"".$OMV_SBACKUP_SESLOGDIR."/".$params['uuid']."_\${SB_TIMESTART}.log\"|awk '/^Total file size: / {print \$5}')\n");
+    fwrite($scriptfile, "  RSPERF=\$(cat \"".$OMV_SBACKUP_SESLOGDIR."/".$params['uuid']."_\${SB_TIMESTART}.log\"|awk '/ bytes\/sec\$/ {print \$(NF-1)}')\n");
     fwrite($scriptfile, "  SB_TIMEEND=\$(date +\"%s\")\n");
     fwrite($scriptfile, "  if [ \"\${SB_ECODE}\" = \"\" ]; then\n");
     fwrite($scriptfile, "    SB_ECODE=-1\n");

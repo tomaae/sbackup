@@ -1,5 +1,3 @@
--disable delete while backup is running
--fix parsing for performance
 -change Size to human readable format
 -on disabled, show if backup is triggered as post job
 -add job pid to lockfile, needed for abort
