@@ -176,6 +176,7 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
         -o "  PURGETIME=\$((SB_TIMESTART-(" -v "protect_days_job" -o "*86400)))" -n \
         -o "  [ \"\${PURGEDAYS}\" != \"\" ] && PURGETIME=\$((SB_TIMESTART-(\${PURGEDAYS}*86400)))" -n \
         -o "  while IFS='|', read r_status d d r_start d d d r_type; do" -n \
+        -o "		[ \"\${r_status}\" = \"running\" ] && continue" -n \
         -o "		[ \"\${r_start}\" -lt \"100\" ] && continue" -n \
         -o "		[ \"\${r_start}\" -gt \"\${PURGETIME}\" ] && continue" -n \
         -o "		[ \"\${r_start}\" = \"\${LAST_BACKUP}\" ] && continue" -n \
