@@ -189,7 +189,6 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 				if($rows[0] == "copy")$objectv['job_status']      = "Copying";
 			}
 			$objectv['versions'] = 0;
-			$objectv['size']     = 0;
 			if(file_exists(sprintf("/var/log/sbackup/history_%s", $use_uuid))){
 				$txt_file = file_get_contents(sprintf("/var/log/sbackup/history_%s", $use_uuid));
 				$lines    = explode("\n", $txt_file);
@@ -202,7 +201,6 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 					$rows_latest = $rows_current;
 					if($rows_current[0] == "0"){
 						$objectv['versions']++;
-						$objectv['size']+=$rows_current[5];
 						$rows_completed = explode("|", $line);
 					}
 				}
@@ -256,7 +254,6 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 			if($objectv['job_type'] == "Purge" || $objectv['job_type'] == "Verify"){
 				$objectv['retention']        = "N/A";
 				$objectv['versions']         = "N/A";
-				$objectv['size']             = "N/A";
 			}
 		}
 

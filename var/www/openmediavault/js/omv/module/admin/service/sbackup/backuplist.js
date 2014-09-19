@@ -949,12 +949,6 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 		width: 65,
 		dataIndex: "versions",
 		stateId: "versions"
-	},{
-		text: _("Size"),
-		sortable: true,
-		width: 65,
-		dataIndex: "size",
-		stateId: "size"
 	}],
 
 	initComponent: function() {
@@ -977,8 +971,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 					{ name: "source_name", type: "string" },
 					{ name: "schedule", type: "string" },
 					{ name: "protect_days_job", type: "string" },
-					{ name: "versions", type: "string" },
-					{ name: "size", type: "string" }
+					{ name: "versions", type: "string" }
 					]
 				}),
 				proxy: {
