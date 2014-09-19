@@ -1,4 +1,3 @@
--change Size to human readable format
 -on disabled, show if backup is triggered as post job
 
 ==HISTORY========================================================
