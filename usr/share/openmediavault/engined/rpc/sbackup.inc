@@ -83,15 +83,20 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
   				if($rows[3]){$t_objects[$i]['starttime'] = date('r', $rows[3]);}else{$t_objects[$i]['starttime'] = "N/A";}
   				if($rows[4]){$t_objects[$i]['endtime'] = date('r', $rows[4]);}else{$t_objects[$i]['endtime'] = "N/A";}
   				if($rows[7] == "backup" || $rows[7] == "copy"){
-    				if($rows[5] != ""){
+    				if($rows[5]){
     					if($rows[5] > 0){
-    					$t_objects[$i]['backupsize'] = $rows[5]." B";
+    						$t_objects[$i]['backupsize'] = $rows[5]." B";
       					if($rows[5] > (100 * 1024)) $t_objects[$i]['backupsize'] = ceil($rows[5] / 1024)." KiB";
       					if($rows[5] > (9 * 1024 * 1024)) $t_objects[$i]['backupsize'] = ceil($rows[5] / 1024 / 1024)." MiB";
       					if($rows[5] > (9 * 1024 * 1024 * 1024)) $t_objects[$i]['backupsize'] = ceil($rows[5] / 1024 / 1024 / 1024)." GiB";
     					}else{$t_objects[$i]['backupsize'] = 0;}
     				}else{$t_objects[$i]['backupsize'] = "N/A";}
-    				if($rows[6]){$t_objects[$i]['backupperf'] = $rows[6];}else{$t_objects[$i]['backupperf'] = "N/A";}
+    				if($rows[6]){
+    					$t_objects[$i]['backupperf'] = $rows[6]." B/s";
+    					if($rows[6] > (100 * 1024)) $t_objects[$i]['backupperf'] = ceil($rows[6] / 1024)." KiB/s";
+      				if($rows[6] > (9 * 1024 * 1024)) $t_objects[$i]['backupperf'] = ceil($rows[6] / 1024 / 1024)." MiB/s";
+      				if($rows[6] > (9 * 1024 * 1024 * 1024)) $t_objects[$i]['backupperf'] = ceil($rows[6] / 1024 / 1024 / 1024)." GiB/s";
+    				}else{$t_objects[$i]['backupperf'] = "N/A";}
   				}else{$t_objects[$i]['backupsize'] = "N/A";$t_objects[$i]['backupperf'] = "N/A";}
   				if(file_exists("/var/log/sbackup/sessionlogs/".$objectv['uuid']."_".$rows[3].".log")){
   					$t_objects[$i]['haslog'] = "yes";
@@ -730,6 +735,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
     fwrite($scriptfile, "# Create target directory.\n");
     fwrite($scriptfile, "mkdir -p \"".$GET_SOURCE_PATH."\"\n");
     fwrite($scriptfile, "echo \"running|".$object['name']."|".$params['uuid']."|\${SB_TIMESTART}||||restore|\" >> \"".$OMV_SBACKUP_LOGFILE."\"\n");
+    fwrite($scriptfile, "sleep 1\n");
     fwrite($scriptfile, "echo \"Backup name: ".$object['name']."\nUUID: ".$params['uuid']."\nStart time: \$(date -d @\${SB_TIMESTART})\n\n\" > \"".$OMV_SBACKUP_SESLOGDIR."/".$params['uuid']."_\${SB_TIMESTART}.log\"\n");
     fwrite($scriptfile, "trap cleanup 0 1 2 5 9 15\n");
     fwrite($scriptfile, "rsync --verbose --stats -aEAX");
