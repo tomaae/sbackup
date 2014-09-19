@@ -1011,7 +1011,8 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
       			"delete": true,
       			"run": true,
       			"restore": true,
-      			"purge": true
+      			"purge": true,
+      			"abort": true
     			};
     			
           if(records.length > 0) {
@@ -1027,6 +1028,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
           		tbarBtnDisabled["restore"] = true;
           		tbarBtnDisabled["purge"] = true;
           		tbarBtnDisabled["delete"] = true;
+          		tbarBtnDisabled["abort"] = false;
           	}
           	if(records[ai].data.job_type != "Backup" ){
           		tbarBtnDisabled["restore"] = true;
@@ -1054,6 +1056,15 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
 			icon: "images/play.png",
 			iconCls: Ext.baseCSSPrefix + "btn-icon-16x16",
 			handler: Ext.Function.bind(me.onRunButton, me, [ me ]),
+			scope: me,
+			disabled: true
+		},{
+			id: me.getId() + "-abort",
+			xtype: "button",
+			text: _("Abort"),
+			icon: "images/alert.png",
+			iconCls: Ext.baseCSSPrefix + "btn-icon-16x16",
+			handler: Ext.Function.bind(me.onAbortButton, me, [ me ]),
 			scope: me,
 			disabled: true
 		},{
@@ -1086,7 +1097,8 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
       "delete": true,
       "run": true,
       "restore": true,
-      "purge": true
+      "purge": true,
+      "abort": true
     };
     
     if(records.length > 0) {
@@ -1102,6 +1114,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
     		tbarBtnDisabled["restore"] = true;
     		tbarBtnDisabled["purge"] = true;
     		tbarBtnDisabled["delete"] = true;
+    		tbarBtnDisabled["abort"] = false;
     	}
     	if(records[0].data.job_type != "Backup" ){
     		tbarBtnDisabled["restore"] = true;
@@ -1218,6 +1231,37 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
   				rpcData: {
   					service: "sbackup",
   					method: "runBackup",
+  					params: {
+  						uuid: record.get("uuid")
+  					}
+  				}
+  			});
+  		},
+  		scope: me,
+  		icon: Ext.Msg.QUESTION
+  	});
+  },
+  
+  onAbortButton: function() {
+  	var me = this;
+  	var record = me.getSelected();
+  	OMV.MessageBox.show({
+  		title: _("Confirmation"),
+  		msg: _("Do you really want to abort this job?"),
+  		buttons: Ext.Msg.YESNO,
+  		fn: function(answer) {
+  			if(answer === "no")
+  			return;
+  			// Execute RPC
+  			OMV.Rpc.request({
+  				scope: me,
+  				callback: function(id, success, response) {
+  					this.doReload();
+  				},
+  				relayErrors: false,
+  				rpcData: {
+  					service: "sbackup",
+  					method: "abortBackup",
   					params: {
   						uuid: record.get("uuid")
   					}

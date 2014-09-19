@@ -9,7 +9,6 @@
 ==BKPLIST========================================================
 - import backup. (save backup configuration within backup_uuid folder), select share point, search subdirectories for configs, show only those which have correct config and are not imported already
 
-[]- ?abort job
 []- ?running job status
 =================================================================
 

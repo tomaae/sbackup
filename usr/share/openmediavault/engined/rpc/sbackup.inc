@@ -25,6 +25,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 		$this->registerMethod("delete");
 		$this->registerMethod("showLog");
 		$this->registerMethod("runBackup");
+		$this->registerMethod("abortBackup");
 		$this->registerMethod("runPurge");
 		$this->registerMethod("runRestore");
 		$this->registerMethod("getRestoreDirBrowser");
@@ -514,6 +515,52 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 			throw new OMVException(OMVErrorMsg::E_EXEC_FAILED,
 			$cmd, implode("\n", $output));
 		}
+	}
+	
+	/**
+	* abortBackup
+	*/
+	public function abortBackup($params, $context) {
+		global $xmlConfig;
+		// Validate the RPC caller context.
+		$this->validateMethodContext($context, array(
+		"role" => OMV_ROLE_ADMINISTRATOR
+		));
+		// Validate the parameters of the RPC service method.
+		$this->validateMethodParams($params, '{
+		"type":"object",
+		"properties":{
+		"uuid":{'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'}
+		}
+		}');
+		// Check if the module is marked as dirty. This can be an indication
+		// that the samba recycle bin cron script has not been created or
+		// updated until now.
+		if($this->isModuleDirty("sbackup"))
+		throw new OMVException(OMVErrorMsg::E_CONFIG_DIRTY);
+		
+		$runfile="/var/run/sbackup_".$params['uuid'];
+		
+		if(file_exists($runfile)){
+			$txt_file = file_get_contents($runfile);
+			$lines    = explode("\n", $txt_file);
+			foreach($lines as $line){
+				if(!$line)continue;
+				$rows = explode("|", $line);
+				if(is_numeric($rows[1]) && $rows[1] > 1){
+      		// Execute process.
+      		$cmd = ". /usr/share/openmediavault/scripts/helper-functions&&omv_kill_children ".$rows[1];
+      		if(0 !== $this->exec($cmd, $output)) {
+      			throw new OMVException(OMVErrorMsg::E_EXEC_FAILED,
+      			$cmd, implode("\n", $output));
+      		}
+				}else{
+					throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Cannot find running backup.");
+				}
+			}
+		}
+  	
+
 	}
 	
 	/**
