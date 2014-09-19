@@ -225,6 +225,15 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 			$objectv['schedule'] = "";
 		  if($objectv['schedule_enable'] == 0){
 		  	$objectv['schedule'] = "Disabled";
+    		$xpath_tmp = "//services/sbackup/backuplist/backup";
+    		$objects_tmp = $xmlConfig->getList($xpath_tmp);
+    		if(is_null($objects_tmp)) {
+    			throw new OMVException(OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,
+    			$xpath_tmp);
+    		}
+    		foreach($objects_tmp as $objectk_tmp => &$objectv_tmp) {
+    			if($objectv_tmp['post_job'] && $objectv_tmp['post_job'] == $objectv['uuid'])$objectv['schedule'] .= ", Post job";
+    		}
 		  }else{
 		  	$objectv['schedule'] .= $objectv['schedule_hour'].":".$objectv['schedule_minute']." ";
 		  	$val = explode(",", $objectv['schedule_wday']);
