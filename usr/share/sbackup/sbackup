@@ -35,6 +35,7 @@ foreach my $arg (@ARGV){
 
 	if ($arg =~ /\-debug$/){$param_ok = 1;$get_debug = 1;$main::DEBUGMODE = 1;}
 	if ($arg =~ /\-simulate$/){$param_ok = 1;$main::SIMULATEMODE = 1;}
+	if ($arg =~ /\-history$/){$param_ok = 1;$sv_history = 1;$get_job = 1;}
 	if ($arg =~ /\-backup$/){$param_ok = 1;$sv_backup = 1;$get_job = 1;}
 	if ($arg =~ /\-purge$/){$param_ok = 1;$sv_purge = 1;$get_job = 1;}
 	if ($arg =~ /\-verify$/){$param_ok = 1;$sv_verify = 1;$get_job = 1;}
@@ -57,7 +58,9 @@ if($main::SIMULATEMODE){print "Simulation mode enabled, no action will be taken.
 use sbackup_init;
 use sbackup_cache;
 &f_getenv();
-if($sv_backup || $sv_purge || $sv_verify || $sv_copy || $sv_restore)&f_getjobs();
+if($sv_backup || $sv_purge || $sv_verify || $sv_copy || $sv_restore){
+	&f_getjobs();
+}
 
 sub f_help { #HELP FUNCTION
 	print "====Sync Backup====\n\n";
@@ -80,13 +83,29 @@ sub f_help { #HELP FUNCTION
 ##CODE START
 ##
 
-if($sv_backup)  require "modules/backup.sbm";
-if($sv_purge)   require "modules/purge.sbm";
-if($sv_verify)  require "modules/verify.sbm";
-if($sv_copy)    require "modules/copy.sbm";
-if($sv_restore) require "modules/restore.sbm";
+if($sv_backup){
+	require "modules/backup.sbm";
+}
 
-if($sv_history)	require "modules/history.sbm";
+if($sv_purge){
+	require "modules/purge.sbm";
+}
+
+if($sv_verify){
+	require "modules/verify.sbm";
+}
+
+if($sv_copy){
+	require "modules/copy.sbm";
+}
+
+if($sv_restore){
+	require "modules/restore.sbm";
+}
+
+if($sv_history){
+	require "modules/history.sbm";
+}
 
 
 ##
