@@ -434,6 +434,9 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
 			if(($objectv['target_sharedfolder_uuid'] && $params['source_sharedfolder_uuid']) && ($objectv['target_sharedfolder_uuid'] == $params['source_sharedfolder_uuid'])){
 				throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Backup source is set as destinations for another backup. Cannot be used.");
 			}
+			if(($objectv['uuid'] != $params['uuid']) && ($objectv['name'] == $params['name'])){
+				throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,"Job name have to be unique.");
+			}
 		}
 		
 		// Set the configuration object.
