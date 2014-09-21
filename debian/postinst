@@ -11,6 +11,8 @@ case "$1" in
             object="<backuplist></backuplist>"
             omv_config_add_element "/config/services" "sbackup" "${object}" true
         fi
+        mkdir -p /etc/sbackup/jobs
+        mkdir -p /var/log/sbackup/sessionlogs
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)

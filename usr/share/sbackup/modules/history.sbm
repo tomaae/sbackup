@@ -1,0 +1,17 @@
+###########################################################################################
+#
+#                                         sbackup
+#                                      history module
+#
+###########################################################################################
+
+&f_output("DEBUG","History part begin.");
+@output = &f_get_history('0ff0b5f1-ed98-4042-be2b-2b9639f62630','type,name,status,start,end');
+if($output[0]){
+  for $tmp(@{$output[2]}){
+  	print $$tmp{'type'},"\t",$$tmp{'name'},"\t",$$tmp{'status'},"\t",f_epoch2human($$tmp{'start'}),"\t",f_epoch2human($$tmp{'end'}),"\n";
+  }
+}
+&f_output("DEBUG","History part end.");
+
+1;

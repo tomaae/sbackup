@@ -7,17 +7,19 @@ set -e
 CONFIG="/config/services/sbackup"
 
 case "$1" in
-		upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+		upgrade|failed-upgrade|abort-install|abort-upgrade|disappear|remove)
 		;;
-    purge|remove)
+    purge)
         if omv_config_exists $CONFIG; then
-            echo "Deleting Configuration"
+            echo "Deleting Configuration..."
             omv_config_delete $CONFIG;
         fi
 
         if ! omv_config_exists $CONFIG; then
             echo "Configuration Deleted"
         fi
+        rm -r /etc/sbackup
+        rm -r /var/log/sbackup
     ;;
 
     *)
