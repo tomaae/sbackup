@@ -38,7 +38,7 @@ foreach my $arg (@ARGV){
 	if ($arg =~ /^\-history$/){$param_ok = 1;$sv_history = 1;$get_job = 1;}
 	if ($arg =~ /^\-log$/){$param_ok = 1;$sv_log = 1;$get_job = 1;}
 	#if ($arg =~ /^\-stat(us)?$/){$param_ok = 1;$sv_status = 1;$get_job = 1;}
-	#if ($arg =~ /^\-backup$/){$param_ok = 1;$sv_backup = 1;$get_job = 1;}
+	if ($arg =~ /^\-backup$/){$param_ok = 1;$sv_backup = 1;$get_job = 1;}
 	#if ($arg =~ /^\-purge$/){$param_ok = 1;$sv_purge = 1;$get_job = 1;}
 	#if ($arg =~ /^\-verify$/){$param_ok = 1;$sv_verify = 1;$get_job = 1;}
 	#if ($arg =~ /^\-copy$/){$param_ok = 1;$sv_copy = 1;$get_job = 1;}

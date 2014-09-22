@@ -15,7 +15,7 @@ BEGIN {
 	our ($VERSION, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);
 
 	@ISA         = qw(Exporter);
-	@EXPORT      = qw(&f_get_history);
+	@EXPORT      = qw(&f_get_history &f_insert_history &f_set_runfile);
 	%EXPORT_TAGS = ( );
 
 	# exported package globals, as well as any optionally exported functions
@@ -41,7 +41,8 @@ our %table;
   
 %{$table{"runfile"}} = (
     "type"=>0,
-    "pid"=>1
+    "pid"=>1,
+    "status"=>2
   );
 
 sub f_parse_select{
@@ -124,6 +125,52 @@ sub f_get_history{
   }
 	
 	##Select output
+	return @returncodes;
+}
+
+sub f_insert_history{
+	my ($p_uuid,$insert)=@_;
+	my @columns;
+	my $tmp;
+	my @val;
+	my @returncodes;
+	
+	if($p_uuid && $insert){
+  	my @entries = split(/,/,$insert,-1);
+  	for $tmp(keys %{$table{'history'}}){
+  		$columns[$table{'history'}{$tmp}] = "";
+  	}
+  	for $tmp(@entries){
+  		@val = split(/=/,$tmp,-1);
+  		$columns[$table{'history'}{$val[0]}] = $val[1];
+  	}
+  	append_log($main::HISTORYPATH.$main::s_slash.'history_'.$p_uuid,join('|',@columns));
+  	
+  	$returncodes[0] = 1;
+	}
+	return @returncodes;
+}
+
+sub f_set_runfile{
+	my ($p_uuid,$insert)=@_;
+	my @columns;
+	my $tmp;
+	my @val;
+	my @returncodes;
+	
+	if($p_uuid && $insert){
+  	my @entries = split(/,/,$insert,-1);
+  	for $tmp(keys %{$table{'runfile'}}){
+  		$columns[$table{'runfile'}{$tmp}] = "";
+  	}
+  	for $tmp(@entries){
+  		@val = split(/=/,$tmp,-1);
+  		$columns[$table{'runfile'}{$val[0]}] = $val[1];
+  	}
+  	write_log($main::RUNFILEPATH.$main::s_slash.'sbackup_'.$p_uuid,join('|',@columns));
+  	
+  	$returncodes[0] = 1;
+	}
 	return @returncodes;
 }
 

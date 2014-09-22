@@ -90,16 +90,13 @@ sub append_log{
 }
 
 sub write_log{
-	my ($logfile,@logentry)=@_;
-	my $tmp;
+	my ($logfile,$logentry)=@_;
+  &f_output("DEBUG","Overwrite to log file \"$logfile\": $logentry");
+	return if $main::SIMULATEMODE;
 	open log_file,">>$logfile";
 	flock log_file,2;
 	truncate log_file,0;
-	for $tmp(@logentry){
-		chomp;
-		&f_output("DEBUG","Overwrite log file \"$logfile\": $tmp");
-    print log_file "$tmp\n" if !$main::SIMULATEMODE;
-  }
+  print log_file "$logentry\n";
   flock log_file,8;
   close log_file;
 }
@@ -217,6 +214,9 @@ sub f_getenv{
 	$main::cmd_sleep      = "sleep";
 	$main::cmd_cp         = "cp";
 	$main::cmd_mv         = "mv";
+	$main::cmd_mkdir      = "mkdir -p";
+	$main::cmd_chmod      = "chmod";
+	$main::cmd_rsync      = "rsync";
 	
 	&f_output("DEBUG","Required parameters set.");
 }

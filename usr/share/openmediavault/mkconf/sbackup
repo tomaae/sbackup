@@ -54,9 +54,11 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
       -o "job_type=" -v "job_type" -n \
       -o "backup_type=" -v "backup_type" -n \
       -o "source_sharedfolder_uuid=" -v "source_sharedfolder_uuid" -n \
-      -o "backup_source=" ${GET_SOURCE_PATH} -o "/"  -n \
+      -o "backup_source_mnt=" ${GET_SOURCE_MNT} -n \
+      -o "backup_source=" ${GET_SOURCE_PATH} -n \
       -o "target_sharedfolder_uuid=" -v "target_sharedfolder_uuid" -n \
-      -o "backup_target=" ${GET_TARGET_DEST} -o "/"  -n \
+      -o "backup_target_mnt=" ${GET_TARGET_MNT} -n \
+      -o "backup_target=" ${GET_TARGET_DEST} -n \
       -o "schedule_enable=" -v "schedule_enable" -n \
       -o "schedule_mon=" -v "schedule_mon" -n \
       -o "schedule_tue=" -v "schedule_tue" -n \
