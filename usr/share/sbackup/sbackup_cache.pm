@@ -24,18 +24,11 @@ BEGIN {
 our @EXPORT_OK;
 
 use Fcntl ':flock';
+use sbackup_init;
 
+our %table;
 
-sub f_parse_select{
-	my ($table,$entry)=@_;
-	my @select_request;
-	my $i;
-	my $tmp;
-	
-	$entry =~ s/ \, /\n/g;
-	my @entries = split(/,/,$entry,-1);
- 
-	my %columns = (
+%{$table{"history"}} = (
     "status"=>0,
     "name"=>1,
     "uuid"=>2,
@@ -45,11 +38,20 @@ sub f_parse_select{
     "perf"=>6,
     "type"=>7
   );
-  
+
+sub f_parse_select{
+	my ($from,$entry)=@_;
+	my @select_request;
+	my $i;
+	my $tmp;
+	
+	$entry =~ s/ \, /\n/g;
+	my @entries = split(/,/,$entry,-1);
+ 
   $i = 0;
   for $tmp(@entries){
   	$select_request[$i]{'key'} = $tmp;
-	  $select_request[$i]{'value'} = $columns{$tmp};
+	  $select_request[$i]{'value'} = $table{$from}{$tmp};
 	  $i++;
   }
 
@@ -57,7 +59,7 @@ sub f_parse_select{
 }
 
 sub f_get_history{
-	my ($uuid,$select,$where)=@_;
+	my ($p_uuid,$select,$where)=@_;
 	
 	my @val;
 	my $tmp;
@@ -65,39 +67,40 @@ sub f_get_history{
 	my @cache;
 	my $display_value;	
 	my $return_counter = -1;
+	my @returncodes;
 	
   my @select_request = &f_parse_select('history',$select);
-  
-  open log_file,"<".$main::HISTORYPATH.$main::s_slash.'history_'.$uuid;
-	flock log_file,1;
-	while($line = <log_file>){
-  	chomp($line);
-  	@val = split '\|',$line;
-  	push @cache,[@val];
-	}
-	flock log_file,8;
-  close log_file;
-
-	for $val(@cache){
-		$display_value = 0;
-		if($where){
-			###############
-		}else{
-			$display_value = 1;
-		}
-		
-		if($display_value){
-  		$returncodes[0] = 1;
-  		$return_counter++;
-  		for $tmp(@select_request){
-  			$returncodes[2][$return_counter]{$$tmp{'key'}} = $$val[$$tmp{'value'}];
-      }     
+  if($p_uuid){
+    open log_file,"<".$main::HISTORYPATH.$main::s_slash.'history_'.$p_uuid;
+  	flock log_file,1;
+  	while($line = <log_file>){
+    	chomp($line);
+    	@val = split '\|',$line;
+    	push @cache,[@val];
   	}
-	}
+  	flock log_file,8;
+    close log_file;
+  
+  	for $val(@cache){
+  		$display_value = 0;
+  		if($where){
+  			###############
+  		}else{
+  			$display_value = 1;
+  		}
+  		
+  		if($display_value){
+    		$returncodes[0] = 1;
+    		$return_counter++;
+    		for $tmp(@select_request){
+    			$returncodes[2][$return_counter]{$$tmp{'key'}} = $$val[$$tmp{'value'}];
+        }     
+    	}
+  	}
+  }
 	
 	##Select output
 	return @returncodes;
-
 }
 
 1;

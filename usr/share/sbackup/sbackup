@@ -58,8 +58,20 @@ if($main::SIMULATEMODE){print "Simulation mode enabled, no action will be taken.
 use sbackup_init;
 use sbackup_cache;
 &f_getenv();
-if($sv_backup || $sv_purge || $sv_verify || $sv_copy || $sv_restore){
+if($sv_backup || $sv_purge || $sv_verify || $sv_copy || $sv_restore 
+  || ($p_job && $p_job !~ /^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$/)
+  || ($sv_history && !$p_job)
+  ){
 	&f_getjobs();
+	
+	
+	if($p_job){
+		if($JOBNAME{&f_cstr("E",$p_job)}){
+			$p_job = $JOBNAME{&f_cstr("E",$p_job)};
+		}else{
+			print "\nJob \"$p_job\" does not exists. \n\n";exit 1;
+		}
+	}
 }
 
 sub f_help { #HELP FUNCTION

@@ -184,7 +184,6 @@ sub f_getjobs{
 	%main::JOBID = ();
 	%main::JOBNAME = ();
 	my @val;
-	
   if( -d $main::JOBCONFIGPATH ){
     for (`$main::s_browsedir $main::JOBCONFIGPATH`){
       chomp;next if /^$/;next if /^0$/;next if /^d/;next if /^total/;next if /\<DIR\>/;next if /File\(s\)/;next if /\Dir\(s\)/;next if /Volume in drive/;next if /Volume Serial/;next if /Directory of/;
@@ -322,7 +321,7 @@ sub f_getjobs{
      	&f_output("ERROR","Error in the job definition file ".$main::JOBID{$jobid_tmp}{'file'}.".",9);
     }
     
-    $main::JOBNAME{&f_cstr("E",$main::JOBID{$jobid_tmp}{'name'})} = $jobid_tmp;
+    $main::JOBNAME{&f_cstr("E",$main::JOBID{$jobid_tmp}{'name'})} = &f_cstr("D",$jobid_tmp);
   }
   &f_output("DEBUG","Configuration file successfully loaded.");
 }
