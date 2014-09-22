@@ -38,6 +38,11 @@ our %table;
     "perf"=>6,
     "type"=>7
   );
+  
+%{$table{"runfile"}} = (
+    "type"=>0,
+    "pid"=>1
+  );
 
 sub f_parse_select{
 	my ($from,$entry)=@_;
@@ -45,7 +50,6 @@ sub f_parse_select{
 	my $i;
 	my $tmp;
 	
-	$entry =~ s/ \, /\n/g;
 	my @entries = split(/,/,$entry,-1);
  
   $i = 0;
@@ -56,6 +60,25 @@ sub f_parse_select{
   }
 
 	return @select_request;
+}
+
+sub f_parse_where{
+	my ($from,$entry)=@_;
+	my @where_request;
+	my $i;
+	my $tmp;
+	
+	my @entries = split(/,/,$entry,-1);
+ 
+  $i = 0;
+  for $tmp(@entries){
+  	my @val = split(/==/,$tmp,-1);
+  	$where_request[$i]{'key'} = $table{$from}{$val[0]};
+	  $where_request[$i]{'value'} = $val[1];
+	  $i++;
+  }
+
+	return @where_request;
 }
 
 sub f_get_history{
@@ -70,6 +93,7 @@ sub f_get_history{
 	my @returncodes;
 	
   my @select_request = &f_parse_select('history',$select);
+  my @where_request  = &f_parse_where('history',$where) if $where;
   if($p_uuid){
     open log_file,"<".$main::HISTORYPATH.$main::s_slash.'history_'.$p_uuid;
   	flock log_file,1;
@@ -82,13 +106,13 @@ sub f_get_history{
     close log_file;
   
   	for $val(@cache){
-  		$display_value = 0;
+  		$display_value = 1;
   		if($where){
-  			###############
-  		}else{
-  			$display_value = 1;
+  			for $tmp(@where_request){
+  				$display_value = 0 if $$val[$$tmp{'key'}] ne $$tmp{'value'};
+  			}
   		}
-  		
+  		  		
   		if($display_value){
     		$returncodes[0] = 1;
     		$return_counter++;
