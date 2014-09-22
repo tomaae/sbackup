@@ -27,12 +27,12 @@ $runfile = $main::RUNFILEPATH.$main::s_slash."sbackup_".$p_job;
 $sessionlogfile = $main::SESSIONLOGPATH.$main::s_slash.$p_job."_".$SB_TIMESTART.".log";
 
 
-# Check if backup is already running
+##Check if backup is already running
 if(-e $runfile){
 	print "Job is already running.";
 	exit 1;
 }
-# Check if all filesystems are mounted.
+##Check if all filesystems are mounted.
 system(". /usr/share/openmediavault/scripts/helper-functions&&omv_is_mounted \"".$main::JOBID{f_cstr("E",$p_job)}{'backup_source_mnt'}."\"");
 if($? != 0){
 	&f_insert_history($p_job,"type=backup,status=Source not mounted,name=".$main::JOBID{f_cstr("E",$p_job)}{'name'}.",start=".$SB_TIMESTART);
@@ -95,19 +95,18 @@ if(-f $main::HISTORYPATH.$main::s_slash.'history_'.$p_job){
 	}
 }
 
-# Run backup
+##Create version directories
 if(!$main::SIMULATEMODE){
   system("$main::cmd_mkdir ".$main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."data_".$SB_TIMESTART.$main::s_slash);
-  if($? != 0){
-  	system("$main::cmd_chmod 777 ".$main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."data_".$SB_TIMESTART.$main::s_slash);
-  }
+  system("$main::cmd_chmod 777 ".$main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."data_".$SB_TIMESTART.$main::s_slash) if ($? != 0);
+  
   if(!-d $main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."data_".$SB_TIMESTART.$main::s_slash){
     &f_insert_history($p_job,"type=backup,status=Vercreate fail,name=".$main::JOBID{f_cstr("E",$p_job)}{'name'}.",start=".$SB_TIMESTART);
     exit 1;
   }
 }
 
-
+##Run backup
 &f_insert_history($p_job,"type=backup,status=running,name=".$main::JOBID{f_cstr("E",$p_job)}{'name'}.",start=".$SB_TIMESTART);
 system("$main::cmd_sleep 1") if !$main::SIMULATEMODE;
 append_log($sessionlogfile,"Backup name: ".$main::JOBID{f_cstr("E",$p_job)}{'name'}."\nUUID: ".$p_job."\nStart time: ".$SB_TIMESTART."\n");
@@ -118,24 +117,34 @@ $cmd = " --verbose --stats -aEAX --delete ".$INCR." \"".$main::JOBID{f_cstr("E",
 system("$main::cmd_rsync $cmd") if !$main::SIMULATEMODE;
 $SB_ECODE=$? if !$main::SIMULATEMODE;
 
+##Check backup status
 system(". /usr/share/openmediavault/scripts/helper-functions&&omv_kill_children ".$$);
 
-#-o "  RSSIZE=\$(cat \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"|awk '/^Total file size: / {print \$4}')" -n \
-#-o "  RSPERF=\$(cat \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\"|awk '/ bytes\/sec\$/ {print \$(NF-1)}')" -n \
+$RSSIZE = "";
+$RSPERF = "";
+for(read_log($sessionlogfile)){
+	chomp;
+	if(/^Total file size: (\d+) bytes/){
+		$RSSIZE = $1;
+	}
+	if(/ (\d+) bytes\/sec$/){
+		$RSPERF = $1;
+	}
+}
 
 $SB_TIMEEND = time();
 if($SB_ECODE eq ""){
 	$SB_ECODE = "-1";
 }
 
-#-o "  cat \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"|sed \"s/^running|\(.*\)|\(.*\)|\${SB_TIMESTART}||||backup|/\${SB_ECODE}|\1|\2|\${SB_TIMESTART}|\${SB_TIMEEND}|\${RSSIZE}|\${RSPERF}|backup|/g\" > \"" -o ${OMV_SBACKUP_LOGFILE} -o ".new\"" -n \
-#-o "  mv \"" -o ${OMV_SBACKUP_LOGFILE} -o ".new\" \"" -o ${OMV_SBACKUP_LOGFILE} -o "\"" -n \
+&f_update_history($p_job,"status=".$SB_ECODE.",end=".$SB_TIMEEND.",size=".$RSSIZE.",perf=".$RSPERF, "start==".$SB_TIMESTART.",status=running,type=backup");
 
 append_log($sessionlogfile,"End time: ".$SB_TIMEEND."\nStatus:".$SB_ECODE."\n");
 
-#-o "  if [ \"\${SB_ECODE}\" = \"0\" ]; then" -n \
-#-o "    mkdir -p \"" ${GET_TARGET_DEST} -o "/meta_\${SB_TIMESTART}/\"" -n \
-#-o "    chmod 777 \"" ${GET_TARGET_DEST} -o "/meta_\${SB_TIMESTART}/\"" -n \
+if($SB_ECODE eq "0"){
+	system("$main::cmd_mkdir ".$main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."meta_".$SB_TIMESTART.$main::s_slash);
+  system("$main::cmd_chmod 777 ".$main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."meta_".$SB_TIMESTART.$main::s_slash) if ($? != 0);
+
 #-o "    cp \"" -o ${OMV_SBACKUP_LOGFILE} -o "\" \"" ${GET_TARGET_DEST} -o "/meta_\${SB_TIMESTART}/\"" -n \
 #-o "    cp \"" -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_" -o "\${SB_TIMESTART}" -o ".log\" \"" ${GET_TARGET_DEST} -o "/meta_\${SB_TIMESTART}/\"" -n \
 #-o "    [ -e \"" ${GET_TARGET_DEST} -o "/data_latest\" ] && rm \"" ${GET_TARGET_DEST} -o "/data_latest\"" -n \
@@ -152,10 +161,10 @@ append_log($sessionlogfile,"End time: ".$SB_TIMEEND."\nStatus:".$SB_ECODE."\n");
 #-o "    echo \"cp " ${GET_TARGET_DEST} -o "/meta_\${SB_TIMESTART}/" -v "uuid" -o "_\${SB_TIMESTART}.log\" " -o ${OMV_SBACKUP_SESLOGDIR} -o "/" -v "uuid" -o "_\${SB_TIMESTART}.log >> \"" ${GET_TARGET_DEST} -o "/meta_\${SB_TIMESTART}/import.sh\"" -n \
 #-o "    echo \"  echo Import completed\" >> \"" ${GET_TARGET_DEST} -o "/meta_\${SB_TIMESTART}/import.sh\"" -n \
 #-o "    echo \"fi\" >> \"" ${GET_TARGET_DEST} -o "/meta_\${SB_TIMESTART}/import.sh\"" -n \
-#-o "  fi" -n \
-#-o "  echo \"backup|completed|\" > ${runfile}" -n \
+}
+&f_set_runfile($p_job,"type=backup,status=completed,pid=".$$);
 #-i "post_purge = 1" -o "  \"" -o ${OMV_SBACKUP_SCRIPTS_DIR} -o "/purge_" -v "uuid" -o "\"" -b -n \
-#-o "  [ -e \"${runfile}\" ] && rm -f \"${runfile}\"" -n \
+&f_rm_runfile($p_job);
 #-i "post_job != \"\" and //services/sbackup/backuplist/backup[uuid=current()/post_job]/enable = \"1\" and //services/sbackup/backuplist/backup[uuid=current()/post_job]/job_type = \"backup\""  -o "  [ \"\${SB_ECODE}\" = \"0\" ] && \"" -o ${OMV_SBACKUP_SCRIPTS_DIR} -o "/backup_" -v "post_job" -o "\"" -b -n \
 #-i "post_job != \"\" and //services/sbackup/backuplist/backup[uuid=current()/post_job]/enable = \"1\" and //services/sbackup/backuplist/backup[uuid=current()/post_job]/job_type = \"restore\"" -o "  [ \"\${SB_ECODE}\" = \"0\" ] && \"" -o ${OMV_SBACKUP_SCRIPTS_DIR} -o "/restore_" -v "post_job" -o "\"" -b -n \
 #-i "post_job != \"\" and //services/sbackup/backuplist/backup[uuid=current()/post_job]/enable = \"1\" and //services/sbackup/backuplist/backup[uuid=current()/post_job]/job_type = \"purge\""   -o "  [ \"\${SB_ECODE}\" = \"0\" ] && \"" -o ${OMV_SBACKUP_SCRIPTS_DIR} -o "/purge_" -v "post_job" -o "\"" -b -n \
