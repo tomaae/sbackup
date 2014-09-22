@@ -15,7 +15,7 @@ BEGIN {
 	our ($VERSION, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);
 
 	@ISA         = qw(Exporter);
-	@EXPORT      = qw(&f_output &f_epoch2human &f_time2min &f_min2time &f_time2block &f_block2time &round &f_cstr &f_getenv &f_getjobs);
+	@EXPORT      = qw(&f_output &append_log &write_log &read_log &f_epoch2human &f_time2min &f_min2time &f_time2block &f_block2time &round &f_cstr &f_getenv &f_getjobs);
 	%EXPORT_TAGS = ( );
 
 	# exported package globals, as well as any optionally exported functions
@@ -75,6 +75,47 @@ sub f_output {
 }
 
 ##
+##APPEND LOG
+##
+sub append_log{
+	my ($logfile,$logentry)=@_;
+  &f_output("DEBUG","Added to log file \"$logfile\": $logentry");
+	return if $main::SIMULATEMODE;
+	open log_file,">>$logfile";
+	flock log_file,2;
+	seek log_file,0,2;
+  print log_file "$logentry\n";
+  flock log_file,8;
+  close log_file;
+}
+
+sub write_log{
+	my ($logfile,@logentry)=@_;
+	my $tmp;
+	open log_file,">>$logfile";
+	flock log_file,2;
+	truncate log_file,0;
+	for $tmp(@logentry){
+		chomp;
+		&f_output("DEBUG","Overwrite log file \"$logfile\": $tmp");
+    print log_file "$tmp\n" if !$main::SIMULATEMODE;
+  }
+  flock log_file,8;
+  close log_file;
+}
+
+sub read_log{
+	my ($logfile)=@_;
+  &f_output("DEBUG","Reading log file \"$logfile\"");
+	open log_file,"<$logfile";
+	flock log_file,1;
+  @tmp = <log_file>;
+  flock log_file,8;
+  close log_file;
+  return @tmp;
+}
+
+##
 ##Time convert
 ##
 sub f_epoch2human {
@@ -84,7 +125,7 @@ sub f_epoch2human {
 	$analyze_hour = "0".$analyze_hour if length($analyze_hour)==1;
 	$analyze_min = "0".$analyze_min if length($analyze_min)==1;
 	$analyze_sec = "0".$analyze_sec if length($analyze_sec)==1;
-	return substr(($analyze_mon + 101),1,2)."/".substr(($analyze_mday + 100),1,2)."/".substr(($analyze_year),1,2)." $analyze_hour:$analyze_min:$analyze_sec";
+	return substr(($analyze_mday + 100),1,2)."/".substr(($analyze_mon + 101),1,2)."/".substr(($analyze_year),1,2)." $analyze_hour:$analyze_min:$analyze_sec";
 }
 
 sub f_time2min {
@@ -169,6 +210,7 @@ sub f_getenv{
 	$main::JOBCONFIGPATH  = "/etc/sbackup/jobs/";
 	$main::HISTORYPATH    = "/var/log/sbackup/";
 	$main::SESSIONLOGPATH = "/var/log/sbackup/sessionlogs/";
+	$main::RUNFILEPATH    = "/var/log/sbackup/run/";
 
 	$main::s_browsedir    = "ls -l";
 	$main::cmd_rm         = "rm -r";
@@ -204,8 +246,10 @@ sub f_getjobs{
     "job_type"=>1,
     "backup_type"=>1,
     "source_sharedfolder_uuid"=>0,
+    "backup_source_mnt"=>0,
     "backup_source"=>0,
     "target_sharedfolder_uuid"=>0,
+    "backup_target_mnt"=>0,
     "backup_target"=>0,
     "schedule_enable"=>0,
     "schedule_mon"=>0,
@@ -288,8 +332,10 @@ sub f_getjobs{
       if($found_variable[$count] eq 'job_type'){$main::JOBID{$jobid_tmp}{'job_type'} = $found_value[$count];}
       if($found_variable[$count] eq 'backup_type'){$main::JOBID{$jobid_tmp}{'backup_type'} = $found_value[$count];}
       if($found_variable[$count] eq 'source_sharedfolder_uuid'){$main::JOBID{$jobid_tmp}{'source_sharedfolder_uuid'} = $found_value[$count];}
+      if($found_variable[$count] eq 'backup_source_mnt'){$main::JOBID{$jobid_tmp}{'backup_source_mnt'} = $found_value[$count];}
       if($found_variable[$count] eq 'backup_source'){$main::JOBID{$jobid_tmp}{'backup_source'} = $found_value[$count];}
       if($found_variable[$count] eq 'target_sharedfolder_uuid'){$main::JOBID{$jobid_tmp}{'target_sharedfolder_uuid'} = $found_value[$count];}
+      if($found_variable[$count] eq 'backup_target_mnt'){$main::JOBID{$jobid_tmp}{'backup_target_mnt'} = $found_value[$count];}
       if($found_variable[$count] eq 'backup_target'){$main::JOBID{$jobid_tmp}{'backup_target'} = $found_value[$count];}
       if($found_variable[$count] eq 'schedule_enable'){$main::JOBID{$jobid_tmp}{'schedule_enable'} = $found_value[$count];}
       if($found_variable[$count] eq 'schedule_mon'){$main::JOBID{$jobid_tmp}{'schedule_mon'} = $found_value[$count];}
