@@ -3,7 +3,7 @@
 ###########################################################################################
 #
 #                                         sbackup
-#                                          cache
+#
 #
 ###########################################################################################
 
@@ -26,26 +26,27 @@ if($noofarguments eq "0"){&f_help;exit 1;}
 foreach my $arg (@ARGV){
 	$param_ok = 0;
 	
-	if ($get_debug){$param_ok = 1;$p_debug=$arg;$get_debug=0;}
+	if ($get_debug && $arg !~ /^\-/){$param_ok = 1;$p_debug=$arg;$get_debug=0;}
 	if ($get_job && $arg !~ /^\-/){$param_ok = 1;$p_job=$arg;$get_job=0;}
 	if ($get_version && $arg !~ /^\-/){$param_ok = 1;$p_version=$arg;$get_version=0;}
 	if ($get_tree && $arg !~ /^\-/){$param_ok = 1;$p_version=$arg;$get_version=0;}
 	if ($get_into && $arg !~ /^\-/){$param_ok = 1;$p_into=$arg;$get_into=0;}
 	if ($get_days && $arg !~ /^\-/){$param_ok = 1;$p_days=$arg;$get_days=0;}
 
-	if ($arg =~ /\-debug$/){$param_ok = 1;$get_debug = 1;$main::DEBUGMODE = 1;}
-	if ($arg =~ /\-simulate$/){$param_ok = 1;$main::SIMULATEMODE = 1;}
-	if ($arg =~ /\-history$/){$param_ok = 1;$sv_history = 1;$get_job = 1;}
-	if ($arg =~ /\-log$/){$param_ok = 1;$sv_log = 1;$get_job = 1;}
-	if ($arg =~ /\-backup$/){$param_ok = 1;$sv_backup = 1;$get_job = 1;}
-	if ($arg =~ /\-purge$/){$param_ok = 1;$sv_purge = 1;$get_job = 1;}
-	if ($arg =~ /\-verify$/){$param_ok = 1;$sv_verify = 1;$get_job = 1;}
-	if ($arg =~ /\-copy$/){$param_ok = 1;$sv_copy = 1;$get_job = 1;}
-	if ($arg =~ /\-restore$/){$param_ok = 1;$sv_restore = 1;$get_job = 1;}
-	if ($arg =~ /\-version$/){$param_ok = 1;$sv_version = 1;$get_version = 1;}
-	if ($arg =~ /\-tree$/){$param_ok = 1;$sv_tree = 1;$get_tree = 1;}
-	if ($arg =~ /\-into$/){$param_ok = 1;$sv_into = 1;$get_into = 1;}
-	if ($arg =~ /\-days$/){$param_ok = 1;$sv_days = 1;$get_days = 1;}
+	if ($arg =~ /^\-debug$/){$param_ok = 1;$get_debug = 1;$main::DEBUGMODE = 1;}
+	if ($arg =~ /^\-simulate$/){$param_ok = 1;$main::SIMULATEMODE = 1;}
+	if ($arg =~ /^\-history$/){$param_ok = 1;$sv_history = 1;$get_job = 1;}
+	if ($arg =~ /^\-log$/){$param_ok = 1;$sv_log = 1;$get_job = 1;}
+	#if ($arg =~ /^\-stat(us)?$/){$param_ok = 1;$sv_status = 1;$get_job = 1;}
+	#if ($arg =~ /^\-backup$/){$param_ok = 1;$sv_backup = 1;$get_job = 1;}
+	#if ($arg =~ /^\-purge$/){$param_ok = 1;$sv_purge = 1;$get_job = 1;}
+	#if ($arg =~ /^\-verify$/){$param_ok = 1;$sv_verify = 1;$get_job = 1;}
+	#if ($arg =~ /^\-copy$/){$param_ok = 1;$sv_copy = 1;$get_job = 1;}
+	#if ($arg =~ /^\-restore$/){$param_ok = 1;$sv_restore = 1;$get_job = 1;}
+	if ($arg =~ /^\-ver(sion)?$/){$param_ok = 1;$sv_version = 1;$get_version = 1;}
+	#if ($arg =~ /^\-tree$/){$param_ok = 1;$sv_tree = 1;$get_tree = 1;}
+	#if ($arg =~ /^\-into$/){$param_ok = 1;$sv_into = 1;$get_into = 1;}
+	#if ($arg =~ /^\-days$/){$param_ok = 1;$sv_days = 1;$get_days = 1;}
 
 	if($param_ok == 0){print "\nSyntax error. \n\n";&f_help;exit 1;}
 }
@@ -80,13 +81,15 @@ sub f_help { #HELP FUNCTION
 	print "Syntax:\n\n";
 	#print "  Start job:\n";
 	#print "     -backup <job name>\n";
-	#print "     -purge <job name> [-days <n>]\n";
+	#print "     -purge <job name> [-days <n>] [-version <versionid>]\n";
 	#print "     -verify <job name>\n";
 	#print "     -copy <job name>\n";
 	#print "     -restore <job name> [-version <versionid>] [-tree <path>] [-into <path>]\n\n";
+	#print "  Running jobs:\n";
+	#print "     -status [<job name>]\n\n";
 	print "  Job history:\n";
 	print "     -history <job name>\n\n";
-	print "  Session log:\n";
+	print "  Job log:\n";
 	print "     -log <job name> -version <versionid>\n\n";
 	print "\n";
 
