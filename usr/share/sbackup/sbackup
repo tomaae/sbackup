@@ -13,7 +13,7 @@ BEGIN {
 	push (@INC, $s_incpath);
 }
 END {
-	print "\n";
+	#print "\n";
 	&f_output("DEBUG","Debugging finished.");
 }
 
@@ -36,6 +36,7 @@ foreach my $arg (@ARGV){
 	if ($arg =~ /\-debug$/){$param_ok = 1;$get_debug = 1;$main::DEBUGMODE = 1;}
 	if ($arg =~ /\-simulate$/){$param_ok = 1;$main::SIMULATEMODE = 1;}
 	if ($arg =~ /\-history$/){$param_ok = 1;$sv_history = 1;$get_job = 1;}
+	if ($arg =~ /\-log$/){$param_ok = 1;$sv_log = 1;$get_job = 1;}
 	if ($arg =~ /\-backup$/){$param_ok = 1;$sv_backup = 1;$get_job = 1;}
 	if ($arg =~ /\-purge$/){$param_ok = 1;$sv_purge = 1;$get_job = 1;}
 	if ($arg =~ /\-verify$/){$param_ok = 1;$sv_verify = 1;$get_job = 1;}
@@ -117,6 +118,10 @@ if($sv_restore){
 
 if($sv_history){
 	require "modules/history.sbm";
+}
+
+if($sv_log){
+	require "modules/sessionlog.sbm";
 }
 
 

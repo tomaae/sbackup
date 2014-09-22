@@ -1,0 +1,68 @@
+###########################################################################################
+#
+#                                         sbackup
+#                                    sessionlog module
+#
+###########################################################################################
+
+&f_output("DEBUG","Sessionlog part begin.\n");
+
+if(!$p_job){
+	print "Job not specified.\n\n";
+	#print "Type\tVersion\t\tStatus\t\tStart time\t\tLog\n";
+	&f_getjobs();
+	print "Type\tName\n";
+	for $uuid(sort keys %main::JOBID){
+		print $main::JOBID{$uuid}{'job_type'};
+		print "\t";
+		print $main::JOBID{$uuid}{'name'};
+		print "\n";
+	}
+	exit 1;
+}
+
+if(!$p_version){
+	print "Version not specified.\n\n";
+
+  print "Type\tVersion\t\tStatus\t\tStart time\t\tLog\n";
+  @output = &f_get_history($p_job,'type,status,start');
+  if($output[0]){
+    for $tmp(@{$output[2]}){
+    	print $$tmp{'type'};
+    	print "\t";
+    	print $$tmp{'start'};
+    	print "\t";
+    	print "Completed" if $$tmp{'status'} eq "0";
+    	print "Error:".$$tmp{'status'} if $$tmp{'status'} ne "0";
+    	print "Running" if $$tmp{'status'} eq "running";
+    	print "\t";
+    	print f_epoch2human($$tmp{'start'});
+    	print "\t";
+    	if(-e $main::SESSIONLOGPATH.$main::s_slash.$p_job."_".$$tmp{'start'}.".log"){
+    		print "y";
+    	}else{
+    		print "n";
+    	}
+    	print "\n";
+    }
+  }
+	exit 1;
+}
+
+
+if(-e $main::SESSIONLOGPATH.$main::s_slash.$p_job."_".$p_version.".log"){
+  open log_file,"<".$main::SESSIONLOGPATH.$main::s_slash.$p_job."_".$p_version.".log";
+  while(<log_file>){
+  	print $_;
+  }
+  close log_file;
+}else{
+	print "Log not found.\n";
+}
+
+
+
+
+&f_output("DEBUG","Sessionlog part end.");
+
+1;
