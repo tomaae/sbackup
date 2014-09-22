@@ -15,7 +15,7 @@ BEGIN {
 	our ($VERSION, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);
 
 	@ISA         = qw(Exporter);
-	@EXPORT      = qw(&f_get_history &f_insert_history &f_set_runfile);
+	@EXPORT      = qw(&f_get_history &f_insert_history &f_update_history &f_set_runfile &f_rm_runfile);
 	%EXPORT_TAGS = ( );
 
 	# exported package globals, as well as any optionally exported functions
@@ -151,6 +151,56 @@ sub f_insert_history{
 	return @returncodes;
 }
 
+sub f_update_history{
+	my ($p_uuid,$update,$where)=@_;
+	my %columns;
+	my @cache;
+	my $tmp;
+	my $line;
+	my @val;
+	my @returncodes;
+	
+	if($p_uuid && $update && $where){
+		my @where_request  = &f_parse_where('history',$where);
+  	my @entries = split(/,/,$update,-1);
+  	for $tmp(@entries){
+  		@val = split(/=/,$tmp,-1);
+  		$columns{$table{'history'}{$val[0]}} = $val[1];
+  	}
+  	
+  	open log_file,"+<".$main::HISTORYPATH.$main::s_slash.'history_'.$p_uuid;
+  	flock log_file,2;
+  	
+  	while($line = <log_file>){
+    	chomp($line);
+    	@val = split '\|',$line;
+    	push @cache,[@val];
+  	}
+
+  	seek log_file,0,0;
+  	truncate log_file,0;
+  	for $val(@cache){
+  		$change_value = 1;
+ 			for $tmp(@where_request){
+ 				$change_value = 0 if $$val[$$tmp{'key'}] ne $$tmp{'value'};
+ 			}
+ 			if($change_value == 1){
+ 				print ">";
+ 				for $tmp(keys %columns){
+ 					$$val[$tmp] = $columns{$tmp};
+ 				}
+ 			}
+ 			print log_file join("|",@{$val}),"\n";
+  	}
+  	
+  	flock log_file,8;
+    close log_file;
+  	
+  	$returncodes[0] = 1;
+	}
+	return @returncodes;
+}
+
 sub f_set_runfile{
 	my ($p_uuid,$insert)=@_;
 	my @columns;
@@ -170,6 +220,16 @@ sub f_set_runfile{
   	write_log($main::RUNFILEPATH.$main::s_slash.'sbackup_'.$p_uuid,join('|',@columns));
   	
   	$returncodes[0] = 1;
+	}
+	return @returncodes;
+}
+
+sub f_rm_runfile{
+	my ($p_uuid)=@_;
+	if($p_uuid && -e $main::RUNFILEPATH.$main::s_slash.'sbackup_'.$p_uuid){
+  	system("$main::cmd_rm ".$main::RUNFILEPATH.$main::s_slash.'sbackup_'.$p_uuid);
+  	$returncodes[0] = 0;
+  	$returncodes[0] = 1 if($? != 0);
 	}
 	return @returncodes;
 }
