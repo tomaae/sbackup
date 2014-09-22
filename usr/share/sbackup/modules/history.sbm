@@ -12,7 +12,6 @@ if($p_job){
 }else{
 	for $uuid(sort keys %main::JOBID){
 		push @uuids, &f_cstr("D",$uuid);
-		print &f_cstr("D",$uuid),"\n";
 	}
 }
 	
