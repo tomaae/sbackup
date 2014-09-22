@@ -86,6 +86,8 @@ sub f_help { #HELP FUNCTION
 	#print "     -restore <job name> [-version <versionid>] [-tree <path>] [-into <path>]\n\n";
 	print "  Job history:\n";
 	print "     -history <job name>\n\n";
+	print "  Session log:\n";
+	print "     -log <job name> -version <versionid>\n\n";
 	print "\n";
 
 	exit 0;
