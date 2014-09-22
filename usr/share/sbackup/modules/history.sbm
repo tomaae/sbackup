@@ -10,6 +10,7 @@
 if($p_job){
 	push @uuids,$p_job;
 }else{
+	&f_getjobs() if !%main::JOBID;
 	for $uuid(sort keys %main::JOBID){
 		push @uuids, &f_cstr("D",$uuid);
 	}

@@ -10,7 +10,7 @@
 if(!$p_job){
 	print "Job not specified.\n\n";
 	#print "Type\tVersion\t\tStatus\t\tStart time\t\tLog\n";
-	&f_getjobs();
+	&f_getjobs() if !%main::JOBID;
 	print "Type\tName\n";
 	for $uuid(sort keys %main::JOBID){
 		print $main::JOBID{$uuid}{'job_type'};
