@@ -39,7 +39,7 @@ foreach my $arg (@ARGV){
 	if ($arg =~ /^\-log$/){$param_ok = 1;$sv_log = 1;$get_job = 1;}
 	#if ($arg =~ /^\-stat(us)?$/){$param_ok = 1;$sv_status = 1;$get_job = 1;}
 	if ($arg =~ /^\-backup$/){$param_ok = 1;$sv_backup = 1;$get_job = 1;}
-	#if ($arg =~ /^\-purge$/){$param_ok = 1;$sv_purge = 1;$get_job = 1;}
+	if ($arg =~ /^\-purge$/){$param_ok = 1;$sv_purge = 1;$get_job = 1;}
 	#if ($arg =~ /^\-verify$/){$param_ok = 1;$sv_verify = 1;$get_job = 1;}
 	#if ($arg =~ /^\-copy$/){$param_ok = 1;$sv_copy = 1;$get_job = 1;}
 	#if ($arg =~ /^\-restore$/){$param_ok = 1;$sv_restore = 1;$get_job = 1;}
@@ -60,9 +60,9 @@ if($main::SIMULATEMODE){print "Simulation mode enabled, no action will be taken.
 use sbackup_init;
 use sbackup_cache;
 &f_getenv();
-if($p_job && $p_job !~ /^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$/){
+if($sv_backup || ($p_job && $p_job !~ /^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$/)){
 	&f_getjobs();
-	if($p_job){
+	if($p_job !~ /^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$/){
 		if($JOBNAME{&f_cstr("E",$p_job)}){
 			$p_job = $JOBNAME{&f_cstr("E",$p_job)};
 		}else{
@@ -88,7 +88,7 @@ sub f_help { #HELP FUNCTION
 	print "     -log <job name> -version <versionid>\n\n";
 	print "\n";
 
-	exit 0;
+	exit 1;
 	return 1;
 }
 
@@ -100,7 +100,7 @@ if($sv_backup){
 	require "modules/backup.sbm";
 }
 
-if($sv_purge){
+if($sv_purge1){
 	require "modules/purge.sbm";
 }
 

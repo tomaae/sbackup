@@ -79,7 +79,9 @@ sub f_output {
 ##
 sub append_log{
 	my ($logfile,$logentry)=@_;
-  &f_output("DEBUG","Added to log file \"$logfile\": $logentry");
+	my $logfile_short = $logfile;
+	$logfile_short =~ s/^.*\///g if $main::p_debug < 3;
+  &f_output("DEBUG","Added to log file \"$logfile_short\": $logentry");
 	return if $main::SIMULATEMODE;
 	open log_file,">>$logfile";
 	flock log_file,2;
@@ -91,7 +93,9 @@ sub append_log{
 
 sub write_log{
 	my ($logfile,$logentry)=@_;
-  &f_output("DEBUG","Overwrite to log file \"$logfile\": $logentry");
+	my $logfile_short = $logfile;
+	$logfile_short =~ s/^.*\///g if $main::p_debug < 3;
+  &f_output("DEBUG","Overwrite to log file \"$logfile_short\": $logentry");
 	return if $main::SIMULATEMODE;
 	open log_file,">>$logfile";
 	flock log_file,2;
@@ -103,7 +107,9 @@ sub write_log{
 
 sub read_log{
 	my ($logfile)=@_;
-  &f_output("DEBUG","Reading log file \"$logfile\"");
+	my $logfile_short = $logfile;
+	$logfile_short =~ s/^.*\///g if $main::p_debug < 3;
+  &f_output("DEBUG","Reading log file \"$logfile_short\"");
 	open log_file,"<$logfile";
 	flock log_file,1;
   @tmp = <log_file>;
@@ -210,6 +216,7 @@ sub f_getenv{
 	$main::RUNFILEPATH    = "/var/log/sbackup/run/";
 
 	$main::s_browsedir    = "ls -l";
+	$main::cmd_ln         = "ln -s";
 	$main::cmd_rm         = "rm -r";
 	$main::cmd_sleep      = "sleep";
 	$main::cmd_cp         = "cp";
@@ -252,13 +259,7 @@ sub f_getjobs{
     "backup_target_mnt"=>0,
     "backup_target"=>0,
     "schedule_enable"=>0,
-    "schedule_mon"=>0,
-    "schedule_tue"=>0,
-    "schedule_wed"=>0,
-    "schedule_thu"=>0,
-    "schedule_fri"=>0,
-    "schedule_sat"=>0,
-    "schedule_sun"=>0,
+    "schedule_wday"=>0,
     "schedule_hour"=>0,
     "schedule_minute"=>0,
     "lvmsnap_enable"=>0,
@@ -270,18 +271,18 @@ sub f_getjobs{
     "post_purge"=>0,
     "protect_days_job"=>1,
     "post_job"=>0,
+    "post_job_type"=>0,
     "purge_job_uuid"=>0,
     "verify_job_uuid"=>0
   );
   
 	my @variable_error  = ();
 	my @value_error     = ();
-	my @found_variable  = ();
-	my @found_value     = ();
 	my $return_error    = 0;
   
   for my $jobid_tmp(keys %main::JOBID){
-  	
+  	my @found_variable  = ();
+		my @found_value     = ();
   	open cfgfile,"<".$main::JOBID{$jobid_tmp}{'file'} or &f_output("ERROR","Cannot open \"".$main::JOBID{$jobid_tmp}{'file'}."\".",9);
   	while (<cfgfile>){
   		chomp;
@@ -338,13 +339,7 @@ sub f_getjobs{
       if($found_variable[$count] eq 'backup_target_mnt'){$main::JOBID{$jobid_tmp}{'backup_target_mnt'} = $found_value[$count];}
       if($found_variable[$count] eq 'backup_target'){$main::JOBID{$jobid_tmp}{'backup_target'} = $found_value[$count];}
       if($found_variable[$count] eq 'schedule_enable'){$main::JOBID{$jobid_tmp}{'schedule_enable'} = $found_value[$count];}
-      if($found_variable[$count] eq 'schedule_mon'){$main::JOBID{$jobid_tmp}{'schedule_mon'} = $found_value[$count];}
-      if($found_variable[$count] eq 'schedule_tue'){$main::JOBID{$jobid_tmp}{'schedule_tue'} = $found_value[$count];}
-      if($found_variable[$count] eq 'schedule_wed'){$main::JOBID{$jobid_tmp}{'schedule_wed'} = $found_value[$count];}
-      if($found_variable[$count] eq 'schedule_thu'){$main::JOBID{$jobid_tmp}{'schedule_thu'} = $found_value[$count];}
-      if($found_variable[$count] eq 'schedule_fri'){$main::JOBID{$jobid_tmp}{'schedule_fri'} = $found_value[$count];}
-      if($found_variable[$count] eq 'schedule_sat'){$main::JOBID{$jobid_tmp}{'schedule_sat'} = $found_value[$count];}
-      if($found_variable[$count] eq 'schedule_sun'){$main::JOBID{$jobid_tmp}{'schedule_sun'} = $found_value[$count];}
+      if($found_variable[$count] eq 'schedule_wday'){$main::JOBID{$jobid_tmp}{'schedule_wday'} = $found_value[$count];}
       if($found_variable[$count] eq 'schedule_hour'){$main::JOBID{$jobid_tmp}{'schedule_hour'} = $found_value[$count];}
       if($found_variable[$count] eq 'schedule_minute'){$main::JOBID{$jobid_tmp}{'schedule_minute'} = $found_value[$count];}
       if($found_variable[$count] eq 'lvmsnap_enable'){$main::JOBID{$jobid_tmp}{'lvmsnap_enable'} = $found_value[$count];}
@@ -356,6 +351,7 @@ sub f_getjobs{
       if($found_variable[$count] eq 'post_purge'){$main::JOBID{$jobid_tmp}{'post_purge'} = $found_value[$count];}
       if($found_variable[$count] eq 'protect_days_job'){$main::JOBID{$jobid_tmp}{'protect_days_job'} = $found_value[$count];}
       if($found_variable[$count] eq 'post_job'){$main::JOBID{$jobid_tmp}{'post_job'} = $found_value[$count];}
+      if($found_variable[$count] eq 'post_job_type'){$main::JOBID{$jobid_tmp}{'post_job_type'} = $found_value[$count];}
       if($found_variable[$count] eq 'purge_job_uuid'){$main::JOBID{$jobid_tmp}{'purge_job_uuid'} = $found_value[$count];}
       if($found_variable[$count] eq 'verify_job_uuid'){$main::JOBID{$jobid_tmp}{'verify_job_uuid'} = $found_value[$count];}
   	}
@@ -366,8 +362,7 @@ sub f_getjobs{
      	for $tmp(@value_error){print "$tmp\n";}
      	&f_output("ERROR","Error in the job definition file ".$main::JOBID{$jobid_tmp}{'file'}.".",9);
     }
-    
-    $main::JOBNAME{&f_cstr("E",$main::JOBID{$jobid_tmp}{'name'})} = &f_cstr("D",$jobid_tmp);
+		$main::JOBNAME{&f_cstr("E",$main::JOBID{$jobid_tmp}{'name'})} = &f_cstr("D",$jobid_tmp);
   }
   &f_output("DEBUG","Configuration file successfully loaded.");
 }

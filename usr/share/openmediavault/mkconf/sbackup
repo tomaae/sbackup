@@ -60,13 +60,7 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
       -o "backup_target_mnt=" ${GET_TARGET_MNT} -n \
       -o "backup_target=" ${GET_TARGET_DEST} -n \
       -o "schedule_enable=" -v "schedule_enable" -n \
-      -o "schedule_mon=" -v "schedule_mon" -n \
-      -o "schedule_tue=" -v "schedule_tue" -n \
-      -o "schedule_wed=" -v "schedule_wed" -n \
-      -o "schedule_thu=" -v "schedule_thu" -n \
-      -o "schedule_fri=" -v "schedule_fri" -n \
-      -o "schedule_sat=" -v "schedule_sat" -n \
-      -o "schedule_sun=" -v "schedule_sun" -n \
+      -o "schedule_wday=" -v "schedule_wday" -n \
       -o "schedule_hour=" -v "schedule_hour" -n \
       -o "schedule_minute=" -v "schedule_minute" -n \
       -o "lvmsnap_enable=" -v "lvmsnap_enable" -n \
@@ -77,7 +71,10 @@ xmlstarlet sel -t -m "//services/sbackup/backuplist/backup" \
       -o "report=" -v "report" -n \
       -o "post_purge=" -v "post_purge" -n \
       -o "protect_days_job=" -v "protect_days_job" -n \
-      -o "post_job=" -v "post_job" -n \
+      -i "post_job != \"\" and //services/sbackup/backuplist/backup[uuid=current()/post_job]/enable = \"1\"" \
+        -o "post_job=" -v "post_job" -n \
+        -o "post_job_type=" -v "//services/sbackup/backuplist/backup[uuid=current()/post_job]/job_type" -n \
+      -b \
       -o "purge_job_uuid=" -v "purge_job_uuid" -n \
       -o "verify_job_uuid=" -v "verify_job_uuid" -n \
 			${OMV_CONFIG_FILE} | xmlstarlet unesc > "${OMV_SBACKUP_JOBS_DIR}/${uuid}"

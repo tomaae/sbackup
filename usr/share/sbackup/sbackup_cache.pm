@@ -185,7 +185,6 @@ sub f_update_history{
  				$change_value = 0 if $$val[$$tmp{'key'}] ne $$tmp{'value'};
  			}
  			if($change_value == 1){
- 				print ">";
  				for $tmp(keys %columns){
  					$$val[$tmp] = $columns{$tmp};
  				}
