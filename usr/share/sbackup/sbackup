@@ -37,12 +37,12 @@ foreach my $arg (@ARGV){
 	if ($arg =~ /^\-simulate$/){$param_ok = 1;$main::SIMULATEMODE = 1;}
 	if ($arg =~ /^\-history$/){$param_ok = 1;$sv_history = 1;$get_job = 1;}
 	if ($arg =~ /^\-log$/){$param_ok = 1;$sv_log = 1;$get_job = 1;}
-	#if ($arg =~ /^\-stat(us)?$/){$param_ok = 1;$sv_status = 1;$get_job = 1;}
+	if ($arg =~ /^\-stat(us)?$/){$param_ok = 1;$sv_status = 1;$get_job = 1;}
 	if ($arg =~ /^\-backup$/){$param_ok = 1;$sv_backup = 1;$get_job = 1;}
 	if ($arg =~ /^\-purge$/){$param_ok = 1;$sv_purge = 1;$get_job = 1;}
-	#if ($arg =~ /^\-verify$/){$param_ok = 1;$sv_verify = 1;$get_job = 1;}
-	#if ($arg =~ /^\-copy$/){$param_ok = 1;$sv_copy = 1;$get_job = 1;}
-	#if ($arg =~ /^\-restore$/){$param_ok = 1;$sv_restore = 1;$get_job = 1;}
+	if ($arg =~ /^\-verify$/){$param_ok = 1;$sv_verify = 1;$get_job = 1;}
+	if ($arg =~ /^\-copy$/){$param_ok = 1;$sv_copy = 1;$get_job = 1;}
+	if ($arg =~ /^\-restore$/){$param_ok = 1;$sv_restore = 1;$get_job = 1;}
 	if ($arg =~ /^\-ver(sion)?$/){$param_ok = 1;$sv_version = 1;$get_version = 1;}
 	#if ($arg =~ /^\-tree$/){$param_ok = 1;$sv_tree = 1;$get_tree = 1;}
 	#if ($arg =~ /^\-into$/){$param_ok = 1;$sv_into = 1;$get_into = 1;}
@@ -100,7 +100,7 @@ if($sv_backup){
 	require "modules/backup.sbm";
 }
 
-if($sv_purge1){
+if($sv_purge){
 	require "modules/purge.sbm";
 }
 
