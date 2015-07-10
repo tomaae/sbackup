@@ -769,7 +769,9 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
     $this->validateMethodContext($context, array(
        "role" => OMV_ROLE_ADMINISTRATOR
       ));
-    if(!$params['version'])return;
+    if(!$params['version']){ // Version not selected
+    	return 0;
+    }
     // Validate the parameters of the RPC service method.
     $this->validateMethodParams($params, '{
        "type":"object",

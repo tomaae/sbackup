@@ -151,13 +151,13 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
       	}
       	if(ai >= 0){
       		var tbarRunCtrl = me.queryById(me.getId() + "-log");
-      		if(records.length > 0 && records[ai].data.haslog == "yes")
+      		if(records.length > 0 && records_bl.length == 1 && records[ai].data.haslog == "yes")
       			tbarRunCtrl.enable();
       		else
       			tbarRunCtrl.disable();
       		var tbarRestoreCtrl = me.queryById(me.getId() + "-restore");
       		var tbarPurgeCtrl = me.queryById(me.getId() + "-purge");
-      		if(records.length > 0 && (records[ai].data.job_type == "Backup")){
+      		if(records.length > 0 && records_bl.length == 1  && (records[ai].data.job_type == "Backup")){
       			tbarRestoreCtrl.enable();
       			tbarPurgeCtrl.enable();
       		}else{
@@ -212,18 +212,25 @@ Ext.define("OMV.module.admin.service.sbackup.backuphistory", {
 		me.callParent(arguments);
 		// Process additional buttons.
 		var tbarRunCtrl = me.queryById(me.getId() + "-log");
-		if(records.length > 0 && records[0].data.haslog == "yes")
-			tbarRunCtrl.enable();
-		else
-			tbarRunCtrl.disable();
-		var tbarRestoreCtrl = me.queryById(me.getId() + "-restore");
-		var tbarPurgeCtrl = me.queryById(me.getId() + "-purge");
-		if(records.length > 0 && (records[0].data.job_type == "Backup")){
-			tbarRestoreCtrl.enable();
-			tbarPurgeCtrl.enable();
+  	var tbarRestoreCtrl = me.queryById(me.getId() + "-restore");
+  	var tbarPurgeCtrl = me.queryById(me.getId() + "-purge");
+		if(records.length == 1){
+  		if(records.length > 0 && records[0].data.haslog == "yes")
+  			tbarRunCtrl.enable();
+  		else
+  			tbarRunCtrl.disable();
+
+  		if(records.length > 0 && (records[0].data.job_type == "Backup")){
+  			tbarRestoreCtrl.enable();
+  			tbarPurgeCtrl.enable();
+  		}else{
+  			tbarRestoreCtrl.disable();
+  			tbarPurgeCtrl.disable();
+  		}
 		}else{
-			tbarRestoreCtrl.disable();
-			tbarPurgeCtrl.disable();
+			tbarRunCtrl.disable();
+  		tbarRestoreCtrl.disable();
+  		tbarPurgeCtrl.disable();
 		}
 	},
 

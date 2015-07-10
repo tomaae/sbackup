@@ -113,7 +113,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			name: "job_type",
 			fieldLabel: _("Job type"),
 			queryMode: "local",
-			store: Ext.create("Ext.data.ArrayStore", {
+			store: Ext.create("OMV.data.Store", {
 				fields: [ "value", "text" ],
 				data: [
 				[ "backup", _("Backup") ],
@@ -133,7 +133,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			name: "backup_type",
 			fieldLabel: _("Backup type"),
 			queryMode: "local",
-			store: Ext.create("Ext.data.ArrayStore", {
+			store: Ext.create("OMV.data.Store", {
 				fields: [ "value", "text" ],
 				data: [
 				[ "sharedfolder", _("Shared folder") ],
@@ -193,7 +193,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			fieldLabel: _("Backup"),
 			queryMode: "local",
 			emptyText: _("Select backup ..."),
-			store: Ext.create("Ext.data.ArrayStore", {
+			store: Ext.create("OMV.data.Store", {
 				autoLoad: true,
 				model: OMV.data.Model.createImplicit({
 					idProperty: "postjob",
@@ -237,7 +237,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			fieldLabel: _("Backup"),
 			queryMode: "local",
 			emptyText: _("Select backup ..."),
-			store: Ext.create("Ext.data.ArrayStore", {
+			store: Ext.create("OMV.data.Store", {
 				autoLoad: true,
 				model: OMV.data.Model.createImplicit({
 					idProperty: "postjob",
@@ -338,7 +338,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			name: "schedule_hour",
 			fieldLabel: _("Hour"),
 			queryMode: "local",
-			store: Ext.create("Ext.data.ArrayStore", {
+			store: Ext.create("OMV.data.Store", {
 				fields: [ "value", "text" ],
 				data: [
 				[ "00", _("00") ],
@@ -379,7 +379,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			name: "schedule_minute",
 			fieldLabel: _("Minute"),
 			queryMode: "local",
-			store: Ext.create("Ext.data.ArrayStore", {
+			store: Ext.create("OMV.data.Store", {
 				fields: [ "value", "text" ],
 				data: [
 				[ "00", _("00") ],
@@ -476,7 +476,7 @@ Ext.define("OMV.module.admin.service.sbackup.backup", {
 			fieldLabel: _("Post job"),
 			queryMode: "local",
 			emptyText: _("No job selected"),
-			store: Ext.create("Ext.data.ArrayStore", {
+			store: Ext.create("OMV.data.Store", {
 				autoLoad: true,
 				model: OMV.data.Model.createImplicit({
 					idProperty: "postjob",
@@ -600,8 +600,8 @@ Ext.define("OMV.module.admin.service.sbackup.restore", {
         
         listeners: {
           scope: me,
-          select: function(combo, records) {
-            var record = records[0];
+          select: function(combo, record) {
+            //var record = records[0];
             this.tp.setVersion(record.get("version"));
           }
         }
@@ -994,7 +994,7 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
       var records_bl = sm.getSelection();
       var ai = -1;
       if(records_bl.length > 0){
-      	for (i = 0; i < records.length; i++) { 
+      	for (i = 0; i < records.length; i++) {
       		if(records[i].data.uuid == records_bl[0].data.uuid){
       			ai = i;
       			break;
@@ -1008,8 +1008,12 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
       			"purge": true,
       			"abort": true
     			};
-    			
-          if(records.length > 0) {
+    			if (records_bl.length <= 0) {
+          	tbarBtnDisabled["run"] = true;
+          	tbarBtnDisabled["restore"] = true;
+          	tbarBtnDisabled["purge"] = true;
+          	tbarBtnDisabled["delete"] = true;
+    			} else if(records_bl.length == 1) {
           	tbarBtnDisabled["run"] = false;
           	tbarBtnDisabled["restore"] = false;
           	tbarBtnDisabled["purge"] = false;
@@ -1028,6 +1032,11 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
           		tbarBtnDisabled["restore"] = true;
           		tbarBtnDisabled["purge"] = true;
           	}
+          }else{
+          	tbarBtnDisabled["run"] = true;
+          	tbarBtnDisabled["restore"] = true;
+          	tbarBtnDisabled["purge"] = true;
+          	tbarBtnDisabled["delete"] = false;
           }
       		
       		Ext.Object.each(tbarBtnDisabled, function(key, value) {
@@ -1095,7 +1104,12 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
       "abort": true
     };
     
-    if(records.length > 0) {
+    if (records.length <= 0) {
+     	tbarBtnDisabled["run"] = true;
+      tbarBtnDisabled["restore"] = true;
+      tbarBtnDisabled["purge"] = true;
+      tbarBtnDisabled["delete"] = true;
+    } else if(records.length == 1) {
     	tbarBtnDisabled["run"] = false;
     	tbarBtnDisabled["restore"] = false;
     	tbarBtnDisabled["purge"] = false;
@@ -1114,6 +1128,11 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
     		tbarBtnDisabled["restore"] = true;
     		tbarBtnDisabled["purge"] = true;
     	}
+    }else{
+      tbarBtnDisabled["run"] = true;
+      tbarBtnDisabled["restore"] = true;
+      tbarBtnDisabled["purge"] = true;
+      tbarBtnDisabled["delete"] = false;
     }
 		
 		Ext.Object.each(tbarBtnDisabled, function(key, value) {
@@ -1217,8 +1236,8 @@ Ext.define("OMV.module.admin.service.sbackup.backuplist", {
   			OMV.Rpc.request({
   				scope: me,
   				callback: function(id, success, response) {
-  					//var now = new Date().getTime();
-  					//while(new Date().getTime() < now + 1500){ /* do nothing */ }
+  					var now = new Date().getTime();
+  					while(new Date().getTime() < now + 1500){ /* do nothing */ }
   					this.doReload();
   				},
   				relayErrors: false,
