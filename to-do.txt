@@ -123,3 +123,49 @@ mount /dev/vg_b/lv_4_snap /mnt -oro
 umount /dev/vg_b/lv_4_snap
 lvremove -f /dev/vg_b/lv_4_snap
 =================================================================
+NAME plex
+UUID b8cd86fa-781b-45f7-853e-8f8d21c6b777
+ENABLED 1
+
+
+SCHEDULE {
+	-enabled 1
+	-day Mon Tue Sat
+	-time 02:00
+}
+
+SOURCE {
+	-host hostname.domain.com
+	-tree "/var/www"|-ovm "88f732cf-f62b-4475-8850-b34330a8c1c5"
+	-snapshot {
+		-enabled 1
+		-type lvm
+		-size 10
+		-fallback yes	
+	}
+	-protect 7
+}
+
+TARGET {
+	-host hostname.domain.com
+	-tree "/var/www"|-ovm "2b84b03d-1fd2-412a-8cff-5beef1bea974"
+	-exclusive yes #"This job will start only when no other jobs are running, otherwise it will queue."
+}
+
+POST {
+	-job {
+		-type backup
+		-name asdf
+	}
+	-autorestart yes #"Automatically restart job on failure. Only one restart attempt will be done."
+}
+
+############################
+root@nc-nas1:/etc/sbackup/jobs# omv_config_get "//system/shares/sharedfolder[uuid='88f732cf-f62b-4475-8850-b34330a8c1c5']/mntentref"
+46440731-0ab4-49e8-ab79-ae7804918732
+
+root@nc-nas1:/etc/sbackup/jobs# omv_config_get "//system/shares/sharedfolder[uuid='88f732cf-f62b-4475-8850-b34330a8c1c5']/reldirpath"
+plex/
+
+root@nc-nas1:/etc/sbackup/jobs# omv_config_get "//system/fstab/mntent[uuid='46440731-0ab4-49e8-ab79-ae7804918732']/dir"
+/media/51f65028-6e40-4cbc-9587-3b0046914361
