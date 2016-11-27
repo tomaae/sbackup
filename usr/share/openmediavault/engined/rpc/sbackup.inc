@@ -793,7 +793,7 @@ class OMVRpcServiceSBackup extends OMVRpcServiceAbstract {
      
     // List the directory contents.
     $result = array();
-    $path = sprintf("%s/%s", $rootPath.$params['version'], rtrim($params['path'], "/"));
+    $path = sprintf("%s/%s", $rootPath."/".$params['version'], rtrim($params['path'], "/"));
     
     foreach (new DirectoryIterator($path) as $item) {
      if ($item->isDot())
