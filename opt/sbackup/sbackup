@@ -1,0 +1,129 @@
+#!/usr/bin/perl
+
+###########################################################################################
+#
+#                                         sbackup
+#
+#
+###########################################################################################
+
+use strict;
+use warnings;
+
+BEGIN {
+	push (@INC, "/opt/sbackup/");
+}
+use init;
+get_env;
+use logger;
+use config;
+my %job = load_jobs_config;
+
+##
+##CMD VARS
+##
+sub help { #HELP FUNCTION
+	print "====Sync Backup====\n\n";
+	print "Syntax:\n\n";
+	#print "  Start job:\n";
+	#print "     -backup <job name>\n";
+	#print "     -purge <job name> [-days <n>] [-version <versionid>]\n";
+	#print "     -verify <job name>\n";
+	#print "     -copy <job name>\n";
+	#print "     -restore <job name> [-version <versionid>] [-tree <path>] [-into <path>]\n\n";
+	#print "  Running jobs:\n";
+	#print "     -status [<job name>]\n\n";
+	print "  Job history:\n";
+	print "     -history <job name>\n\n";
+	print "  Job log:\n";
+	print "     -log <job name> -version <versionid>\n\n";
+	print "\n";
+
+	exit 1;
+	return 1;
+}
+
+my $noofarguments=@ARGV;
+if($noofarguments eq "0"){help;exit 1;}
+my ($sv_history, $sv_log, $sv_status, $sv_backup, $sv_purge, $sv_verify, $sv_copy, $sv_restore, $sv_version);
+my ($get_job, $get_version, $get_tree, $get_into, $get_days);
+my ($p_job, $p_version, $p_into, $p_days);
+foreach my $arg (@ARGV){
+	my $param_ok = 0;
+	
+	if ($get_job && $arg !~ /^\-/){$param_ok = 1;$p_job=$arg;$get_job=0;}
+	if ($get_version && $arg !~ /^\-/){$param_ok = 1;$p_version=$arg;$get_version=0;}
+	if ($get_tree && $arg !~ /^\-/){$param_ok = 1;$p_version=$arg;$get_version=0;}
+	if ($get_into && $arg !~ /^\-/){$param_ok = 1;$p_into=$arg;$get_into=0;}
+	if ($get_days && $arg !~ /^\-/){$param_ok = 1;$p_days=$arg;$get_days=0;}
+
+	if ($arg =~ /^\-history$/){$param_ok = 1;$sv_history = 1;$get_job = 1;}
+	if ($arg =~ /^\-log$/){$param_ok = 1;$sv_log = 1;$get_job = 1;}
+	if ($arg =~ /^\-stat(us)?$/){$param_ok = 1;$sv_status = 1;$get_job = 1;}
+	if ($arg =~ /^\-backup$/){$param_ok = 1;$sv_backup = 1;$get_job = 1;}
+	if ($arg =~ /^\-purge$/){$param_ok = 1;$sv_purge = 1;$get_job = 1;}
+	if ($arg =~ /^\-verify$/){$param_ok = 1;$sv_verify = 1;$get_job = 1;}
+	if ($arg =~ /^\-copy$/){$param_ok = 1;$sv_copy = 1;$get_job = 1;}
+	if ($arg =~ /^\-restore$/){$param_ok = 1;$sv_restore = 1;$get_job = 1;}
+	if ($arg =~ /^\-ver(sion)?$/){$param_ok = 1;$sv_version = 1;$get_version = 1;}
+	#if ($arg =~ /^\-tree$/){$param_ok = 1;$sv_tree = 1;$get_tree = 1;}
+	#if ($arg =~ /^\-into$/){$param_ok = 1;$sv_into = 1;$get_into = 1;}
+	#if ($arg =~ /^\-days$/){$param_ok = 1;$sv_days = 1;$get_days = 1;}
+
+	if($param_ok == 0){print "\nSyntax error. \n\n";help;exit 1;}
+}
+
+#use sbackup_init;
+#use sbackup_cache;
+#&f_getenv();
+#if($sv_backup || ($p_job && $p_job !~ /^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$/)){
+#	&f_getjobs();
+#	if($p_job !~ /^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$/){
+#		if($JOBNAME{&f_cstr("E",$p_job)}){
+#			$p_job = $JOBNAME{&f_cstr("E",$p_job)};
+#		}else{
+#			print "\nJob \"$p_job\" does not exists. \n\n";exit 1;
+#		}
+#	}
+#}
+
+
+
+##
+##CODE START
+##
+
+if($sv_backup){
+	require "modules/backup.sbm";
+}
+
+if($sv_purge){
+	require "modules/purge.sbm";
+}
+
+if($sv_verify){
+	require "modules/verify.sbm";
+}
+
+if($sv_copy){
+	require "modules/copy.sbm";
+}
+
+if($sv_restore){
+	require "modules/restore.sbm";
+}
+
+if($sv_history){
+	require "modules/history.sbm";
+}
+
+if($sv_log){
+	require "modules/sessionlog.sbm";
+}
+
+
+##
+##CODE END
+##
+
+exit 0;
