@@ -73,19 +73,24 @@ foreach my $arg (@ARGV){
 	if($param_ok == 0){print "\nSyntax error. \n\n";help;exit 1;}
 }
 
-#use sbackup_init;
-#use sbackup_cache;
-#&f_getenv();
-#if($sv_backup || ($p_job && $p_job !~ /^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$/)){
-#	&f_getjobs();
-#	if($p_job !~ /^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$/){
-#		if($JOBNAME{&f_cstr("E",$p_job)}){
-#			$p_job = $JOBNAME{&f_cstr("E",$p_job)};
-#		}else{
-#			print "\nJob \"$p_job\" does not exists. \n\n";exit 1;
-#		}
-#	}
-#}
+for my $l1(keys %job){
+	print "=======================\n";
+	for my $l2(sort keys %{$job{$l1}}){
+		if(ref $job{$l1}{$l2} eq "HASH"){
+			for my $l3(sort keys %{$job{$l1}{$l2}}){
+				if(ref $job{$l1}{$l2}{$l3} eq "HASH"){
+					for my $l4(sort keys %{$job{$l1}{$l2}{$l3}}){
+						print "3",$l2,":",$l3,":",$l4,":",$job{$l1}{$l2}{$l3}{$l4},"\n";
+					}
+				}else{
+					print "2",$l2,":",$l3,":",$job{$l1}{$l2}{$l3},"\n";
+				}
+			}
+		}else{
+			print "1",$l2,":",$job{$l1}{$l2},"\n";
+		}
+	}
+}
 
 
 

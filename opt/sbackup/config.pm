@@ -18,9 +18,9 @@ our @EXPORT = qw(load_jobs_config parse_job_config);
 my %job_definition = ( ##Default value, Mandatory, Type, Range of type
   'NAME' => ["",1,"",""],
   'UUID' => ["",0,"",""],
-  'ENABLED' => ["",1,"bool",""],
+  'ENABLED' => ["0",1,"bool",""],
   'SCHEDULE' => {
-  	'-enabled' => ["",0,"bool",""],
+  	'-enabled' => ["0",0,"bool",""],
   	'-day' => ["",0,"day",""],
   	'-time' => ["",0,"time",""],
   },
@@ -30,10 +30,10 @@ my %job_definition = ( ##Default value, Mandatory, Type, Range of type
   	'-tree' => ["",0,"",""],
   	'-protect' => ["",0,"number",""],
   	'-snapshot' => {
-  		'-enabled' => ["",0,"bool",""],
+  		'-enabled' => ["0",0,"bool",""],
   		'-type' => ["",0,"list","lvm"],
   		'-size' => ["",0,"number",""],
-  		'-fallback' => ["",0,"bool",""],
+  		'-fallback' => ["0",0,"bool",""],
   	}
   },
   'TARGET' => {
@@ -45,7 +45,7 @@ my %job_definition = ( ##Default value, Mandatory, Type, Range of type
   	'-job' => {
   		'-name' => ["",0,"",""],
   	},
-  	'-autorestart' => ["",0,"bool",""],
+  	'-autorestart' => ["0",0,"bool",""],
   }
 );
 
@@ -72,7 +72,7 @@ sub verify_job {
 	my ($job,$config,$job_path,$error)=@_;
 	$error = 0 if !$error;
 	for my $tmp(keys %{$config}){
-		if(ref ${$config}{$tmp}eq "HASH"){
+		if(ref ${$config}{$tmp} eq "HASH"){
 			push @{$job_path}, $tmp;
 			$error = verify_job(${$job}{$tmp},${$config}{$tmp},$job_path,$error);
 			pop @{$job_path};
@@ -85,7 +85,7 @@ sub verify_job {
 				}
 			}
 			##Bool test
-			if(${${$config}{$tmp}}[2] eq "bool"){
+			if(defined ${$job}{$tmp} && ${${$config}{$tmp}}[2] eq "bool"){
   			if(${$job}{$tmp} =~ /^(0|1|no|yes)$/i){
   				${$job}{$tmp} = 0 if ${$job}{$tmp} =~ /^(0|no)$/i;
   				${$job}{$tmp} = 1 if ${$job}{$tmp} =~ /^(1|yes)$/i;
@@ -95,14 +95,14 @@ sub verify_job {
   			}
 			}
 			##Numeric test
-			if(${${$config}{$tmp}}[2] eq "number"){
+			if(defined ${$job}{$tmp} && ${${$config}{$tmp}}[2] eq "number"){
   			if(${$job}{$tmp} !~ /^[0-9]*$/){
   				print "Invalid value for ".join(">",@{$job_path}).">$tmp: ${$job}{$tmp}\n";
   				$error = 1;
   			}
 			}
 			##List test
-			if(${${$config}{$tmp}}[2] eq "list"){
+			if(defined ${$job}{$tmp} && ${${$config}{$tmp}}[2] eq "list"){
   			if(${$job}{$tmp} =~ /^(${${$config}{$tmp}}[3])$/i){
   				${$job}{$tmp} = lc($1);
   			}else{
@@ -110,7 +110,6 @@ sub verify_job {
   				$error = 1;
   			}
 			}
-			
 		}
 	}
 	return $error;
@@ -176,28 +175,5 @@ sub load_jobs_config {
 	}
 	return %job;
 }
-
-#my %job = load_job_configs();
-#my %job = parse_job_config("97cf541a-32fe-4b71-9a76-a411937aa2d5");
-#exit 0;
-#for my $l1(keys %job){
-#	print "=======================\n";
-#	for my $l2(sort keys %{$job{$l1}}){
-#		if(ref $job{$l1}{$l2} eq "HASH"){
-#			for my $l3(sort keys %{$job{$l1}{$l2}}){
-#				if(ref $job{$l1}{$l2}{$l3} eq "HASH"){
-#					for my $l4(sort keys %{$job{$l1}{$l2}{$l3}}){
-#						print "3",$l2,":",$l3,":",$l4,":",$job{$l1}{$l2}{$l3}{$l4},"\n";
-#					}
-#				}else{
-#					print "2",$l2,":",$l3,":",$job{$l1}{$l2}{$l3},"\n";
-#				}
-#			}
-#		}else{
-#			print "1",$l2,":",$job{$l1}{$l2},"\n";
-#		}
-#	}
-#}
-
 
 1;
