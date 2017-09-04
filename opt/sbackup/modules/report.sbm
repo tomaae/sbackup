@@ -1,0 +1,73 @@
+###########################################################################################
+#
+#                                         sbackup
+#                                      backup module
+#
+###########################################################################################
+
+use strict;
+use warnings;
+our %job;
+
+printf "%-2.2s %-20.20s %-20.20s %-10.10s %-10.10s %-20.20s %-20.20s %-10.10s %-3.3s\n",
+	"Enabled",
+	"Name",
+	"Schedule",
+	"Status",
+	"Last completed",
+	"Source",
+	"Target",
+	"Retention",
+	"Versions";
+
+
+for my $tmp_job(sort keys %job){
+	my $out_enabled;
+	if($job{$tmp_job}{'ENABLED'} == 1){$out_enabled = 'E';}else{$out_enabled = 'D';}
+	my $out_uuid = $job{$tmp_job}{'UUID'};
+	
+	##
+	##Parse schedule
+	##
+	my $out_schedule;
+	if($job{$tmp_job}{'SCHEDULE'}{'-enabled'} ne "1"){
+		$out_schedule = "Disabled";
+		for my $tmp_job2(keys %job){
+			if($out_uuid && $out_uuid eq $job{$tmp_job2}{'POST'}{'-job'}{'-name'}){
+				$out_schedule .= ", Post Job";
+			}
+		}
+	}else{
+		$out_schedule .= $job{$tmp_job}{'SCHEDULE'}{'-time'}." ";
+		my $tmp_noofschedules = 0;
+		if($job{$tmp_job}{'SCHEDULE'}{'-day'} ne ""){
+  		my @tmp_schedules = split /,/, $job{$tmp_job}{'SCHEDULE'}{'-day'};
+  		$tmp_noofschedules = scalar(@tmp_schedules);
+  		$out_schedule .= "Daily" if $tmp_noofschedules == 7;
+  		if($tmp_noofschedules < 7){
+  			my @wdays = ('Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday');
+  			@wdays = ('Sun','Mon','Tue','Wed','Thu','Fri','Sat') if $tmp_noofschedules > 1;
+  			@wdays = ('Su','Mo','Tu','We','Th','Fr','Sa') if $tmp_noofschedules > 3;
+  			@wdays = ('S','M','T','W','T','F','S') if $tmp_noofschedules > 4;
+  			for(my $i=0;$i < $tmp_noofschedules;$i++){
+  				$out_schedule .= $wdays[$tmp_schedules[$i]]."," if defined $wdays[$tmp_schedules[$i]];
+  			}
+  			$out_schedule = substr($out_schedule, 0, -1) if substr($out_schedule, -1, 1) eq ",";
+  		}
+  	}
+	}
+
+	printf "%-2.2s %-20.20s %-20.20s %-10.10s %-10.10s %-20.20s %-20.20s %-10.10s %-3.3s\n",
+		$out_enabled,
+		$job{$tmp_job}{'NAME'},
+		$out_schedule,
+		"-",
+		"-",
+		$job{$tmp_job}{'SOURCE'}{'-omv'},
+		$job{$tmp_job}{'TARGET'}{'-omv'},
+		$job{$tmp_job}{'SOURCE'}{'-protect'},
+		"-";
+		
+}
+
+return 1;

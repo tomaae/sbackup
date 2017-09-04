@@ -55,7 +55,7 @@ my %job_definition = ( ##Default value, Mandatory, Type, Range of type
 sub copy_job {
 	my ($job,$config)=@_;
 	for my $tmp(keys %{$config}){
-		if(ref ${$config}{$tmp}eq "HASH"){
+		if(ref ${$config}{$tmp} eq "HASH"){
 			%{${$job}{$tmp}} = ();
 			copy_job(${$job}{$tmp},${$config}{$tmp});
 		}elsif(ref ${$config}{$tmp} eq "ARRAY"){

@@ -1,0 +1,34 @@
+{
+	"type": "config",
+	"id": "conf.service.sbackup.backup",
+	"title": "SBackup job",
+	"queryinfo": {
+		"xpath": "//services/sbackup/backuplist/backup",
+		"iterable": true,
+		"idproperty": "uuid"
+	},
+	"properties": {
+		"uuid": {"type": "string","format": "uuidv4"},
+		"enable":{"type":"boolean","default": false},
+		"name":{"type":"string"},
+		"job_type":{"type":"string"},
+		"backup_type":{"type":"string"},
+		"source_sharedfolder_uuid":{"type": "string","format": "uuidv4"},
+		"target_sharedfolder_uuid":{"type": "string","format": "uuidv4"},
+		"schedule_enable":{"type":"boolean"},
+		"schedule_wday":{"type":"string"},
+		"schedule_hour":{"type":"string"},
+		"schedule_minute":{"type":"string"},
+		"lvmsnap_enable":{"type":"boolean","default": false},
+		"lvmsnap_size":{"type":"integer","minimum":10,"maximum":100},
+		"lvmsnap_fallback":{"type":"boolean"},
+		"queue":{"type":"boolean","default": false},
+		"autorestart":{"type":"boolean","default": false},
+		"report":{"type":"boolean","default": false},
+		"post_purge":{"type":"boolean","default": true},
+		"protect_days_job":{"type":"integer","minimum":0,"maximum":365},
+		"post_job":{"type":"string"},
+		"purge_job_uuid":{"type":"string"},
+		"verify_job_uuid":{"type":"string"}
+	}
+}

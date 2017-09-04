@@ -32,11 +32,12 @@ sub help { #HELP FUNCTION
 	#print "     -copy <job name>\n";
 	#print "     -restore <job name> [-version <versionid>] [-tree <path>] [-into <path>]\n\n";
 	#print "  Running jobs:\n";
-	#print "     -status [<job name>]\n\n";
-	print "  Job history:\n";
-	print "     -history <job name>\n\n";
-	print "  Job log:\n";
-	print "     -log <job name> -version <versionid>\n\n";
+	print "  Report jobs:\n";
+	print "     -report\n\n";
+	#print "  Job history:\n";
+	#print "     -history <job name>\n\n";
+	#print "  Job log:\n";
+	#print "     -log <job name> -version <versionid>\n\n";
 	print "\n";
 
 	exit 1;
@@ -45,7 +46,7 @@ sub help { #HELP FUNCTION
 
 my $noofarguments=@ARGV;
 if($noofarguments eq "0"){help;exit 1;}
-our ($sv_history, $sv_log, $sv_status, $sv_backup, $sv_purge, $sv_verify, $sv_copy, $sv_restore, $sv_version);
+our ($sv_history, $sv_report, $sv_log, $sv_status, $sv_backup, $sv_purge, $sv_verify, $sv_copy, $sv_restore, $sv_version);
 my ($get_job, $get_version, $get_tree, $get_into, $get_days);
 our ($p_job, $p_version, $p_into, $p_days);
 foreach my $arg (@ARGV){
@@ -58,6 +59,7 @@ foreach my $arg (@ARGV){
 	if ($get_days && $arg !~ /^\-/){$param_ok = 1;$p_days=$arg;$get_days=0;}
 
 	if ($arg =~ /^\-history$/){$param_ok = 1;$sv_history = 1;$get_job = 1;}
+	if ($arg =~ /^\-report$/){$param_ok = 1;$sv_report = 1;}
 	if ($arg =~ /^\-log$/){$param_ok = 1;$sv_log = 1;$get_job = 1;}
 	if ($arg =~ /^\-stat(us)?$/){$param_ok = 1;$sv_status = 1;$get_job = 1;}
 	if ($arg =~ /^\-backup$/){$param_ok = 1;$sv_backup = 1;$get_job = 1;}
@@ -72,25 +74,6 @@ foreach my $arg (@ARGV){
 
 	if($param_ok == 0){print "\nSyntax error. \n\n";help;exit 1;}
 }
-
-#for my $l1(keys %job){
-#	print "=======================\n";
-#	for my $l2(sort keys %{$job{$l1}}){
-#		if(ref $job{$l1}{$l2} eq "HASH"){
-#			for my $l3(sort keys %{$job{$l1}{$l2}}){
-#				if(ref $job{$l1}{$l2}{$l3} eq "HASH"){
-#					for my $l4(sort keys %{$job{$l1}{$l2}{$l3}}){
-#						print "3",$l2,":",$l3,":",$l4,":",$job{$l1}{$l2}{$l3}{$l4},"\n";
-#					}
-#				}else{
-#					print "2",$l2,":",$l3,":",$job{$l1}{$l2}{$l3},"\n";
-#				}
-#			}
-#		}else{
-#			print "1",$l2,":",$job{$l1}{$l2},"\n";
-#		}
-#	}
-#}
 
 ##
 ##CODE START
@@ -114,6 +97,10 @@ if($sv_copy){
 
 if($sv_restore){
 	require "modules/restore.sbm";
+}
+
+if($sv_report){
+	require "modules/report.sbm";
 }
 
 if($sv_history){
