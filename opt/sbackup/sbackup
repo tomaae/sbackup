@@ -17,7 +17,7 @@ use init;
 get_env;
 use logger;
 use config;
-my %job = load_jobs_config;
+our %job = load_jobs_config;
 
 ##
 ##CMD VARS
@@ -25,8 +25,8 @@ my %job = load_jobs_config;
 sub help { #HELP FUNCTION
 	print "====Sync Backup====\n\n";
 	print "Syntax:\n\n";
-	#print "  Start job:\n";
-	#print "     -backup <job name>\n";
+	print "  Start job:\n";
+	print "     -backup <job name>\n";
 	#print "     -purge <job name> [-days <n>] [-version <versionid>]\n";
 	#print "     -verify <job name>\n";
 	#print "     -copy <job name>\n";
@@ -45,9 +45,9 @@ sub help { #HELP FUNCTION
 
 my $noofarguments=@ARGV;
 if($noofarguments eq "0"){help;exit 1;}
-my ($sv_history, $sv_log, $sv_status, $sv_backup, $sv_purge, $sv_verify, $sv_copy, $sv_restore, $sv_version);
+our ($sv_history, $sv_log, $sv_status, $sv_backup, $sv_purge, $sv_verify, $sv_copy, $sv_restore, $sv_version);
 my ($get_job, $get_version, $get_tree, $get_into, $get_days);
-my ($p_job, $p_version, $p_into, $p_days);
+our ($p_job, $p_version, $p_into, $p_days);
 foreach my $arg (@ARGV){
 	my $param_ok = 0;
 	
@@ -73,26 +73,24 @@ foreach my $arg (@ARGV){
 	if($param_ok == 0){print "\nSyntax error. \n\n";help;exit 1;}
 }
 
-for my $l1(keys %job){
-	print "=======================\n";
-	for my $l2(sort keys %{$job{$l1}}){
-		if(ref $job{$l1}{$l2} eq "HASH"){
-			for my $l3(sort keys %{$job{$l1}{$l2}}){
-				if(ref $job{$l1}{$l2}{$l3} eq "HASH"){
-					for my $l4(sort keys %{$job{$l1}{$l2}{$l3}}){
-						print "3",$l2,":",$l3,":",$l4,":",$job{$l1}{$l2}{$l3}{$l4},"\n";
-					}
-				}else{
-					print "2",$l2,":",$l3,":",$job{$l1}{$l2}{$l3},"\n";
-				}
-			}
-		}else{
-			print "1",$l2,":",$job{$l1}{$l2},"\n";
-		}
-	}
-}
-
-
+#for my $l1(keys %job){
+#	print "=======================\n";
+#	for my $l2(sort keys %{$job{$l1}}){
+#		if(ref $job{$l1}{$l2} eq "HASH"){
+#			for my $l3(sort keys %{$job{$l1}{$l2}}){
+#				if(ref $job{$l1}{$l2}{$l3} eq "HASH"){
+#					for my $l4(sort keys %{$job{$l1}{$l2}{$l3}}){
+#						print "3",$l2,":",$l3,":",$l4,":",$job{$l1}{$l2}{$l3}{$l4},"\n";
+#					}
+#				}else{
+#					print "2",$l2,":",$l3,":",$job{$l1}{$l2}{$l3},"\n";
+#				}
+#			}
+#		}else{
+#			print "1",$l2,":",$job{$l1}{$l2},"\n";
+#		}
+#	}
+#}
 
 ##
 ##CODE START

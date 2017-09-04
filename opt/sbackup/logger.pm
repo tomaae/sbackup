@@ -79,7 +79,7 @@ sub get_history{
   my @select_request = parse_select('history',$select);
   my @where_request  = parse_where('history',$where) if $where;
   if($p_uuid){
-    open log_file,"<".$main::HISTORYPATH.$main::s_slash.'history_'.$p_uuid;
+    open log_file,"<".$main::VARPATH.$main::s_slash.'history_'.$p_uuid;
   	flock log_file,1;
   	while($line = <log_file>){
     	chomp($line);
@@ -125,7 +125,7 @@ sub insert_history{
   		@val = split(/=/,$tmp,-1);
   		$columns[$table{'history'}{$val[0]}] = $val[1];
   	}
-  	append_log($main::HISTORYPATH.$main::s_slash.'history_'.$p_uuid,join('|',@columns));
+  	append_log($main::VARPATH.$main::slash.'history_'.$p_uuid,join('|',@columns));
   	$returncodes[0] = 1;
 	}
 	return @returncodes;
@@ -150,7 +150,7 @@ sub update_history{
   		$columns{$table{'history'}{$val[0]}} = $val[1];
   	}
   	
-  	open log_file,"+<".$main::HISTORYPATH.$main::s_slash.'history_'.$p_uuid;
+  	open log_file,"+<".$main::VARPATH.$main::s_slash.'history_'.$p_uuid;
   	flock log_file,2;
   	while($line = <log_file>){
     	chomp($line);

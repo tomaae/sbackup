@@ -14,7 +14,8 @@ use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
 									get_env 
-									$slash $BINPATH $MODULESPATH $ETCPATH $JOBCONFIGPATH $HISTORYPATH $SESSIONLOGPATH $RUNFILEPATH
+									$slash $BINPATH $MODULESPATH $ETCPATH $JOBCONFIGPATH $VARPATH $SESSIONLOGPATH $RUNFILEPATH
+									$cmd_ls $cmd_ln $cmd_rm $cmd_sleep $cmd_cp $cmd_mv $cmd_mkdir $cmd_chmod $cmd_rsync
 							  );
 
 
