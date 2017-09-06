@@ -10,14 +10,25 @@ use warnings;
 our ($p_job);
 our %job;
 
-if(!$p_job){
-	print "Job not specified.\n\n";
-	print "Name\n";
-	for my $tmp(sort keys %job){
-		print $job{$tmp}{'NAME'};
-		print "\n";
+##
+## Check parameters
+##
+if($p_job){
+	my $param_ok = 0;
+	for my $tmp_job(sort keys %job){
+		$param_ok = 1 if $job{$tmp_job}{'NAME'} eq $p_job;
 	}
-	exit 1;
+
+  if($param_ok == 0){
+  	print "Error: Job \"$p_job\" does not exists.\n\n";
+  	print "Available jobs:\n";
+  	for my $tmp(sort keys %job){
+  		print $job{$tmp}{'NAME'};
+  		print "\n";
+  	}
+  	print "\n";
+  	exit 1;
+  }
 }
 
 my $SB_TIMESTART = time();

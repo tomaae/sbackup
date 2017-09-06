@@ -1,15 +1,16 @@
 ###########################################################################################
 #
 #                                         sbackup
-#                                      backup module
+#                                      report module
 #
 ###########################################################################################
 
 use strict;
 use warnings;
+use POSIX qw(strftime ceil);
 our %job;
 
-printf "%-2.2s %-20.20s %-20.20s %-10.10s %-10.10s %-20.20s %-20.20s %-10.10s %-3.3s\n",
+printf "%-1.1s %-18.18s %-18.18s %-10.10s %-16.16s %-20.20s %-20.20s %-14.14s %-3.3s\n",
 	"Enabled",
 	"Name",
 	"Schedule",
@@ -19,7 +20,7 @@ printf "%-2.2s %-20.20s %-20.20s %-10.10s %-10.10s %-20.20s %-20.20s %-10.10s %-
 	"Target",
 	"Retention",
 	"Versions";
-
+print "================================================================================================================================\n";
 
 for my $tmp_job(sort keys %job){
 	my $out_enabled;
@@ -27,19 +28,23 @@ for my $tmp_job(sort keys %job){
 	my $out_uuid = $job{$tmp_job}{'UUID'};
 	
 	##
-	##Parse schedule
+	## Parse schedule
 	##
 	my $out_schedule;
 	if($job{$tmp_job}{'SCHEDULE'}{'-enabled'} ne "1"){
+		##Schedule disabled
 		$out_schedule = "Disabled";
 		for my $tmp_job2(keys %job){
+			##Check for post job
 			if($out_uuid && $out_uuid eq $job{$tmp_job2}{'POST'}{'-job'}{'-name'}){
 				$out_schedule .= ", Post Job";
 			}
 		}
 	}else{
+		##Schedule Enabled
 		$out_schedule .= $job{$tmp_job}{'SCHEDULE'}{'-time'}." ";
 		my $tmp_noofschedules = 0;
+		##Format schedule days
 		if($job{$tmp_job}{'SCHEDULE'}{'-day'} ne ""){
   		my @tmp_schedules = split /,/, $job{$tmp_job}{'SCHEDULE'}{'-day'};
   		$tmp_noofschedules = scalar(@tmp_schedules);
@@ -56,17 +61,56 @@ for my $tmp_job(sort keys %job){
   		}
   	}
 	}
-
-	printf "%-2.2s %-20.20s %-20.20s %-10.10s %-10.10s %-20.20s %-20.20s %-10.10s %-3.3s\n",
+	
+	##
+	## Parse status/last completed/versions
+	##
+	my $out_status = "N/A";
+	if(-e $RUNFILEPATH."sbackup_queuing_".$job{$tmp_job}{'UUID'}){
+		$out_status = "Queuing";
+	}
+	if(-e $RUNFILEPATH."sbackup_".$job{$tmp_job}{'UUID'}){
+		my @output = read_log($RUNFILEPATH."sbackup_".$job{$tmp_job}{'UUID'});
+		my @val = split /|/, $output[0];
+		$out_status = "backup"    if $val[0] eq "Running";
+		$out_status = "restore"   if $val[0] eq "Restoring";
+		$out_status = "purge"     if $val[0] eq "Purging";
+		$out_status = "migration" if $val[0] eq "Migrating";
+		$out_status = "copy"      if $val[0] eq "Copying";
+	}
+	my $out_versions = 0;
+	my $out_lastcompleted = "N/A";
+	my @tmp_history = &get_history($job{$tmp_job}{'UUID'},'status,start,name','type==backup');
+	my $last_status;
+	for my $tmp(@{$tmp_history[2]}){
+		$out_versions++ if $$tmp{'status'} eq "0";
+		$out_lastcompleted = strftime("%a, %d %b %G %H:%M:%S", localtime($$tmp{'start'})) if $$tmp{'status'} eq "0";
+		$last_status = $$tmp{'status'};
+	}
+	if($out_status eq "N/A"){
+  	$out_status = $last_status;
+  	$out_status = "Error:".$out_status if $out_status ne "0";
+  	$out_status = "Completed" if $out_status eq "0";
+  }
+	
+	##
+	## Parse retention
+	##
+	my $out_retention;
+	$out_retention = "Single version" if $job{$tmp_job}{'SOURCE'}{'-protect'} == 0;
+	$out_retention = $job{$tmp_job}{'SOURCE'}{'-protect'}." day" if $job{$tmp_job}{'SOURCE'}{'-protect'} == 1;
+	$out_retention = $job{$tmp_job}{'SOURCE'}{'-protect'}." days" if $job{$tmp_job}{'SOURCE'}{'-protect'} > 1;
+	
+	printf "%-1.1s %-18.18s %-18.18s %-10.10s %-16.16s %-20.20s %-20.20s %-14.14s %-3.3s\n",
 		$out_enabled,
 		$job{$tmp_job}{'NAME'},
 		$out_schedule,
-		"-",
-		"-",
+		$out_status,
+		$out_lastcompleted,
 		$job{$tmp_job}{'SOURCE'}{'-omv'},
 		$job{$tmp_job}{'TARGET'}{'-omv'},
-		$job{$tmp_job}{'SOURCE'}{'-protect'},
-		"-";
+		$out_retention,
+		$out_versions;
 		
 }
 

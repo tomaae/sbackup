@@ -20,84 +20,157 @@ use config;
 our %job = load_jobs_config;
 
 ##
-##CMD VARS
+## Parameters
 ##
-sub help { #HELP FUNCTION
-	print "====Sync Backup====\n\n";
-	print "Syntax:\n\n";
-	print "  Start job:\n";
-	print "     -backup <job name>\n";
-	#print "     -purge <job name> [-days <n>] [-version <versionid>]\n";
-	#print "     -verify <job name>\n";
-	#print "     -copy <job name>\n";
-	#print "     -restore <job name> [-version <versionid>] [-tree <path>] [-into <path>]\n\n";
-	#print "  Running jobs:\n";
-	print "  Report jobs:\n";
-	print "     -report\n\n";
-	#print "  Job history:\n";
-	#print "     -history <job name>\n\n";
-	#print "  Job log:\n";
-	#print "     -log <job name> -version <versionid>\n\n";
-	print "\n";
+our ($sv_history, $sv_report, $sv_log, $sv_status, $sv_backup, $sv_purge, $sv_verify, $sv_copy, $sv_restore, $sv_version, $sv_days, $sv_type, $sv_tree, $sv_into);
+our ($p_job, $p_version, $p_days, $p_type, $p_tree, $p_into);
 
-	exit 1;
-	return 1;
-}
+my %arguments;
+%{$arguments{"backup"}} = (
+	"var" => \$sv_backup,
+	"val1" => \$p_job,
+	"vals_mandatory" => 1,
+	"primary" => 1,
+	"help_header" => "Start backup job:",
+	"help_args" => "-backup <job name>",
+	"help_display" => 1,
+);
+%{$arguments{"purge"}} = (
+	"var" => \$sv_purge,
+	"val1" => \$p_job,
+	"vals_mandatory" => 1,
+	"primary" => 1,
+	"help_header" => "Start purge job:",
+	"help_args" => "-purge <job name> [-days <n>] [-version <versionid>]",
+	"help_display" => 2,
+);
+#%{$arguments{"verify"}} = (
+#	"var" => \$sv_verify,
+#	"val1" => \$p_job,
+#	"vals_mandatory" => 1,
+#	"primary" => 1,
+#	"help_header" => "Start verify job:",
+#	"help_args" => "-verify <job name>",
+#	"help_display" => 3,
+#);
+#%{$arguments{"copy"}} = (
+#	"var" => \$sv_copy,
+#	"val1" => \$p_job,
+#	"vals_mandatory" => 1,
+#	"primary" => 1,
+#	"help_header" => "Start copy job:",
+#	"help_args" => "-copy <job name>",
+#	"help_display" => 4,
+#);
+%{$arguments{"restore"}} = (
+	"var" => \$sv_restore,
+	"val1" => \$p_job,
+	"vals_mandatory" => 1,
+	"primary" => 1,
+	"help_header" => "Start restore job:",
+	"help_args" => "-restore <job name> [-version <versionid>] [-tree <path>] [-into <path>]",
+	"help_display" => 5,
+);
 
-my $noofarguments=@ARGV;
-if($noofarguments eq "0"){help;exit 1;}
-our ($sv_history, $sv_report, $sv_log, $sv_status, $sv_backup, $sv_purge, $sv_verify, $sv_copy, $sv_restore, $sv_version);
-my ($get_job, $get_version, $get_tree, $get_into, $get_days);
-our ($p_job, $p_version, $p_into, $p_days);
-foreach my $arg (@ARGV){
-	my $param_ok = 0;
-	
-	if ($get_job && $arg !~ /^\-/){$param_ok = 1;$p_job=$arg;$get_job=0;}
-	if ($get_version && $arg !~ /^\-/){$param_ok = 1;$p_version=$arg;$get_version=0;}
-	if ($get_tree && $arg !~ /^\-/){$param_ok = 1;$p_version=$arg;$get_version=0;}
-	if ($get_into && $arg !~ /^\-/){$param_ok = 1;$p_into=$arg;$get_into=0;}
-	if ($get_days && $arg !~ /^\-/){$param_ok = 1;$p_days=$arg;$get_days=0;}
+%{$arguments{"report"}} = (
+	"var" => \$sv_report,
+	"primary" => 1,
+	"vals_mandatory" => 0,
+	"help_header" => "Report jobs:",
+	"help_args" => "-report",
+	"help_display" => 10,
+);
+%{$arguments{"history"}} = (
+	"var" => \$sv_history,
+	"val1" => \$p_job,
+	"vals_mandatory" => 0,
+	"primary" => 1,
+	"help_header" => "Job history:",
+	"help_args" => "-history <job name>",
+	"help_display" => 11,
+);
+%{$arguments{"log"}} = (
+	"var" => \$sv_log,
+	"val1" => \$p_job,
+	"vals_mandatory" => 0,
+	"primary" => 1,
+	"help_header" => "Job log:",
+	"help_args" => "-log <job name> -version <versionid>",
+	"help_display" => 11,
+);
 
-	if ($arg =~ /^\-history$/){$param_ok = 1;$sv_history = 1;$get_job = 1;}
-	if ($arg =~ /^\-report$/){$param_ok = 1;$sv_report = 1;}
-	if ($arg =~ /^\-log$/){$param_ok = 1;$sv_log = 1;$get_job = 1;}
-	if ($arg =~ /^\-stat(us)?$/){$param_ok = 1;$sv_status = 1;$get_job = 1;}
-	if ($arg =~ /^\-backup$/){$param_ok = 1;$sv_backup = 1;$get_job = 1;}
-	if ($arg =~ /^\-purge$/){$param_ok = 1;$sv_purge = 1;$get_job = 1;}
-	if ($arg =~ /^\-verify$/){$param_ok = 1;$sv_verify = 1;$get_job = 1;}
-	if ($arg =~ /^\-copy$/){$param_ok = 1;$sv_copy = 1;$get_job = 1;}
-	if ($arg =~ /^\-restore$/){$param_ok = 1;$sv_restore = 1;$get_job = 1;}
-	if ($arg =~ /^\-ver(sion)?$/){$param_ok = 1;$sv_version = 1;$get_version = 1;}
-	#if ($arg =~ /^\-tree$/){$param_ok = 1;$sv_tree = 1;$get_tree = 1;}
-	#if ($arg =~ /^\-into$/){$param_ok = 1;$sv_into = 1;$get_into = 1;}
-	#if ($arg =~ /^\-days$/){$param_ok = 1;$sv_days = 1;$get_days = 1;}
+%{$arguments{"type"}} = (
+	"var" => \$sv_type,
+	"val1" => \$p_type,
+	"vals_mandatory" => 1,
+	"dependency" => "history",
+	"help_header" => "Job type:",
+	"help_args" => "-type (backup|purge|copy|verify)",
+	"help_display" => 0,
+);
+%{$arguments{"version"}} = (
+	"var" => \$sv_version,
+	"val1" => \$p_version,
+	"vals_mandatory" => 1,
+	"dependency" => "restore;purge",
+	"help_header" => "Job version:",
+	"help_args" => "-version <version>",
+	"help_display" => 0,
+);
+%{$arguments{"tree"}} = (
+	"var" => \$sv_tree,
+	"val1" => \$p_tree,
+	"vals_mandatory" => 1,
+	"dependency" => "restore",
+	"help_header" => "Directory tree:",
+	"help_args" => "-tree <directory>",
+	"help_display" => 0,
+);
+%{$arguments{"into"}} = (
+	"var" => \$sv_into,
+	"val1" => \$p_into,
+	"vals_mandatory" => 1,
+	"dependency" => "restore",
+	"help_header" => "Target directory:",
+	"help_args" => "-into <directory>",
+	"help_display" => 0,
+);
+%{$arguments{"days"}} = (
+	"var" => \$sv_days,
+	"val1" => \$p_days,
+	"vals_mandatory" => 1,
+	"dependency" => "purge",
+	"help_header" => "Number of days:",
+	"help_args" => "-days <days>",
+	"help_display" => 0,
+);
 
-	if($param_ok == 0){print "\nSyntax error. \n\n";help;exit 1;}
-}
+&f_arguments(\%arguments);
+
 
 ##
 ##CODE START
 ##
 
-if($sv_backup){
-	require "modules/backup.sbm";
-}
-
-if($sv_purge){
-	require "modules/purge.sbm";
-}
-
-if($sv_verify){
-	require "modules/verify.sbm";
-}
-
-if($sv_copy){
-	require "modules/copy.sbm";
-}
-
-if($sv_restore){
-	require "modules/restore.sbm";
-}
+#if($sv_backup){
+#	require "modules/backup.sbm";
+#}
+#
+#if($sv_purge){
+#	require "modules/purge.sbm";
+#}
+#
+#if($sv_verify){
+#	require "modules/verify.sbm";
+#}
+#
+#if($sv_copy){
+#	require "modules/copy.sbm";
+#}
+#
+#if($sv_restore){
+#	require "modules/restore.sbm";
+#}
 
 if($sv_report){
 	require "modules/report.sbm";
@@ -107,9 +180,13 @@ if($sv_history){
 	require "modules/history.sbm";
 }
 
-if($sv_log){
-	require "modules/sessionlog.sbm";
-}
+#if($sv_status){
+#	require "modules/running.sbm";
+#}
+
+#if($sv_log){
+#	require "modules/sessionlog.sbm";
+#}
 
 
 ##
