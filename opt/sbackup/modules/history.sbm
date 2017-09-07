@@ -40,7 +40,7 @@ if($p_job){
 ##
 for my $tmp_job(sort keys %job){
 	next if $p_job && $job{$tmp_job}{'NAME'} ne $p_job;
-	my @tmp_history = &get_history($tmp_job,'uuid,status,name,start,end,size,perf,type');
+	my @tmp_history = &get_history($tmp_job,'status,name,start,end,size,perf,type');
 	for my $tmp(@{$tmp_history[2]}){
 		next if $p_type && $$tmp{'type'} ne $p_type;
 		$history{$$tmp{'start'}.'_'.$tmp_job} = $tmp;
@@ -101,7 +101,7 @@ for my $key(sort keys %history){
 	
 	##Log
 	my $out_log = "N";
-	$out_log = "Y" if -f $main::SESSIONLOGPATH.$tmp{'uuid'}."_".$tmp{'start'}.".log";
+	$out_log = "Y" if -f $main::SESSIONLOGPATH.$tmp{'NAME'}."_".$tmp{'start'}.".log";
 		
 	printf "%-10.10s %-7.7s %-18.18s %-14.14s %-25.25s %-25.25s %-8.8s %-8.8s %-3.3s\n",
   	$tmp{'start'},

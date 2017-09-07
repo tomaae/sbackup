@@ -31,26 +31,61 @@ if($p_job){
   }
 }
 
+##
+## Set variables
+##
 my $SB_TIMESTART = time();
 
-my $runfile = $::RUNFILEPATH.$::slash."sbackup_".$job{$p_job}{'NAME'};
-my $sessionlogfile = $::SESSIONLOGPATH.$::slash.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".log";
+my $runfile = $::RUNFILEPATH."sbackup_".$job{$p_job}{'NAME'};
+my $sessionlogfile = $::SESSIONLOGPATH.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".log";
 
+
+print "Starting backup $job{$p_job}{'NAME'}\n\n";
+
+##
+## Pre-initialization
+##
 
 ##Check if backup is already running
-if(-e $runfile){
-	print "Job is already running.";
+if(-f $runfile){
+	print "Job is already running.\n";
 	exit 1;
 }
 
-##Get source and target filesystem
-my $source_path = $job{$p_job}{'SOURCE'}{'-tree'} if $job{$p_job}{'SOURCE'}{'-tree'} =~ /^\//;
-`$::cmd_ls $source_path 2>&1`;
-if($? != 0){
-	&insert_history($p_job,"type=backup,status=Source not mounted,name=".$job{$p_job}{'NAME'}.",start=".$SB_TIMESTART);
-	print "Backup source is not mounted.\n";
-	exit 1;
+##
+## Get source and target
+##
+my $source_integ = "";
+my $source_mnt = "";
+if(defined $job{$p_job}{'SOURCE'}{'-omv'} && $job{$p_job}{'SOURCE'}{'-omv'} ne ""){
+	&f_output("DEBUG","Source integration: OMV");
+	require omv;
+	import omv;
+	$source_integ = "OMV ";
+	$source_mnt = omv_prepare_uuid($job{$p_job}{'SOURCE'}{'-omv'});
 }
+&f_output("DEBUG","Source mnt: \"$source_mnt\"");
+
+my $target_integ = "";
+my $target_mnt = "";
+if(defined $job{$p_job}{'TARGET'}{'-omv'} && $job{$p_job}{'TARGET'}{'-omv'} ne ""){
+	&f_output("DEBUG","Target integration: OMV");
+	require omv;
+	import omv;
+	$target_integ = "OMV ";
+	$target_mnt = omv_prepare_uuid($job{$p_job}{'TARGET'}{'-omv'});
+}
+&f_output("DEBUG","Target mnt: \"$target_mnt\"");
+
+
+###Get source and target filesystem
+#my $source_path = $job{$p_job}{'SOURCE'}{'-tree'} if $job{$p_job}{'SOURCE'}{'-tree'} =~ /^\//;
+#`$::cmd_ls $source_path 2>&1`;
+#if($? != 0){
+#	&insert_history($p_job,"type=backup,status=Source not mounted,name=".$job{$p_job}{'NAME'}.",start=".$SB_TIMESTART);
+#	print "Backup source is not mounted.\n";
+#	exit 1;
+#}
 
 
 #
@@ -207,5 +242,5 @@ if($? != 0){
 #}
 #
 #&f_output("DEBUG","Backup part end.");
-exit 0;
+
 1;

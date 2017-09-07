@@ -25,7 +25,6 @@ print "=========================================================================
 for my $tmp_job(sort keys %job){
 	my $out_enabled;
 	if($job{$tmp_job}{'ENABLED'} == 1){$out_enabled = 'E';}else{$out_enabled = 'D';}
-	my $out_uuid = $job{$tmp_job}{'UUID'};
 	
 	##
 	## Parse schedule
@@ -36,7 +35,7 @@ for my $tmp_job(sort keys %job){
 		$out_schedule = "Disabled";
 		for my $tmp_job2(keys %job){
 			##Check for post job
-			if($out_uuid && $out_uuid eq $job{$tmp_job2}{'POST'}{'-job'}{'-name'}){
+			if($job{$tmp_job}{'NAME'} eq $job{$tmp_job2}{'POST'}{'-job'}{'-name'}){
 				$out_schedule .= ", Post Job";
 			}
 		}
@@ -66,11 +65,11 @@ for my $tmp_job(sort keys %job){
 	## Parse status/last completed/versions
 	##
 	my $out_status = "N/A";
-	if(-e $RUNFILEPATH."sbackup_queuing_".$job{$tmp_job}{'UUID'}){
+	if(-e $RUNFILEPATH."sbackup_queuing_".$job{$tmp_job}{'NAME'}){
 		$out_status = "Queuing";
 	}
-	if(-e $RUNFILEPATH."sbackup_".$job{$tmp_job}{'UUID'}){
-		my @output = read_log($RUNFILEPATH."sbackup_".$job{$tmp_job}{'UUID'});
+	if(-e $RUNFILEPATH."sbackup_".$job{$tmp_job}{'NAME'}){
+		my @output = read_log($RUNFILEPATH."sbackup_".$job{$tmp_job}{'NAME'});
 		my @val = split /|/, $output[0];
 		$out_status = "backup"    if $val[0] eq "Running";
 		$out_status = "restore"   if $val[0] eq "Restoring";
@@ -80,8 +79,8 @@ for my $tmp_job(sort keys %job){
 	}
 	my $out_versions = 0;
 	my $out_lastcompleted = "N/A";
-	my @tmp_history = &get_history($job{$tmp_job}{'UUID'},'status,start,name','type==backup');
-	my $last_status;
+	my @tmp_history = &get_history($job{$tmp_job}{'NAME'},'status,start,name','type==backup');
+	my $last_status = "N/A";
 	for my $tmp(@{$tmp_history[2]}){
 		$out_versions++ if $$tmp{'status'} eq "0";
 		$out_lastcompleted = strftime("%a, %d %b %G %H:%M:%S", localtime($$tmp{'start'})) if $$tmp{'status'} eq "0";
@@ -89,7 +88,7 @@ for my $tmp_job(sort keys %job){
 	}
 	if($out_status eq "N/A"){
   	$out_status = $last_status;
-  	$out_status = "Error:".$out_status if $out_status ne "0";
+  	$out_status = "Error:".$out_status if $out_status ne "0" && $out_status ne "N/A";
   	$out_status = "Completed" if $out_status eq "0";
   }
 	
@@ -101,14 +100,38 @@ for my $tmp_job(sort keys %job){
 	$out_retention = $job{$tmp_job}{'SOURCE'}{'-protect'}." day" if $job{$tmp_job}{'SOURCE'}{'-protect'} == 1;
 	$out_retention = $job{$tmp_job}{'SOURCE'}{'-protect'}." days" if $job{$tmp_job}{'SOURCE'}{'-protect'} > 1;
 	
+	##
+	## Get source and target
+	##
+	my $source_integ = "";
+	my $source_name = "N/A";
+	if(defined $job{$tmp_job}{'SOURCE'}{'-omv'} && $job{$tmp_job}{'SOURCE'}{'-omv'} ne ""){
+		require omv;
+		import omv;
+		$source_integ = "OMV ";
+		$source_name = omv_name_by_uuid($job{$tmp_job}{'SOURCE'}{'-omv'});
+	}
+	
+	my $target_integ = "";
+	my $target_name = "N/A";
+	if(defined $job{$tmp_job}{'TARGET'}{'-omv'} && $job{$tmp_job}{'TARGET'}{'-omv'} ne ""){
+		require omv;
+		import omv;
+		$target_integ = "OMV ";
+		$target_name = omv_name_by_uuid($job{$tmp_job}{'TARGET'}{'-omv'});
+	}
+	
+	##
+	## Output
+	##
 	printf "%-1.1s %-18.18s %-18.18s %-10.10s %-16.16s %-20.20s %-20.20s %-14.14s %-3.3s\n",
 		$out_enabled,
 		$job{$tmp_job}{'NAME'},
 		$out_schedule,
 		$out_status,
 		$out_lastcompleted,
-		$job{$tmp_job}{'SOURCE'}{'-omv'},
-		$job{$tmp_job}{'TARGET'}{'-omv'},
+		$source_integ.$source_name,
+		$target_integ.$target_name,
 		$out_retention,
 		$out_versions;
 		

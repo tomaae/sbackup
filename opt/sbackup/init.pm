@@ -13,12 +13,71 @@ use warnings;
 use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
-									get_env f_arguments
+									f_output get_env f_arguments
 									$slash $BINPATH $MODULESPATH $ETCPATH $JOBCONFIGPATH $VARPATH $SESSIONLOGPATH $RUNFILEPATH
 									$cmd_ls $cmd_ln $cmd_rm $cmd_sleep $cmd_cp $cmd_mv $cmd_mkdir $cmd_chmod $cmd_rsync
 							  );
 
 
+##
+##OUTPUT HANDLER
+##
+sub f_output { 
+	my ($msg_type,$err_msg,$additionalcode)=@_;
+	my ($sec,$min,$hour,$mday,$mon,$year, $wday,$yday,$isdst) = localtime;
+	my $debug_type;
+	my $debug_show = 0;
+	#my $reportdate = ($year+1900).'.'.substr(($mon + 101),1,2).'.'.substr(($mday + 100),1,2).' '.substr(($hour + 100),1,2).':'.substr(($min + 100),1,2).':'.substr(($sec + 100),1,2);
+	my $reportdate = substr(($hour + 100),1,2).':'.substr(($min + 100),1,2).':'.substr(($sec + 100),1,2);
+	if($msg_type eq "ERROR"){
+	  print "\n$err_msg\n";
+	  #if($exitcode == 9){&f_startsafemode;}
+    if($additionalcode){exit $additionalcode;}
+  }
+  if($main::DEBUGMODE){
+    if($msg_type eq "DEBUG"){
+    	$debug_type = "MSG";
+			$debug_show = 1;
+  	}
+  	if($msg_type eq "DEBUG1"){
+  		$debug_type = "ERR";
+  		$debug_show = 1;
+    }
+    if($msg_type eq "DEBUG2" && $main::p_debug >= 2){
+    	$debug_type = "DET";
+    	$debug_show = 1;
+    }
+    if($msg_type eq "DEBUG3" && $main::p_debug >= 3){
+    	$debug_type = "SQL";
+    	$debug_show = 1;
+    }
+    if($msg_type eq "DEBUG4" && $main::p_debug >= 4){
+    	$debug_type = "DET4";
+    	$debug_show = 1;
+    }
+  	if($msg_type eq "DEBUG5" && $main::p_debug >= 5){
+  		$debug_type = "DET5";
+  		$debug_show = 1;
+    }
+    
+    if($debug_show){
+      if($main::DEBUGFILE){
+      	$main::s_debugfile = $0;
+  			$main::s_debugfile =~ /(ob\w*)$/;
+  			$main::s_debugfile = $1;
+    		append_log("$main::LOGPATH${main::s_slash}debug$main::s_slash${main::s_debugfile}.log","=\"PID".$$."\"-$debug_type-$reportdate=>$err_msg");
+    	}else{
+    		print "=DEBUG-$debug_type-$reportdate=>$err_msg\n";
+    	}
+    }
+	}
+  if($msg_type eq "SCREEN"){
+	  print "$err_msg";
+  }
+#  if($msg_type eq "HTML" &&($main::sv_html)){
+#  	printf main::htmlfile "$err_msg\n";
+#  }
+} 
 
 sub get_env{
 	#&f_output("DEBUG","Setting required parameters.");
@@ -30,7 +89,7 @@ sub get_env{
 	our $JOBCONFIGPATH  = "/etc/sbackup/jobs/";
 	our $VARPATH        = "/var/log/sbackup/";
 	our $SESSIONLOGPATH = "/var/log/sbackup/sessionlogs/";
-	our $RUNFILEPATH    = "/var/log/sbackup/run/";
+	our $RUNFILEPATH    = "/var/run/sbackup/";
 
 	our $cmd_ls         = "ls -l";
 	our $cmd_ln         = "ln -s";

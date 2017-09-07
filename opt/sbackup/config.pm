@@ -17,7 +17,7 @@ our @EXPORT = qw(load_jobs_config parse_job_config);
 
 my %job_definition = ( ##Default value, Mandatory, Type, Range of type
   'NAME' => ["",1,"",""],
-  'UUID' => ["",0,"",""],
+#  'UUID' => ["",0,"",""],
   'ENABLED' => ["0",1,"bool",""],
   'SCHEDULE' => {
   	'-enabled' => ["0",0,"bool",""],
@@ -37,7 +37,7 @@ my %job_definition = ( ##Default value, Mandatory, Type, Range of type
   	}
   },
   'TARGET' => {
-  	'-host' => ["",0,"",""],
+  	#'-host' => ["",0,"",""],
   	'-omv' => ["",0,"",""],
   	'-tree' => ["",0,"",""],
   },

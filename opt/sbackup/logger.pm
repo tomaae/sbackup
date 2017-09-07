@@ -25,12 +25,11 @@ our %table;
 %{$table{"history"}} = (
     "status"=>0,
     "name"=>1,
-    "uuid"=>2,
-    "start"=>3,
-    "end"=>4,
-    "size"=>5,
-    "perf"=>6,
-    "type"=>7
+    "start"=>2,
+    "end"=>3,
+    "size"=>4,
+    "perf"=>5,
+    "type"=>6
   );
   
 %{$table{"runfile"}} = (

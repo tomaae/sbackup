@@ -22,10 +22,18 @@ our %job = load_jobs_config;
 ##
 ## Parameters
 ##
-our ($sv_history, $sv_report, $sv_log, $sv_status, $sv_backup, $sv_purge, $sv_verify, $sv_copy, $sv_restore, $sv_version, $sv_days, $sv_type, $sv_tree, $sv_into);
-our ($p_job, $p_version, $p_days, $p_type, $p_tree, $p_into);
+our ($DEBUGMODE, $sv_history, $sv_report, $sv_log, $sv_status, $sv_backup, $sv_purge, $sv_verify, $sv_copy, $sv_restore, $sv_version, $sv_days, $sv_type, $sv_tree, $sv_into);
+our ($p_debug, $p_job, $p_version, $p_days, $p_type, $p_tree, $p_into);
 
 my %arguments;
+%{$arguments{"debug"}} = (
+	"var" => \$main::DEBUGMODE,
+	"val1" => \$p_debug,
+	"vals_mandatory" => 0,
+	"help_header" => "Enable debug mode:",
+	"help_args" => "-debug [1-5]",
+	"help_display" => 0,
+);
 %{$arguments{"backup"}} = (
 	"var" => \$sv_backup,
 	"val1" => \$p_job,
@@ -86,7 +94,7 @@ my %arguments;
 	"vals_mandatory" => 0,
 	"primary" => 1,
 	"help_header" => "Job history:",
-	"help_args" => "-history <job name>",
+	"help_args" => "-history [<job name>]",
 	"help_display" => 11,
 );
 %{$arguments{"log"}} = (
@@ -152,10 +160,10 @@ my %arguments;
 ##CODE START
 ##
 
-#if($sv_backup){
-#	require "modules/backup.sbm";
-#}
-#
+if($sv_backup){
+	require "modules/backup.sbm";
+}
+
 #if($sv_purge){
 #	require "modules/purge.sbm";
 #}
