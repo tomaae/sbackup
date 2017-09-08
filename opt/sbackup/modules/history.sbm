@@ -88,21 +88,25 @@ for my $key(sort keys %history){
 	my $out_size = "N/A";
 	my $out_perf = "N/A";
 	if($tmp{'type'} eq "backup" || $tmp{'type'} eq "copy"){
-		$out_size = $tmp{'size'}." B";
-		$out_size = ceil($tmp{'size'} / 1024)." KiB" if $tmp{'size'} > (100 * 1024);
-		$out_size = ceil($tmp{'size'} / 1024 / 1024)." MiB" if $tmp{'size'} > (9 * 1024 * 1024);
-		$out_size = ceil($tmp{'size'} / 1024 / 1024 / 1024)." GiB" if $tmp{'size'} > (9 * 1024 * 1024 * 1024);
+		if($tmp{'size'} ne "" && $tmp{'size'} >= 0){
+			$out_size = $tmp{'size'}." B";
+			$out_size = ceil($tmp{'size'} / 1024)." KiB" if $tmp{'size'} > (100 * 1024);
+			$out_size = ceil($tmp{'size'} / 1024 / 1024)." MiB" if $tmp{'size'} > (9 * 1024 * 1024);
+			$out_size = ceil($tmp{'size'} / 1024 / 1024 / 1024)." GiB" if $tmp{'size'} > (9 * 1024 * 1024 * 1024);
+		}
 		
-		$out_perf = $tmp{'perf'}." B";
-		$out_perf = ceil($tmp{'perf'} / 1024)." K/s" if $tmp{'perf'} > (100 * 1024);
-		$out_perf = ceil($tmp{'perf'} / 1024 / 1024)." M/s" if $tmp{'perf'} > (9 * 1024 * 1024);
-		$out_perf = ceil($tmp{'perf'} / 1024 / 1024 / 1024)." G/s" if $tmp{'perf'} > (9 * 1024 * 1024 * 1024);
+		if($tmp{'perf'} ne "" && $tmp{'perf'} >= 0){
+			$out_perf = $tmp{'perf'}." B";
+			$out_perf = ceil($tmp{'perf'} / 1024)." K/s" if $tmp{'perf'} > (100 * 1024);
+			$out_perf = ceil($tmp{'perf'} / 1024 / 1024)." M/s" if $tmp{'perf'} > (9 * 1024 * 1024);
+			$out_perf = ceil($tmp{'perf'} / 1024 / 1024 / 1024)." G/s" if $tmp{'perf'} > (9 * 1024 * 1024 * 1024);
+		}
 	}
 	
 	##Log
 	my $out_log = "N";
-	$out_log = "Y" if -f $main::SESSIONLOGPATH.$tmp{'NAME'}."_".$tmp{'start'}.".log";
-		
+	$out_log = "Y" if -f $main::SESSIONLOGPATH.$tmp{'name'}."_".$tmp{'start'}.".log";
+
 	printf "%-10.10s %-7.7s %-18.18s %-14.14s %-25.25s %-25.25s %-8.8s %-8.8s %-3.3s\n",
   	$tmp{'start'},
   	$out_type,

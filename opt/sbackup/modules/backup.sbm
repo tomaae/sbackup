@@ -35,12 +35,23 @@ if($p_job){
 ## Set variables
 ##
 my $SB_TIMESTART = time();
+my $SB_TIMEEND;
 
-my $runfile = $::RUNFILEPATH."sbackup_".$job{$p_job}{'NAME'};
-my $sessionlogfile = $::SESSIONLOGPATH.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".log";
+my $runfile = $RUNFILEPATH."sbackup_".$job{$p_job}{'NAME'};
+my $sessionlogfile = $SESSIONLOGPATH.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".log";
 
 
-print "Starting backup $job{$p_job}{'NAME'}\n\n";
+&f_output("DEBUG","Starting backup $job{$p_job}{'NAME'}");
+
+sub backup_fail {
+	my $msg = shift;
+	$SB_TIMEEND = time();
+	print "Error: $msg\n";
+	update_history($p_job,"status=".$msg.",end=".$SB_TIMEEND,"status==running,type==backup,start==".$SB_TIMESTART);
+	append_log($sessionlogfile,"End time: ".$SB_TIMEEND." (".epoch2human($SB_TIMEEND).")\nStatus:Error: $msg\n");
+	rm_runfile($p_job);
+	exit 1;
+}
 
 ##
 ## Pre-initialization
@@ -53,194 +64,196 @@ if(-f $runfile){
 }
 
 ##
-## Get source and target
+set_runfile($p_job,"type=backup,status=running,pid=".$$);
+insert_history($p_job,"type=backup,status=running,name=".$job{$p_job}{'NAME'}.",start=".$SB_TIMESTART);
+append_log($sessionlogfile,"Backup name: ".$job{$p_job}{'NAME'});
+append_log($sessionlogfile,"UUID: ".$job{$p_job}{'UUID'}) if defined $job{$p_job}{'UUID'} && $job{$p_job}{'UUID'} ne "";
+append_log($sessionlogfile,"Start time: ".$SB_TIMESTART." (".epoch2human($SB_TIMESTART).")\n");
+
+##
+## Get source
 ##
 my $source_integ = "";
-my $source_mnt = "";
+my $source_path = "";
 if(defined $job{$p_job}{'SOURCE'}{'-omv'} && $job{$p_job}{'SOURCE'}{'-omv'} ne ""){
 	&f_output("DEBUG","Source integration: OMV");
 	require omv;
 	import omv;
 	$source_integ = "OMV ";
-	$source_mnt = omv_prepare_uuid($job{$p_job}{'SOURCE'}{'-omv'});
+	$source_path = omv_prepare_uuid($job{$p_job}{'SOURCE'}{'-omv'});
+	if($source_path =~ /^Error:(.*)$/){backup_fail("Source $1");}
 }
-&f_output("DEBUG","Source mnt: \"$source_mnt\"");
+#$source_path = $job{$p_job}{'SOURCE'}{'-tree'} if $job{$p_job}{'SOURCE'}{'-tree'} =~ /^\//;
+`$cmd_ls $source_path 2>&1`;
+backup_fail("Backup source path not found.") if $? != 0;
+&f_output("DEBUG","Source mnt: \"$source_path\"");
 
+##
+## Get target
+##
 my $target_integ = "";
-my $target_mnt = "";
+my $target_path = "";
 if(defined $job{$p_job}{'TARGET'}{'-omv'} && $job{$p_job}{'TARGET'}{'-omv'} ne ""){
 	&f_output("DEBUG","Target integration: OMV");
 	require omv;
 	import omv;
 	$target_integ = "OMV ";
-	$target_mnt = omv_prepare_uuid($job{$p_job}{'TARGET'}{'-omv'});
+	$target_path = omv_prepare_uuid($job{$p_job}{'TARGET'}{'-omv'});
+	if($target_path =~ /^Error:(.*)$/){backup_fail("Target $1")}
 }
-&f_output("DEBUG","Target mnt: \"$target_mnt\"");
+`$cmd_ls $target_path 2>&1`;
+backup_fail("Backup target path not found.") if $? != 0;
+
+$target_path .= $slash."sbackup_".$p_job;
+if(!-d $target_path){
+	`$cmd_mkdir $target_path 2>&1`;
+	backup_fail("Backup target path creation failed.") if $? != 0;
+}
+&f_output("DEBUG","Target mnt: \"$target_path\"");
 
 
-###Get source and target filesystem
-#my $source_path = $job{$p_job}{'SOURCE'}{'-tree'} if $job{$p_job}{'SOURCE'}{'-tree'} =~ /^\//;
-#`$::cmd_ls $source_path 2>&1`;
-#if($? != 0){
-#	&insert_history($p_job,"type=backup,status=Source not mounted,name=".$job{$p_job}{'NAME'}.",start=".$SB_TIMESTART);
-#	print "Backup source is not mounted.\n";
-#	exit 1;
-#}
+##
+## Check backup history
+##
+my $INCR = "";
+if(-f $VARPATH.'history_'.$p_job){
+	##Get backup status from history
+	&f_output("DEBUG","History log found, checking history.");
+	my $LAST_FAILED_STAMP    = 0;
+	my $LAST_COMPLETED_STAMP = 0;
+  my @output = &get_history($p_job,'status,start','type==backup');
+  for my $tmp(@{$output[2]}){
+  	if($$tmp{'start'} ne "" && $$tmp{'start'} > 100 && -d $target_path.$slash."data_".$$tmp{'start'}){
+  		$LAST_COMPLETED_STAMP = $$tmp{'start'} if $$tmp{'status'} == "0";
+  		$LAST_FAILED_STAMP    = $$tmp{'start'} if $$tmp{'status'} != "0";
+  	}
+  }
+  &f_output("DEBUG","Last failed version: ".$LAST_FAILED_STAMP) if $LAST_FAILED_STAMP;
+  &f_output("DEBUG","Last completed version: ".$LAST_COMPLETED_STAMP) if $LAST_COMPLETED_STAMP;
+  
+  if($LAST_COMPLETED_STAMP || $LAST_FAILED_STAMP){
+  	##Check for backup to restart
+  	if($LAST_FAILED_STAMP > $LAST_COMPLETED_STAMP){
+  		&f_output("DEBUG","Last version is failed, cleaning up and restarting.");
+			append_log($sessionlogfile,"Restarting backup from version ".$LAST_FAILED_STAMP." (".epoch2human($LAST_FAILED_STAMP).")\n");
+			if(!$main::SIMULATEMODE){
+  			system("$cmd_mv ".$target_path.$slash."data_".$LAST_FAILED_STAMP." ".$target_path.$slash."data_".$SB_TIMESTART);
+  			backup_fail("Restart failed") if $? != 0;
+			}
+  	}
+  	
+  	##Check for last completed backup
+  	if($LAST_COMPLETED_STAMP){
+  		&f_output("DEBUG","Last completed backup found, incremental enabled.");
+			$INCR=" --link-dest=\"".$target_path.$slash."data_".$LAST_COMPLETED_STAMP.$slash."\"";
+  	}
+	}
+}
+
+##
+## Create version directories
+##
+
+if(!$main::SIMULATEMODE){
+  system("$cmd_mkdir     ".$target_path.$slash."data_".$SB_TIMESTART);
+  system("$cmd_chmod 777 ".$target_path.$slash."data_".$SB_TIMESTART) if $? != 0;
+  backup_fail("Vercreate failed") if !-d $target_path.$slash."data_".$SB_TIMESTART;
+}
 
 
-#
-###Check if all filesystems are mounted.
-#system(". /usr/share/openmediavault/scripts/helper-functions&&omv_is_mounted \"".$main::JOBID{f_cstr("E",$p_job)}{'backup_source_mnt'}."\"");
-#if($? != 0){
-#	&f_insert_history($p_job,"type=backup,status=Source not mounted,name=".$main::JOBID{f_cstr("E",$p_job)}{'name'}.",start=".$SB_TIMESTART);
-#	print "Backup source is not mounted.\n";
-#	exit 1;
-#}
-#system(". /usr/share/openmediavault/scripts/helper-functions&&omv_is_mounted \"".$main::JOBID{f_cstr("E",$p_job)}{'backup_target_mnt'}."\"");
-#if($? != 0){
-#	&f_insert_history($p_job,"type=backup,status=Target not mounted,name=".$main::JOBID{f_cstr("E",$p_job)}{'name'}.",start=".$SB_TIMESTART);
-#	print "Backup target is not mounted.\n";
-#	exit 1;
-#}
-#
-#
-#&f_set_runfile($p_job,"type=backup,status=running,pid=".$$);
-#
-#if(-f $main::VARPATH.$main::s_slash.'history_'.$p_job){
-#	##Get backup status from history
-#	&f_output("DEBUG","History log found, checking history.");
-#	$LAST_FAILED_STAMP    = "";
-#	$LAST_COMPLETED_STAMP = "";
-#  @output = &f_get_history($p_job,'status,start','type==backup');
-#  for $tmp(@{$output[2]}){
-#  	if($$tmp{'start'} ne "" && $$tmp{'start'} > 100 && -d $main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$s_slash."data_".$$tmp{'start'}){
-#  		$LAST_COMPLETED_STAMP = $$tmp{'start'} if $$tmp{'status'} == "0";
-#  		$LAST_FAILED_STAMP    = $$tmp{'start'} if $$tmp{'status'} != "0";
-#  	}
-#  }
-#  &f_output("DEBUG","Last failed version: ".$LAST_FAILED_STAMP) if $LAST_FAILED_STAMP;
-#  &f_output("DEBUG","Last completed version: ".$LAST_COMPLETED_STAMP) if $LAST_COMPLETED_STAMP;
-#  
-#  if($LAST_COMPLETED_STAMP || $LAST_FAILED_STAMP){
-#  	##Check for backup to restart
-#  	if($LAST_FAILED_STAMP > $LAST_COMPLETED_STAMP){
-#  		&f_output("DEBUG","Last version is failed, cleaning up and restarting.");
-#			append_log($sessionlogfile,"Restarting backup from version ".$LAST_FAILED_STAMP." (".f_epoch2human($LAST_FAILED_STAMP).")\n");
-#			if(!$main::SIMULATEMODE){
-#  			system("$main::cmd_mv ".$main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."data_".$LAST_FAILED_STAMP." ".$main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."data_".$SB_TIMESTART);
-#  			if($? != 0){
-#  				&f_insert_history($p_job,"type=backup,status=Restart fail,name=".$main::JOBID{f_cstr("E",$p_job)}{'name'}.",start=".$SB_TIMESTART);
-#					exit 1;
-#  			}
-#			}
-#  	}
-#  	
-#  	##Check for last completed backup
-#  	if($LAST_COMPLETED_STAMP){
-#  		&f_output("DEBUG","Last completed backup found, incremental enabled.");
-#			$INCR=" --link-dest=\"".$main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."data_".$LAST_COMPLETED_STAMP.$main::s_slash."\"";
-#  	}
-#	}
-#}
-#
-###Create version directories
-#if(!$main::SIMULATEMODE){
-#  system("$main::cmd_mkdir ".$main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."data_".$SB_TIMESTART.$main::s_slash);
-#  system("$main::cmd_chmod 777 ".$main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."data_".$SB_TIMESTART.$main::s_slash) if ($? != 0);
-#  
-#  if(!-d $main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."data_".$SB_TIMESTART.$main::s_slash){
-#    &f_insert_history($p_job,"type=backup,status=Vercreate fail,name=".$main::JOBID{f_cstr("E",$p_job)}{'name'}.",start=".$SB_TIMESTART);
-#    exit 1;
-#  }
-#}
-#
-###Run backup
-#&f_insert_history($p_job,"type=backup,status=running,name=".$main::JOBID{f_cstr("E",$p_job)}{'name'}.",start=".$SB_TIMESTART);
-#system("$main::cmd_sleep 1") if !$main::SIMULATEMODE;
-#append_log($sessionlogfile,"Backup name: ".$main::JOBID{f_cstr("E",$p_job)}{'name'}."\nUUID: ".$p_job."\nStart time: ".$SB_TIMESTART."\n");
-#
-#&f_output("DEBUG","Starting backup.");
-#$cmd = " --verbose --stats -aEAX --delete ".$INCR." \"".$main::JOBID{f_cstr("E",$p_job)}{'backup_source'}.$main::s_slash."\" \"".$main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."data_".$SB_TIMESTART.$main::s_slash."\"";
-#&f_output("DEBUG3","Execute: \"$main::cmd_rsync $cmd\"");
-#system("$main::cmd_rsync $cmd >> $sessionlogfile") if !$main::SIMULATEMODE;
-#$SB_ECODE=$? if !$main::SIMULATEMODE;
-#
-###Check backup status
-#system(". /usr/share/openmediavault/scripts/helper-functions&&omv_kill_children ".$$);
-#
-#$RSSIZE = "";
-#$RSPERF = "";
-#for(read_log($sessionlogfile)){
-#	chomp;
-#	if(/^Total file size: (\d+) bytes/){
-#		$RSSIZE = $1;
-#	}
-#	if(/ (\d+).00 bytes\/sec$/){
-#		$RSPERF = $1;
-#	}
-#}
-#
-#$SB_TIMEEND = time();
-#if($SB_ECODE eq ""){
-#	$SB_ECODE = "-1";
-#}
-#
-#&f_update_history($p_job,"status=".$SB_ECODE.",end=".$SB_TIMEEND.",size=".$RSSIZE.",perf=".$RSPERF, "start==".$SB_TIMESTART.",status==running,type==backup");
-#
-#append_log($sessionlogfile,"End time: ".$SB_TIMEEND."\nStatus:".$SB_ECODE."\n");
-#
-#if($SB_ECODE eq "0"){
-#	##Create meta directory
-#	system("$main::cmd_mkdir ".$main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."meta_".$SB_TIMESTART.$main::s_slash);
-#  system("$main::cmd_chmod 777 ".$main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."meta_".$SB_TIMESTART.$main::s_slash) if ($? != 0);
-#
-#  ##Copy meta
-#  system("$main::cmd_cp ".$main::VARPATH.$main::s_slash.'history_'.$p_job." ".$main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."meta_".$SB_TIMESTART.$main::s_slash);
-#  system("$main::cmd_cp ".$sessionlogfile." ".$main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."meta_".$SB_TIMESTART.$main::s_slash);
-#  system("$main::cmd_cp ".$main::JOBCONFIGPATH.$main::s_slash.$p_job." ".$main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."meta_".$SB_TIMESTART.$main::s_slash);
-#  
-#  ##Generate import script
+##
+## Run backup
+##
+my $SB_ECODE = "";
+system("$cmd_sleep 1") if !$main::SIMULATEMODE;
+#append_log($sessionlogfile,"Start time: ".$SB_TIMESTART."\n");
+&f_output("DEBUG","Starting backup.");
+my $cmd = " --verbose --stats -aEAX --delete ".$INCR." \"".$source_path.$slash."\" \"".$target_path.$slash."data_".$SB_TIMESTART.$slash."\"";
+&f_output("DEBUG3","Execute: \"$cmd_rsync $cmd\"");
+system("$cmd_rsync $cmd >> $sessionlogfile") if !$main::SIMULATEMODE;
+$SB_ECODE=$? if !$main::SIMULATEMODE;
+
+##Check backup status
+system(". /usr/share/openmediavault/scripts/helper-functions&&omv_kill_children ".$$);
+
+my $RSSIZE = "";
+my $RSPERF = "";
+for(read_log($sessionlogfile)){
+	chomp;
+	if(/^Total file size: (\d+) bytes/){
+		$RSSIZE = $1;
+	}
+	if(/ (\d+).00 bytes\/sec$/){
+		$RSPERF = $1;
+	}
+}
+
+$SB_TIMEEND = time();
+$SB_ECODE = "-1" if $SB_ECODE eq "";
+update_history($p_job,"status=".$SB_ECODE.",end=".$SB_TIMEEND.",size=".$RSSIZE.",perf=".$RSPERF,"status==running,type==backup,start==".$SB_TIMESTART);
+append_log($sessionlogfile,"End time: ".$SB_TIMEEND." (".epoch2human($SB_TIMEEND).")\nStatus:".$SB_ECODE."\n");
+
+
+if($SB_ECODE eq "0"){
+	append_log($sessionlogfile,"Writing meta data");
+	##Create meta directory
+	system("$cmd_mkdir ".$target_path.$slash."meta_".$SB_TIMESTART.$slash);
+  system("$cmd_chmod 777 ".$target_path.$slash."meta_".$SB_TIMESTART.$slash) if ($? != 0);
+
+  ##Copy meta
+  system("$cmd_cp \"".$VARPATH.'history_'.$p_job."\"   \"".$target_path.$slash."meta_".$SB_TIMESTART.$slash."\"");
+  system("$cmd_cp \"".$sessionlogfile."\"              \"".$target_path.$slash."meta_".$SB_TIMESTART.$slash."\"");
+  system("$cmd_cp \"".$JOBCONFIGPATH.$slash.$p_job."\" \"".$target_path.$slash."meta_".$SB_TIMESTART.$slash."\"");
+  
+  ##Generate import script
 #	$import_script  = '#!/bin/sh'."\n";
 #	$import_script .= '. /etc/default/openmediavault'."\n";
 #	$import_script .= '. /usr/share/openmediavault/scripts/helper-functions'."\n";
 #	$import_script .= 'if ! omv_config_exists "/config/services/sbackup/backuplist/backup[uuid=\''.$p_job.'\']"; then'."\n";
-#	$import_script .= '  object="<uuid>'.$p_job.'</uuid><enable>'.$main::JOBID{f_cstr("E",$p_job)}{'enable'}.'</enable><name>'.$main::JOBID{f_cstr("E",$p_job)}{'name'}.'</name><job_type>'.$main::JOBID{f_cstr("E",$p_job)}{'job_type'}.'</job_type><backup_type>'.$main::JOBID{f_cstr("E",$p_job)}{'backup_type'}.'</backup_type><source_sharedfolder_uuid>'.$main::JOBID{f_cstr("E",$p_job)}{'source_sharedfolder_uuid'}.'</source_sharedfolder_uuid><target_sharedfolder_uuid>'.$main::JOBID{f_cstr("E",$p_job)}{'target_sharedfolder_uuid'}.'</target_sharedfolder_uuid><schedule_enable>'.$main::JOBID{f_cstr("E",$p_job)}{'schedule_enable'}.'</schedule_enable><schedule_wday>'.$main::JOBID{f_cstr("E",$p_job)}{'schedule_wday'}.'</schedule_wday><schedule_hour>'.$main::JOBID{f_cstr("E",$p_job)}{'schedule_hour'}.'</schedule_hour><schedule_minute>'.$main::JOBID{f_cstr("E",$p_job)}{'schedule_minute'}.'</schedule_minute><post_purge>'.$main::JOBID{f_cstr("E",$p_job)}{'post_purge'}.'</post_purge><protect_days_job>'.$main::JOBID{f_cstr("E",$p_job)}{'protect_days_job'}.'</protect_days_job><post_job>'.$main::JOBID{f_cstr("E",$p_job)}{'post_job'}.'</post_job><purge_job_uuid>'.$main::JOBID{f_cstr("E",$p_job)}{'purge_job_uuid'}.'</purge_job_uuid><verify_job_uuid>'.$main::JOBID{f_cstr("E",$p_job)}{'verify_job_uuid'}.'</verify_job_uuid>"'."\n";
+#	$import_script .= '  object="<uuid>'.$p_job.'</uuid><enable>'.$JOBID{f_cstr("E",$p_job)}{'enable'}.'</enable><name>'.$JOBID{f_cstr("E",$p_job)}{'name'}.'</name><job_type>'.$JOBID{f_cstr("E",$p_job)}{'job_type'}.'</job_type><backup_type>'.$JOBID{f_cstr("E",$p_job)}{'backup_type'}.'</backup_type><source_sharedfolder_uuid>'.$JOBID{f_cstr("E",$p_job)}{'source_sharedfolder_uuid'}.'</source_sharedfolder_uuid><target_sharedfolder_uuid>'.$JOBID{f_cstr("E",$p_job)}{'target_sharedfolder_uuid'}.'</target_sharedfolder_uuid><schedule_enable>'.$JOBID{f_cstr("E",$p_job)}{'schedule_enable'}.'</schedule_enable><schedule_wday>'.$JOBID{f_cstr("E",$p_job)}{'schedule_wday'}.'</schedule_wday><schedule_hour>'.$JOBID{f_cstr("E",$p_job)}{'schedule_hour'}.'</schedule_hour><schedule_minute>'.$JOBID{f_cstr("E",$p_job)}{'schedule_minute'}.'</schedule_minute><post_purge>'.$JOBID{f_cstr("E",$p_job)}{'post_purge'}.'</post_purge><protect_days_job>'.$JOBID{f_cstr("E",$p_job)}{'protect_days_job'}.'</protect_days_job><post_job>'.$JOBID{f_cstr("E",$p_job)}{'post_job'}.'</post_job><purge_job_uuid>'.$JOBID{f_cstr("E",$p_job)}{'purge_job_uuid'}.'</purge_job_uuid><verify_job_uuid>'.$JOBID{f_cstr("E",$p_job)}{'verify_job_uuid'}.'</verify_job_uuid>"'."\n";
 #	$import_script .= '  omv_config_add_element "/config/services/sbackup/backuplist" "backup" "${object}" true'."\n";
-#	$import_script .= '  cp '.$main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."meta_".$SB_TIMESTART.$main::s_slash."history_".$p_job.' '.$main::VARPATH.$main::s_slash."\n";
-#	$import_script .= '  cp '.$main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."meta_".$SB_TIMESTART.$main::s_slash.$p_job."_".$SB_TIMESTART.".log".' '.$main::SESSIONLOGPATH.$main::s_slash."\n";
-#	$import_script .= '  cp '.$main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."meta_".$SB_TIMESTART.$main::s_slash.$p_job.' '.$main::JOBCONFIGPATH.$main::s_slash."\n";
+#	$import_script .= '  cp '.$target_path.$slash."meta_".$SB_TIMESTART.$slash."history_".$p_job.' '.$VARPATH.$slash."\n";
+#	$import_script .= '  cp '.$target_path.$slash."meta_".$SB_TIMESTART.$slash.$p_job."_".$SB_TIMESTART.".log".' '.$SESSIONLOGPATH.$slash."\n";
+#	$import_script .= '  cp '.$target_path.$slash."meta_".$SB_TIMESTART.$slash.$p_job.' '.$JOBCONFIGPATH.$slash."\n";
 #	$import_script .= '  echo Import completed'."\n";
 #	$import_script .= 'fi'."\n";
-#	write_log($main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."meta_".$SB_TIMESTART.$main::s_slash."import.sh",$import_script);
-#	
-#	##Link latest backup
-#  system("$main::cmd_rm ".$main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."data_latest");
-#  system("$main::cmd_ln ".$main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."data_".$SB_TIMESTART." ".$main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."data_latest");
-#  system("$main::cmd_rm ".$main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."meta_latest");
-#  system("$main::cmd_ln ".$main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."meta_".$SB_TIMESTART." ".$main::JOBID{f_cstr("E",$p_job)}{'backup_target'}.$main::s_slash."meta_latest");
-#}
-#&f_set_runfile($p_job,"type=backup,status=completed,pid=".$$);
-#if($main::JOBID{f_cstr("E",$p_job)}{'post_purge'} == 1 && $SB_ECODE == "0"){
-#	&f_output("DEBUG","Starting post-purge.");
-#	system("/usr/share/sbackup/sbackup -purge ".$p_job);
-#	if($? != 0){
-#		&f_output("DEBUG","Post-purge failed.");
-#	}else{
-#		&f_output("DEBUG","Post-purge completed.");
-#	}
-#}
-#&f_rm_runfile($p_job);
-#
-#if($main::JOBID{f_cstr("E",$p_job)}{'post_job'} != "" && $SB_ECODE == "0"){
-#	&f_output("DEBUG","Starting ".$main::JOBID{f_cstr("E",$p_job)}{'post_job_type'}." post-job ".$main::JOBID{f_cstr("E",$p_job)}{'post_job'});
-#	system("/usr/share/sbackup/sbackup -".$main::JOBID{f_cstr("E",$p_job)}{'post_job_type'}." ".$main::JOBID{f_cstr("E",$p_job)}{'post_job'});
-#	if($? != 0){
-#		&f_output("DEBUG","Post-job failed.");
-#	}else{
-#		&f_output("DEBUG","Post-job completed.");
-#	}
-#}
-#
-#&f_output("DEBUG","Backup part end.");
+#	write_log($target_path.$slash."meta_".$SB_TIMESTART.$slash."import.sh",$import_script);
+	
+	##Link latest backup
+  system("$cmd_rm \"".$target_path.$slash."data_latest\"") if -l $target_path.$slash."data_latest" || -f $target_path.$slash."data_latest";
+  system("$cmd_ln \"".$target_path.$slash."data_".$SB_TIMESTART."\" \"".$target_path.$slash."data_latest\"");
+  system("$cmd_rm \"".$target_path.$slash."meta_latest\"") if -l $target_path.$slash."meta_latest" || -f $target_path.$slash."meta_latest";
+  system("$cmd_ln \"".$target_path.$slash."meta_".$SB_TIMESTART."\" \"".$target_path.$slash."meta_latest\"");
+}
+
+#set_runfile($p_job,"type=backup,status=completed,pid=".$$);
+rm_runfile($p_job);
+if($SB_ECODE == "0"){
+	append_log($sessionlogfile,"Starting post-purge");
+	&f_output("DEBUG","Starting post-purge.");
+	system("/opt/sbackup/sbackup -purge ".$p_job);
+	if($? != 0){
+		append_log($sessionlogfile,"Post-purge failed");
+		&f_output("DEBUG","Post-purge failed.");
+	}else{
+		append_log($sessionlogfile,"Post-purge completed");
+		&f_output("DEBUG","Post-purge completed.");
+	}
+}
+
+if($SB_ECODE == "0" && $job{$p_job}{'POST'}{'-job'}{'-name'} ne ""){
+	append_log($sessionlogfile,"Starting post-job ".$job{$p_job}{'POST'}{'-job'}{'-name'});
+	&f_output("DEBUG","Starting ".$job{$p_job}{'POST'}{'-job'}{'-type'}." post-job ".$job{$p_job}{'POST'}{'-job'}{'-name'});
+	system("/opt/sbackup/sbackup -".$job{$p_job}{'POST'}{'-job'}{'-type'}." ".$job{$p_job}{'POST'}{'-job'}{'-name'});
+	if($? != 0){
+		append_log($sessionlogfile,"Post-job failed.");
+		&f_output("DEBUG","Post-job failed.");
+	}else{
+		append_log($sessionlogfile,"Post-job completed.");
+		&f_output("DEBUG","Post-job completed.");
+	}
+}
+
+&f_output("DEBUG","Backup part end.");
 
 1;

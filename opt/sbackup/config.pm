@@ -17,7 +17,7 @@ our @EXPORT = qw(load_jobs_config parse_job_config);
 
 my %job_definition = ( ##Default value, Mandatory, Type, Range of type
   'NAME' => ["",1,"",""],
-#  'UUID' => ["",0,"",""],
+  'UUID' => ["",0,"",""],
   'ENABLED' => ["0",1,"bool",""],
   'SCHEDULE' => {
   	'-enabled' => ["0",0,"bool",""],
@@ -43,6 +43,7 @@ my %job_definition = ( ##Default value, Mandatory, Type, Range of type
   },
   'POST' => {
   	'-job' => {
+  		'-type' => ["",0,"list","backup|restore"],
   		'-name' => ["",0,"",""],
   	},
   	'-autorestart' => ["0",0,"bool",""],
@@ -90,23 +91,23 @@ sub verify_job {
   				${$job}{$tmp} = 0 if ${$job}{$tmp} =~ /^(0|no)$/i;
   				${$job}{$tmp} = 1 if ${$job}{$tmp} =~ /^(1|yes)$/i;
   			}else{
-  				print "Invalid value for ".join(">",@{$job_path}).">$tmp: ${$job}{$tmp}\n";
+  				print "Invalid value for bool ".join(">",@{$job_path}).">$tmp: ${$job}{$tmp}\n";
   				$error = 1;
   			}
 			}
 			##Numeric test
 			if(defined ${$job}{$tmp} && ${${$config}{$tmp}}[2] eq "number"){
   			if(${$job}{$tmp} !~ /^[0-9]*$/){
-  				print "Invalid value for ".join(">",@{$job_path}).">$tmp: ${$job}{$tmp}\n";
+  				print "Invalid value for numeric ".join(">",@{$job_path}).">$tmp: ${$job}{$tmp}\n";
   				$error = 1;
   			}
 			}
 			##List test
-			if(defined ${$job}{$tmp} && ${${$config}{$tmp}}[2] eq "list"){
+			if(defined ${$job}{$tmp} && ${$job}{$tmp} ne "" && ${${$config}{$tmp}}[2] eq "list"){
   			if(${$job}{$tmp} =~ /^(${${$config}{$tmp}}[3])$/i){
   				${$job}{$tmp} = lc($1);
   			}else{
-  				print "Invalid value for ".join(">",@{$job_path}).">$tmp: ${$job}{$tmp}\n";
+  				print "Invalid value for list ".join(">",@{$job_path}).">$tmp: ${$job}{$tmp}\n";
   				$error = 1;
   			}
 			}

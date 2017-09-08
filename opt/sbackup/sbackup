@@ -24,7 +24,7 @@ our %job = load_jobs_config;
 ##
 our ($DEBUGMODE, $sv_history, $sv_report, $sv_log, $sv_status, $sv_backup, $sv_purge, $sv_verify, $sv_copy, $sv_restore, $sv_version, $sv_days, $sv_type, $sv_tree, $sv_into);
 our ($p_debug, $p_job, $p_version, $p_days, $p_type, $p_tree, $p_into);
-
+$p_debug = 1;
 my %arguments;
 %{$arguments{"debug"}} = (
 	"var" => \$main::DEBUGMODE,
@@ -164,20 +164,20 @@ if($sv_backup){
 	require "modules/backup.sbm";
 }
 
-#if($sv_purge){
-#	require "modules/purge.sbm";
-#}
-#
 #if($sv_verify){
 #	require "modules/verify.sbm";
 #}
-#
+
 #if($sv_copy){
 #	require "modules/copy.sbm";
 #}
-#
+
 #if($sv_restore){
 #	require "modules/restore.sbm";
+#}
+
+#if($sv_purge){
+#	require "modules/purge.sbm";
 #}
 
 if($sv_report){

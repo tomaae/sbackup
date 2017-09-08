@@ -14,7 +14,8 @@ use Fcntl ':flock';
 use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(append_log write_log read_log
-								get_history insert_history update_history set_runfile rm_runfile);
+								get_history insert_history update_history 
+								set_runfile rm_runfile);
 
 ##
 ## HISTORY

@@ -83,7 +83,6 @@ sub omv_prepare_uuid {
 	my $uuid_path = omv_path_by_uuid($uuid);
 	return $uuid_path if $uuid_path =~ /^Error:/;
 	
-	&::f_output("DEBUG","Finished preparing OMV uuid \"$uuid\"");
 	$result = $uuid_path;
 	return $result;
 }
