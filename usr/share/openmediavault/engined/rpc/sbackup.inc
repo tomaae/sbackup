@@ -48,9 +48,6 @@ class OMVRpcServiceSbackup extends \OMV\Rpc\ServiceAbstract {
 //		}');
 //
 //		// Get the configuration objects.
-//		$db = \OMV\Config\Database::getInstance();
-//		$objects = $db->get("conf.system.cron.job");
-//		
 //		$xpath = "//services/sbackup/backuplist/backup";
 //		$objects = $xmlConfig->getList($xpath);
 //		if(is_null($objects)) {
