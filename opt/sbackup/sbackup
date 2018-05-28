@@ -34,6 +34,13 @@ my %arguments;
 	"help_args" => "-debug [1-5]",
 	"help_display" => 0,
 );
+%{$arguments{"simulate"}} = (
+	"var" => \$main::SIMULATEMODE,
+	"vals_mandatory" => 0,
+	"help_header" => "Simulated run:",
+	"help_args" => "-simulate",
+	"help_display" => 0,
+);
 %{$arguments{"backup"}} = (
 	"var" => \$sv_backup,
 	"val1" => \$p_job,

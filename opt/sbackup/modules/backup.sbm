@@ -4,7 +4,7 @@
 #                                      backup module
 #
 ###########################################################################################
-
+#use diagnostics;
 use strict;
 use warnings;
 our ($p_job);
@@ -29,6 +29,15 @@ if($p_job){
   	print "\n";
   	exit 1;
   }
+}else{
+	print "Error: Job \"$p_job\" does not exists.\n\n";
+	print "Available jobs:\n";
+	for my $tmp(sort keys %job){
+		print $job{$tmp}{'NAME'};
+		print "\n";
+	}
+	print "\n";
+	exit 1;
 }
 
 ##
@@ -256,4 +265,3 @@ if($SB_ECODE == "0" && $job{$p_job}{'POST'}{'-job'}{'-name'} ne ""){
 
 &f_output("DEBUG","Backup part end.");
 
-1;
