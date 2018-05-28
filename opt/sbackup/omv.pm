@@ -46,6 +46,16 @@ sub omv_mnt_by_uuid {
 sub omv_path_by_uuid {
 	my $uuid = shift;
 	my $result = "";
+#      <sharedfolder>
+#        <uuid>c39e30a8-9201-4b0f-a848-07a5f18ec533</uuid>
+#        <name>backuptest</name>
+#        <comment></comment>
+#        <mntentref>f8092d74-045d-449b-b5b5-de11fdfdf7f2</mntentref>
+#        <reldirpath>backuptest/</reldirpath>
+#        <privileges></privileges>
+#      </sharedfolder>
+
+	#. /usr/share/openmediavault/scripts/helper-functions&&omv_config_get "//config/system/shares/sharedfolder[name='backuptest']"
 	$result = `. /usr/share/openmediavault/scripts/helper-functions&&omv_get_sharedfolder_path \"$uuid\"`;
 	if($? != 0 || $result eq ""){
 		$result = "Error:OMV path not found";

@@ -49,9 +49,9 @@ my $SB_TIMEEND;
 my $runfile = $RUNFILEPATH."sbackup_".$job{$p_job}{'NAME'};
 my $sessionlogfile = $SESSIONLOGPATH.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".log";
 
-
-&f_output("DEBUG","Starting backup $job{$p_job}{'NAME'}");
-
+##
+## backup_fail
+##
 sub backup_fail {
 	my $msg = shift;
 	$SB_TIMEEND = time();
@@ -65,18 +65,17 @@ sub backup_fail {
 ##
 ## Pre-initialization
 ##
+&f_output("DEBUG","Starting backup $job{$p_job}{'NAME'}");
 
-##Check if backup is already running
 if(-f $runfile){
 	print "Job is already running.\n";
 	exit 1;
 }
 
-##
+
 set_runfile($p_job,"type=backup,status=running,pid=".$$);
 insert_history($p_job,"type=backup,status=running,name=".$job{$p_job}{'NAME'}.",start=".$SB_TIMESTART);
 append_log($sessionlogfile,"Backup name: ".$job{$p_job}{'NAME'});
-append_log($sessionlogfile,"UUID: ".$job{$p_job}{'UUID'}) if defined $job{$p_job}{'UUID'} && $job{$p_job}{'UUID'} ne "";
 append_log($sessionlogfile,"Start time: ".$SB_TIMESTART." (".epoch2human($SB_TIMESTART).")\n");
 
 ##
@@ -84,15 +83,16 @@ append_log($sessionlogfile,"Start time: ".$SB_TIMESTART." (".epoch2human($SB_TIM
 ##
 my $source_integ = "";
 my $source_path = "";
-if(defined $job{$p_job}{'SOURCE'}{'-omv'} && $job{$p_job}{'SOURCE'}{'-omv'} ne ""){
+if($job{$p_job}{'SOURCE'}{'-type'} eq "omv4"){
 	&f_output("DEBUG","Source integration: OMV");
 	require omv;
 	import omv;
 	$source_integ = "OMV ";
-	$source_path = omv_prepare_uuid($job{$p_job}{'SOURCE'}{'-omv'});
+	$source_path = omv_prepare_uuid($job{$p_job}{'SOURCE'}{'-path'});
 	if($source_path =~ /^Error:(.*)$/){backup_fail("Source $1");}
 }
-#$source_path = $job{$p_job}{'SOURCE'}{'-tree'} if $job{$p_job}{'SOURCE'}{'-tree'} =~ /^\//;
+exit 0;
+$source_path = $job{$p_job}{'SOURCE'}{'-path'} if $job{$p_job}{'SOURCE'}{'-path'} =~ /^\//;
 `$cmd_ls $source_path 2>&1`;
 backup_fail("Backup source path not found.") if $? != 0;
 &f_output("DEBUG","Source mnt: \"$source_path\"");

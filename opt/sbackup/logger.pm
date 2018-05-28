@@ -10,6 +10,7 @@ package logger;
 use strict;
 use warnings;
 use Fcntl ':flock';
+use init;
 
 use Exporter qw(import);
 our @ISA = qw(Exporter);
@@ -67,7 +68,7 @@ sub parse_where{
 }
 
 sub get_history{
-	my ($p_uuid,$select,$where)=@_;
+	my ($p_job,$select,$where)=@_;
 	my $tmp2;
 	my @val;
 	my $line;
@@ -78,8 +79,9 @@ sub get_history{
 	
   my @select_request = parse_select('history',$select);
   my @where_request  = parse_where('history',$where) if $where;
-  if($p_uuid && -f $main::VARPATH.'history_'.$p_uuid){
-    open log_file,"<${main::VARPATH}history_${p_uuid}";
+  if($p_job && -f $main::VARPATH.'history_'.$p_job){
+  	&f_output("DEBUG","History get, $select, $where");
+    open log_file,"<${main::VARPATH}history_${p_job}";
   	flock log_file,1;
   	while($line = <log_file>){
     	chomp($line);
@@ -110,13 +112,14 @@ sub get_history{
 }
 
 sub insert_history{
-	my ($p_uuid,$insert)=@_;
+	my ($p_job,$insert)=@_;
 	my @columns;
 	my $tmp;
 	my @val;
 	my @returncodes;
 	
-	if($p_uuid && $insert){
+	if($p_job && $insert){
+		&f_output("DEBUG","History insert, $insert");
   	my @entries = split(/,/,$insert,-1);
   	for $tmp(keys %{$table{'history'}}){
   		$columns[$table{'history'}{$tmp}] = "";
@@ -125,14 +128,14 @@ sub insert_history{
   		@val = split(/=/,$tmp,-1);
   		$columns[$table{'history'}{$val[0]}] = $val[1];
   	}
-  	append_log($main::VARPATH.'history_'.$p_uuid,join('|',@columns));
+  	append_log($main::VARPATH.'history_'.$p_job,join('|',@columns));
   	$returncodes[0] = 1;
 	}
 	return @returncodes;
 }
 
 sub update_history{
-	my ($p_uuid,$update,$where)=@_;
+	my ($p_job,$update,$where)=@_;
 	my %columns;
 	my @cache;
 	my $tmp;
@@ -142,7 +145,8 @@ sub update_history{
 	my @val;
 	my @returncodes;
 	
-	if($p_uuid && $update && $where){
+	if($p_job && $update && $where){
+		&f_output("DEBUG","History update $p_job, $update, $where");
 		my @where_request  = parse_where('history',$where);
   	my @entries = split(/,/,$update,-1);
   	for $tmp(@entries){
@@ -150,42 +154,45 @@ sub update_history{
   		$columns{$table{'history'}{$val[0]}} = $val[1];
   	}
   	
-  	open log_file,"+<".$main::VARPATH.'history_'.$p_uuid;
-  	flock log_file,2;
-  	while($line = <log_file>){
-    	chomp($line);
-    	@val = split '\|',$line;
-    	push @cache,[@val];
+  	if(!$main::SIMULATEMODE){
+    	open log_file,"+<".$main::VARPATH.'history_'.$p_job;
+    	flock log_file,2;
+    	while($line = <log_file>){
+      	chomp($line);
+      	@val = split '\|',$line;
+      	push @cache,[@val];
+    	}
+    	seek log_file,0,0;
+    	truncate log_file,0;
+    	for my $tmp1(@cache){
+    		$change_value = 1;
+   			for $tmp2(@where_request){
+   				$change_value = 0 if $$tmp1[$$tmp2{'key'}] ne $$tmp2{'value'};
+   			}
+   			if($change_value == 1){
+   				for $tmp2(keys %columns){
+   					$$tmp1[$tmp2] = $columns{$tmp2};
+   				}
+   			}
+   			print log_file join("|",@{$tmp1}),"\n";
+    	}
+    	flock log_file,8;
+      close log_file;
   	}
-  	seek log_file,0,0;
-  	truncate log_file,0;
-  	for my $tmp1(@cache){
-  		$change_value = 1;
- 			for $tmp2(@where_request){
- 				$change_value = 0 if $$tmp1[$$tmp2{'key'}] ne $$tmp2{'value'};
- 			}
- 			if($change_value == 1){
- 				for $tmp2(keys %columns){
- 					$$tmp1[$tmp2] = $columns{$tmp2};
- 				}
- 			}
- 			print log_file join("|",@{$tmp1}),"\n";
-  	}
-  	flock log_file,8;
-    close log_file;
   	$returncodes[0] = 1;
 	}
 	return @returncodes;
 }
 
 sub set_runfile{
-	my ($p_uuid,$insert)=@_;
+	my ($p_job,$insert)=@_;
 	my @columns;
 	my $tmp;
 	my @val;
 	my @returncodes;
 	
-	if($p_uuid && $insert){
+	if($p_job && $insert){
+		&f_output("DEBUG","Setting runfile for job $p_job, $insert");
   	my @entries = split(/,/,$insert,-1);
   	for $tmp(keys %{$table{'runfile'}}){
   		$columns[$table{'runfile'}{$tmp}] = "";
@@ -194,17 +201,18 @@ sub set_runfile{
   		@val = split(/=/,$tmp,-1);
   		$columns[$table{'runfile'}{$val[0]}] = $val[1];
   	}
-  	write_log($main::RUNFILEPATH.'sbackup_'.$p_uuid,join('|',@columns));
+  	write_log($main::RUNFILEPATH.'sbackup_'.$p_job,join('|',@columns));
   	$returncodes[0] = 1;
 	}
 	return @returncodes;
 }
 
 sub rm_runfile{
-	my ($p_uuid)=@_;
+	my ($p_job)=@_;
 	my @returncodes;
-	if($p_uuid && -e $main::RUNFILEPATH.'sbackup_'.$p_uuid){
-  	system("$main::cmd_rm ".$main::RUNFILEPATH.'sbackup_'.$p_uuid);
+	if($p_job && -e $main::RUNFILEPATH.'sbackup_'.$p_job){
+		&f_output("DEBUG","Removing runfile for $p_job");
+  	system("$main::cmd_rm ".$main::RUNFILEPATH.'sbackup_'.$p_job) if !$main::SIMULATEMODE;
   	$returncodes[0] = 0;
   	$returncodes[0] = 1 if($? != 0);
 	}
@@ -216,6 +224,7 @@ sub rm_runfile{
 ##
 sub append_log{
 	my ($logfile,$logentry)=@_;
+	&f_output("DEBUG","Append log $logfile, $logentry");
 	return if $main::SIMULATEMODE;
 	chomp($logentry);
 	open log_file,">>$logfile" or die "Error: Insufficient access rights\n";
@@ -229,12 +238,13 @@ sub append_log{
 sub write_log{
 	my ($logfile,@logentry)=@_;
 	my $tmp;
+	return if $main::SIMULATEMODE;
 	open log_file,">>$logfile" or die "Error: Insufficient access rights\n";
 	flock log_file,2;
 	truncate log_file,0;
 	for $tmp(@logentry){
 		chomp($tmp);
-		print log_file "$tmp\n" if !$main::SIMULATEMODE;
+		print log_file "$tmp\n";
 	}
 	flock log_file,8;
 	close log_file;
