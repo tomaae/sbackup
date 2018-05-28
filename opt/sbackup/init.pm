@@ -100,6 +100,30 @@ sub get_env{
 	our $cmd_mkdir      = "mkdir -p";
 	our $cmd_chmod      = "chmod";
 	our $cmd_rsync      = "rsync";
+	
+	if(!-d $JOBCONFIGPATH){
+		system("$cmd_mkdir $JOBCONFIGPATH");
+		if($? != 0){
+			print "Failed to create $JOBCONFIGPATH with exit code $?.\n";
+			exit 1;
+		}
+	}
+	
+	if(!-d $SESSIONLOGPATH){
+		system("$cmd_mkdir $SESSIONLOGPATH");
+		if($? != 0){
+			print "Failed to create $SESSIONLOGPATH with exit code $?.\n";
+			exit 1;
+		}
+	}
+	
+	if(!-d $RUNFILEPATH){
+		system("$cmd_mkdir $RUNFILEPATH");
+		if($? != 0){
+			print "Failed to create $RUNFILEPATH with exit code $?.\n";
+			exit 1;
+		}
+	}
 }
 
 ##
