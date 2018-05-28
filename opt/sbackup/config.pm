@@ -17,7 +17,6 @@ our @EXPORT = qw(load_jobs_config parse_job_config);
 
 my %job_definition = ( ##Default value, Mandatory, Type, Range of type
   'NAME' => ["",1,"",""],
-  'UUID' => ["",0,"",""],
   'ENABLED' => ["0",1,"bool",""],
   'SCHEDULE' => {
   	'-enabled' => ["0",0,"bool",""],
@@ -25,21 +24,21 @@ my %job_definition = ( ##Default value, Mandatory, Type, Range of type
   	'-time' => ["",0,"time",""],
   },
   'SOURCE' => {
-  	'-host' => ["",0,"",""],
-  	'-omv' => ["",0,"",""],
-  	'-tree' => ["",0,"",""],
+  	'-type' => ["",1,"list","filesystem|omv4"],
+  	#'-host' => ["",0,"",""],
+  	'-tree' => ["",1,"",""],
   	'-protect' => ["",0,"number",""],
   	'-snapshot' => {
-  		'-enabled' => ["0",0,"bool",""],
+  		'-enabled' => ["0",1,"bool",""],
   		'-type' => ["",0,"list","lvm"],
   		'-size' => ["",0,"number",""],
   		'-fallback' => ["0",0,"bool",""],
   	}
   },
   'TARGET' => {
+  	'-type' => ["",1,"list","filesystem|omv4"],
   	#'-host' => ["",0,"",""],
-  	'-omv' => ["",0,"",""],
-  	'-tree' => ["",0,"",""],
+  	'-tree' => ["",1,"",""],
   },
   'POST' => {
   	'-job' => {
@@ -158,7 +157,8 @@ sub parse_job_config {
 	}
 	
 	my @job_path = ();
-	if(verify_job(\%{$job{$file}},\%job_definition,\@job_path)){
+	if(verify_job(\%{$job{$file}},\%job_definition,\@job_path) || $job{$file}{'NAME'} ne $file){
+		print "Job name \"".$job{$file}{'NAME'}."\" and filename \"".$file."\" do not match.\n" if $job{$file}{'NAME'} ne $file;
 		print "Syntax error in job file $file\n";
 		undef %job;
 	}
