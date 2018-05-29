@@ -68,8 +68,25 @@ sub backup_fail {
 &f_output("DEBUG","Starting backup $job{$p_job}{'NAME'}");
 
 if(-f $runfile){
-	print "Job is already running.\n";
-	exit 1;
+	&f_output("DEBUG","Runfile found.");
+	
+	my @output = &get_runfile($p_job,'status,type,pid');
+	if($output[0] && $output[2][0]{'pid'} =~ /^\d+$/){
+		&f_output("DEBUG","Runfile pid ".$output[2][0]{'pid'});
+		`ps $output[2][0]{'pid'}`;
+		if($? == 0){
+			print "Job is already running.\n";
+			exit 1;
+		}else{
+			&f_output("DEBUG","Job is no longer running, possible crash or kill.");
+			update_history($p_job,"status=killed", "status==running");
+			rm_runfile($p_job);
+		}
+	}else{
+		&f_output("DEBUG","Runfile is faulty, removing.");
+		update_history($p_job,"status=killed", "status==running");
+		rm_runfile($p_job);
+	}
 }
 
 
@@ -130,7 +147,6 @@ if(!-d $target_path){
 }
 &f_output("DEBUG","Target path: \"$target_path\"");
 
-exit 0;
 ##
 ## Check backup history
 ##
@@ -143,8 +159,11 @@ if(-f $VARPATH.'history_'.$p_job){
   my @output = &get_history($p_job,'status,start','type==backup');
   for my $tmp(@{$output[2]}){
   	if($$tmp{'start'} ne "" && $$tmp{'start'} > 100 && -d $target_path.$slash."data_".$$tmp{'start'}){
-  		$LAST_COMPLETED_STAMP = $$tmp{'start'} if $$tmp{'status'} == "0";
-  		$LAST_FAILED_STAMP    = $$tmp{'start'} if $$tmp{'status'} != "0";
+  		if($$tmp{'status'} =~ /^\d+$/ && $$tmp{'status'} == "0"){
+  			$LAST_COMPLETED_STAMP = $$tmp{'start'};
+  		}else{
+  			$LAST_FAILED_STAMP = $$tmp{'start'};
+  		}
   	}
   }
   &f_output("DEBUG","Last failed version: ".$LAST_FAILED_STAMP) if $LAST_FAILED_STAMP;
@@ -167,6 +186,8 @@ if(-f $VARPATH.'history_'.$p_job){
 			$INCR=" --link-dest=\"".$target_path.$slash."data_".$LAST_COMPLETED_STAMP.$slash."\"";
   	}
 	}
+}else{
+	&f_output("DEBUG","History log not found, initial backup.");
 }
 
 ##
@@ -179,7 +200,7 @@ if(!$main::SIMULATEMODE){
   backup_fail("Vercreate failed") if !-d $target_path.$slash."data_".$SB_TIMESTART;
 }
 
-
+exit 0;
 ##
 ## Run backup
 ##

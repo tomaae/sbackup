@@ -16,7 +16,7 @@ use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(append_log write_log read_log
 								get_history insert_history update_history 
-								set_runfile rm_runfile);
+								get_runfile set_runfile rm_runfile);
 
 ##
 ## HISTORY
@@ -145,6 +145,11 @@ sub update_history{
 	my @val;
 	my @returncodes;
 	
+	if( !-f $main::VARPATH.'history_'.$p_job){
+		print "Error: History file for $p_job does not exists.\n";
+		return;
+	}
+	
 	if($p_job && $update && $where){
 		&f_output("DEBUG","History update $p_job, $update, $where");
 		my @where_request  = parse_where('history',$where);
@@ -216,6 +221,44 @@ sub rm_runfile{
   	$returncodes[0] = 0;
   	$returncodes[0] = 1 if($? != 0);
 	}
+	return @returncodes;
+}
+
+sub get_runfile{
+	my ($p_job,$select)=@_;
+	my $tmp2;
+	my @val;
+	my $line;
+	my @cache;
+	my $display_value;	
+	my $return_counter = -1;
+	my @returncodes;
+	
+  my @select_request = parse_select('runfile',$select);
+  if($p_job && -f $main::RUNFILEPATH.'sbackup_'.$p_job){
+  	&f_output("DEBUG","Runfile get, $select");
+    open log_file,"<${main::RUNFILEPATH}sbackup_${p_job}";
+  	flock log_file,1;
+  	while($line = <log_file>){
+    	chomp($line);
+    	@val = split '\|',$line;
+    	push @cache,[@val];
+  	}
+  	flock log_file,8;
+    close log_file;
+  
+  	for my $tmp1(@cache){
+  		$display_value = 1;
+  		
+  		if($display_value){
+    		$returncodes[0] = 1;
+    		$return_counter++;
+    		for $tmp2(@select_request){
+    			$returncodes[2][$return_counter]{$$tmp2{'key'}} = $$tmp1[$$tmp2{'value'}];
+        }     
+    	}
+  	}
+  }
 	return @returncodes;
 }
 
