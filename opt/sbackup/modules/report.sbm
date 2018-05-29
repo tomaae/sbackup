@@ -9,6 +9,11 @@ use strict;
 use warnings;
 use POSIX qw(strftime ceil);
 our %job;
+our $p_job;
+if($p_job){
+	require "modules/history.sbm";
+	return 1;
+}
 
 printf "%-1.1s %-18.18s %-18.18s %-10.10s %-16.16s %-20.20s %-20.20s %-14.14s %-3.3s\n",
 	"Enabled",

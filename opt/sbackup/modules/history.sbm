@@ -13,6 +13,35 @@ our %job;
 my %history;
 our $p_job;
 our $p_type;
+our $sv_log;
+our $p_version;
+
+if($p_version){
+	my @tmp = &get_history($p_job,'status,name,start,end,size,perf,type','start=='.$p_version);
+	if(!$tmp[0]){
+		print "Invalid job id.\n";
+		exit 1;
+	}
+}
+
+if($sv_log eq 1){
+	if(!$p_version){
+		print "Missing job id.\n";
+		exit 1;
+	}
+	
+	if( !-f $main::SESSIONLOGPATH.$p_job."_".$p_version.".log"){
+		print "Job log is not available.\n";
+		exit 1;
+	}
+	
+	for my $tmp(&read_log($main::SESSIONLOGPATH.$p_job."_".$p_version.".log")){
+		print $tmp;
+	}
+	
+	return 1;
+}
+
 
 ##
 ## Check parameters

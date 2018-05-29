@@ -22,7 +22,7 @@ our %job = load_jobs_config;
 ##
 ## Parameters
 ##
-our ($DEBUGMODE, $sv_history, $sv_report, $sv_log, $sv_status, $sv_backup, $sv_purge, $sv_verify, $sv_copy, $sv_restore, $sv_version, $sv_days, $sv_type, $sv_tree, $sv_into);
+our ($DEBUGMODE, $sv_history, $sv_job, $sv_log, $sv_status, $sv_backup, $sv_purge, $sv_verify, $sv_copy, $sv_restore, $sv_version, $sv_days, $sv_type, $sv_tree, $sv_into);
 our ($p_debug, $p_job, $p_version, $p_days, $p_type, $p_tree, $p_into);
 $p_debug = 1;
 my %arguments;
@@ -41,6 +41,7 @@ my %arguments;
 	"help_args" => "-simulate",
 	"help_display" => 0,
 );
+
 %{$arguments{"backup"}} = (
 	"var" => \$sv_backup,
 	"val1" => \$p_job,
@@ -77,88 +78,88 @@ my %arguments;
 #	"help_args" => "-copy <job name>",
 #	"help_display" => 4,
 #);
-%{$arguments{"restore"}} = (
-	"var" => \$sv_restore,
-	"val1" => \$p_job,
-	"vals_mandatory" => 1,
-	"primary" => 1,
-	"help_header" => "Start restore job:",
-	"help_args" => "-restore <job name> [-version <versionid>] [-tree <path>] [-into <path>]",
-	"help_display" => 5,
-);
+#%{$arguments{"restore"}} = (
+#	"var" => \$sv_restore,
+#	"val1" => \$p_job,
+#	"vals_mandatory" => 1,
+#	"primary" => 1,
+#	"help_header" => "Start restore job:",
+#	"help_args" => "-restore <job name> [-version <versionid>] [-tree <path>] [-into <path>]",
+#	"help_display" => 5,
+#);
 
-%{$arguments{"report"}} = (
-	"var" => \$sv_report,
+%{$arguments{"job"}} = (
+	"var" => \$sv_job,
 	"primary" => 1,
+	"val1" => \$p_job,
 	"vals_mandatory" => 0,
 	"help_header" => "Report jobs:",
-	"help_args" => "-report",
+	"help_args" => "-job [ <job name> [-type (backup|purge|copy|verify)] [-version <version> [-log]] ]",
 	"help_display" => 10,
 );
-%{$arguments{"history"}} = (
-	"var" => \$sv_history,
-	"val1" => \$p_job,
-	"vals_mandatory" => 0,
-	"primary" => 1,
-	"help_header" => "Job history:",
-	"help_args" => "-history [<job name>]",
-	"help_display" => 11,
-);
+#%{$arguments{"history"}} = (
+#	"var" => \$sv_history,
+#	"val1" => \$p_job,
+#	"vals_mandatory" => 0,
+#	"primary" => 1,
+#	"help_header" => "Job history:",
+#	"help_args" => "-history [<job name>]",
+#	"help_display" => 11,
+#);
 %{$arguments{"log"}} = (
 	"var" => \$sv_log,
-	"val1" => \$p_job,
 	"vals_mandatory" => 0,
-	"primary" => 1,
+	"dependency" => "job",
 	"help_header" => "Job log:",
-	"help_args" => "-log <job name> -version <versionid>",
-	"help_display" => 11,
+	"help_args" => "-job <job name> -version <version> -log",
+	"help_display" => 0,
 );
 
 %{$arguments{"type"}} = (
 	"var" => \$sv_type,
 	"val1" => \$p_type,
 	"vals_mandatory" => 1,
-	"dependency" => "history",
+	"dependency" => "job",
 	"help_header" => "Job type:",
-	"help_args" => "-type (backup|purge|copy|verify)",
+	"help_args" => "-job <job name> -type (backup|purge|copy|verify)",
 	"help_display" => 0,
 );
 %{$arguments{"version"}} = (
 	"var" => \$sv_version,
 	"val1" => \$p_version,
 	"vals_mandatory" => 1,
-	"dependency" => "restore;purge;log",
+	"dependency" => "restore;purge;job",
 	"help_header" => "Job version:",
 	"help_args" => "-version <version>",
 	"help_display" => 0,
 );
-%{$arguments{"tree"}} = (
-	"var" => \$sv_tree,
-	"val1" => \$p_tree,
-	"vals_mandatory" => 1,
-	"dependency" => "restore",
-	"help_header" => "Directory tree:",
-	"help_args" => "-tree <directory>",
-	"help_display" => 0,
-);
-%{$arguments{"into"}} = (
-	"var" => \$sv_into,
-	"val1" => \$p_into,
-	"vals_mandatory" => 1,
-	"dependency" => "restore",
-	"help_header" => "Target directory:",
-	"help_args" => "-into <directory>",
-	"help_display" => 0,
-);
-%{$arguments{"days"}} = (
-	"var" => \$sv_days,
-	"val1" => \$p_days,
-	"vals_mandatory" => 1,
-	"dependency" => "purge",
-	"help_header" => "Number of days:",
-	"help_args" => "-days <days>",
-	"help_display" => 0,
-);
+#%{$arguments{"tree"}} = (
+#	"var" => \$sv_tree,
+#	"val1" => \$p_tree,
+#	"vals_mandatory" => 1,
+#	"dependency" => "restore",
+#	"help_header" => "Directory tree:",
+#	"help_args" => "-tree <directory>",
+#	"help_display" => 0,
+#);
+#%{$arguments{"into"}} = (
+#	"var" => \$sv_into,
+#	"val1" => \$p_into,
+#	"vals_mandatory" => 1,
+#	"dependency" => "restore",
+#	"help_header" => "Target directory:",
+#	"help_args" => "-into <directory>",
+#	"help_display" => 0,
+#);
+#%{$arguments{"days"}} = (
+#	"var" => \$sv_days,
+#	"val1" => \$p_days,
+#	"vals_mandatory" => 1,
+#	"dependency" => "purge",
+#	"help_header" => "Number of days:",
+#	"help_args" => "-days <days>",
+#	"help_display" => 0,
+#);
 
 &f_arguments(\%arguments);
 
@@ -187,7 +188,7 @@ if($sv_backup){
 #	require "modules/purge.sbm";
 #}
 
-if($sv_report){
+if($sv_job){
 	require "modules/report.sbm";
 }
 
