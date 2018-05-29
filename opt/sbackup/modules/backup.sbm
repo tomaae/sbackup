@@ -247,20 +247,6 @@ if($SB_ECODE eq "0"){
   system("$cmd_cp \"".$sessionlogfile."\"              \"".$target_path.$slash."meta_".$SB_TIMESTART.$slash."\"");
   system("$cmd_cp \"".$JOBCONFIGPATH.$slash.$p_job."\" \"".$target_path.$slash."meta_".$SB_TIMESTART.$slash."\"");
   
-  ##Generate import script
-#	$import_script  = '#!/bin/sh'."\n";
-#	$import_script .= '. /etc/default/openmediavault'."\n";
-#	$import_script .= '. /usr/share/openmediavault/scripts/helper-functions'."\n";
-#	$import_script .= 'if ! omv_config_exists "/config/services/sbackup/backuplist/backup[uuid=\''.$p_job.'\']"; then'."\n";
-#	$import_script .= '  object="<uuid>'.$p_job.'</uuid><enable>'.$JOBID{f_cstr("E",$p_job)}{'enable'}.'</enable><name>'.$JOBID{f_cstr("E",$p_job)}{'name'}.'</name><job_type>'.$JOBID{f_cstr("E",$p_job)}{'job_type'}.'</job_type><backup_type>'.$JOBID{f_cstr("E",$p_job)}{'backup_type'}.'</backup_type><source_sharedfolder_uuid>'.$JOBID{f_cstr("E",$p_job)}{'source_sharedfolder_uuid'}.'</source_sharedfolder_uuid><target_sharedfolder_uuid>'.$JOBID{f_cstr("E",$p_job)}{'target_sharedfolder_uuid'}.'</target_sharedfolder_uuid><schedule_enable>'.$JOBID{f_cstr("E",$p_job)}{'schedule_enable'}.'</schedule_enable><schedule_wday>'.$JOBID{f_cstr("E",$p_job)}{'schedule_wday'}.'</schedule_wday><schedule_hour>'.$JOBID{f_cstr("E",$p_job)}{'schedule_hour'}.'</schedule_hour><schedule_minute>'.$JOBID{f_cstr("E",$p_job)}{'schedule_minute'}.'</schedule_minute><post_purge>'.$JOBID{f_cstr("E",$p_job)}{'post_purge'}.'</post_purge><protect_days_job>'.$JOBID{f_cstr("E",$p_job)}{'protect_days_job'}.'</protect_days_job><post_job>'.$JOBID{f_cstr("E",$p_job)}{'post_job'}.'</post_job><purge_job_uuid>'.$JOBID{f_cstr("E",$p_job)}{'purge_job_uuid'}.'</purge_job_uuid><verify_job_uuid>'.$JOBID{f_cstr("E",$p_job)}{'verify_job_uuid'}.'</verify_job_uuid>"'."\n";
-#	$import_script .= '  omv_config_add_element "/config/services/sbackup/backuplist" "backup" "${object}" true'."\n";
-#	$import_script .= '  cp '.$target_path.$slash."meta_".$SB_TIMESTART.$slash."history_".$p_job.' '.$VARPATH.$slash."\n";
-#	$import_script .= '  cp '.$target_path.$slash."meta_".$SB_TIMESTART.$slash.$p_job."_".$SB_TIMESTART.".log".' '.$SESSIONLOGPATH.$slash."\n";
-#	$import_script .= '  cp '.$target_path.$slash."meta_".$SB_TIMESTART.$slash.$p_job.' '.$JOBCONFIGPATH.$slash."\n";
-#	$import_script .= '  echo Import completed'."\n";
-#	$import_script .= 'fi'."\n";
-#	write_log($target_path.$slash."meta_".$SB_TIMESTART.$slash."import.sh",$import_script);
-	
 	##Link latest backup
   system("$cmd_rm \"".$target_path.$slash."data_latest\"") if -l $target_path.$slash."data_latest" || -f $target_path.$slash."data_latest";
   system("cd \"$target_path\" && $cmd_ln \"data_".$SB_TIMESTART."\" \"data_latest\"");
@@ -268,7 +254,6 @@ if($SB_ECODE eq "0"){
   system("cd \"$target_path\" && $cmd_ln \"meta_".$SB_TIMESTART."\" \"meta_latest\"");
 }
 
-#set_runfile($p_job,"type=backup,status=completed,pid=".$$);
 rm_runfile($p_job);
 if($SB_ECODE == "0"){
 	append_log($sessionlogfile,"Starting post-purge");
