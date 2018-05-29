@@ -12,7 +12,7 @@ use warnings;
 
 use Exporter qw(import);
 our @ISA = qw(Exporter);
-our @EXPORT = qw(omv_prepare_sharedfolder);
+our @EXPORT = qw(omv_prepare_sharedfolder omv_uuid_by_name omv_name_by_uuid);
 
 ##
 ## omv_name_by_uuid

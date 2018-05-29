@@ -45,7 +45,7 @@ for my $tmp_job(sort keys %job){
 		my $tmp_noofschedules = 0;
 		##Format schedule days
 		if($job{$tmp_job}{'SCHEDULE'}{'-day'} ne ""){
-  		my @tmp_schedules = split /,/, $job{$tmp_job}{'SCHEDULE'}{'-day'};
+  		my @tmp_schedules = split /,| /, $job{$tmp_job}{'SCHEDULE'}{'-day'};
   		$tmp_noofschedules = scalar(@tmp_schedules);
   		$out_schedule .= "Daily" if $tmp_noofschedules == 7;
   		if($tmp_noofschedules < 7){
@@ -54,6 +54,13 @@ for my $tmp_job(sort keys %job){
   			@wdays = ('Su','Mo','Tu','We','Th','Fr','Sa') if $tmp_noofschedules > 3;
   			@wdays = ('S','M','T','W','T','F','S') if $tmp_noofschedules > 4;
   			for(my $i=0;$i < $tmp_noofschedules;$i++){
+  				$tmp_schedules[$i] = 0 if $tmp_schedules[$i] eq "Sun";
+  				$tmp_schedules[$i] = 1 if $tmp_schedules[$i] eq "Mon";
+  				$tmp_schedules[$i] = 2 if $tmp_schedules[$i] eq "Tue";
+  				$tmp_schedules[$i] = 3 if $tmp_schedules[$i] eq "Wed";
+  				$tmp_schedules[$i] = 4 if $tmp_schedules[$i] eq "Thu";
+  				$tmp_schedules[$i] = 5 if $tmp_schedules[$i] eq "Fri";
+  				$tmp_schedules[$i] = 6 if $tmp_schedules[$i] eq "Sat";
   				$out_schedule .= $wdays[$tmp_schedules[$i]]."," if defined $wdays[$tmp_schedules[$i]];
   			}
   			$out_schedule = substr($out_schedule, 0, -1) if substr($out_schedule, -1, 1) eq ",";
@@ -105,20 +112,20 @@ for my $tmp_job(sort keys %job){
 	##
 	my $source_integ = "";
 	my $source_name = "N/A";
-	if(defined $job{$tmp_job}{'SOURCE'}{'-omv'} && $job{$tmp_job}{'SOURCE'}{'-omv'} ne ""){
-		require omv;
-		import omv;
-		$source_integ = "OMV ";
-		$source_name = omv_name_by_uuid($job{$tmp_job}{'SOURCE'}{'-omv'});
+	if($job{$tmp_job}{'SOURCE'}{'-type'} eq "omv4" && $job{$tmp_job}{'SOURCE'}{'-path'} ne ""){
+  	require omv4;
+  	import omv4;
+  	$source_integ = "OMV ";
+  	$source_name = omv_name_by_uuid(omv_uuid_by_name($job{$tmp_job}{'SOURCE'}{'-path'}))
 	}
 	
 	my $target_integ = "";
 	my $target_name = "N/A";
-	if(defined $job{$tmp_job}{'TARGET'}{'-omv'} && $job{$tmp_job}{'TARGET'}{'-omv'} ne ""){
-		require omv;
-		import omv;
+	if($job{$tmp_job}{'TARGET'}{'-type'} eq "omv4" && $job{$tmp_job}{'TARGET'}{'-path'} ne ""){
+		require omv4;
+		import omv4;
 		$target_integ = "OMV ";
-		$target_name = omv_name_by_uuid($job{$tmp_job}{'TARGET'}{'-omv'});
+		$target_name = omv_name_by_uuid(omv_uuid_by_name($job{$tmp_job}{'TARGET'}{'-path'}))
 	}
 	
 	##
