@@ -69,6 +69,8 @@ sub parse_where{
 
 sub get_history{
 	my ($p_job,$select,$where)=@_;
+	$where = "" if !defined($where);
+	
 	my $tmp2;
 	my @val;
 	my $line;

@@ -158,12 +158,18 @@ if(-f $VARPATH.'history_'.$p_job){
 	my $LAST_COMPLETED_STAMP = 0;
   my @output = &get_history($p_job,'status,start','type==backup');
   for my $tmp(@{$output[2]}){
+  	if($$tmp{'start'} eq $SB_TIMESTART){
+  		&f_output("DEBUG","Skipping current backup in history file.");
+  		next;
+  	}
   	if($$tmp{'start'} ne "" && $$tmp{'start'} > 100 && -d $target_path.$slash."data_".$$tmp{'start'}){
   		if($$tmp{'status'} =~ /^\d+$/ && $$tmp{'status'} == "0"){
   			$LAST_COMPLETED_STAMP = $$tmp{'start'};
   		}else{
   			$LAST_FAILED_STAMP = $$tmp{'start'};
   		}
+  	}else{
+  		&f_output("DEBUG","Data not found for job $$tmp{'start'}");
   	}
   }
   &f_output("DEBUG","Last failed version: ".$LAST_FAILED_STAMP) if $LAST_FAILED_STAMP;
@@ -193,20 +199,18 @@ if(-f $VARPATH.'history_'.$p_job){
 ##
 ## Create version directories
 ##
-
 if(!$main::SIMULATEMODE){
+	&f_output("DEBUG","Creating data directory for $SB_TIMESTART");
   system("$cmd_mkdir     ".$target_path.$slash."data_".$SB_TIMESTART);
   system("$cmd_chmod 777 ".$target_path.$slash."data_".$SB_TIMESTART) if $? != 0;
   backup_fail("Vercreate failed") if !-d $target_path.$slash."data_".$SB_TIMESTART;
 }
 
-exit 0;
 ##
 ## Run backup
 ##
 my $SB_ECODE = "";
 system("$cmd_sleep 1") if !$main::SIMULATEMODE;
-#append_log($sessionlogfile,"Start time: ".$SB_TIMESTART."\n");
 &f_output("DEBUG","Starting backup.");
 my $cmd = " --verbose --stats -aEAX --delete ".$INCR." \"".$source_path.$slash."\" \"".$target_path.$slash."data_".$SB_TIMESTART.$slash."\"";
 &f_output("DEBUG3","Execute: \"$cmd_rsync $cmd\"");
@@ -214,8 +218,6 @@ system("$cmd_rsync $cmd >> $sessionlogfile") if !$main::SIMULATEMODE;
 $SB_ECODE=$? if !$main::SIMULATEMODE;
 
 ##Check backup status
-system(". /usr/share/openmediavault/scripts/helper-functions&&omv_kill_children ".$$);
-
 my $RSSIZE = "";
 my $RSPERF = "";
 for(read_log($sessionlogfile)){
@@ -261,9 +263,9 @@ if($SB_ECODE eq "0"){
 	
 	##Link latest backup
   system("$cmd_rm \"".$target_path.$slash."data_latest\"") if -l $target_path.$slash."data_latest" || -f $target_path.$slash."data_latest";
-  system("$cmd_ln \"".$target_path.$slash."data_".$SB_TIMESTART."\" \"".$target_path.$slash."data_latest\"");
+  system("cd \"$target_path\" && $cmd_ln \"data_".$SB_TIMESTART."\" \"data_latest\"");
   system("$cmd_rm \"".$target_path.$slash."meta_latest\"") if -l $target_path.$slash."meta_latest" || -f $target_path.$slash."meta_latest";
-  system("$cmd_ln \"".$target_path.$slash."meta_".$SB_TIMESTART."\" \"".$target_path.$slash."meta_latest\"");
+  system("cd \"$target_path\" && $cmd_ln \"meta_".$SB_TIMESTART."\" \"meta_latest\"");
 }
 
 #set_runfile($p_job,"type=backup,status=completed,pid=".$$);
@@ -296,3 +298,4 @@ if($SB_ECODE == "0" && $job{$p_job}{'POST'}{'-job'}{'-name'} ne ""){
 
 &f_output("DEBUG","Backup part end.");
 
+return 1;

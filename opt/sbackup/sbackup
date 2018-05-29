@@ -127,7 +127,7 @@ my %arguments;
 	"var" => \$sv_version,
 	"val1" => \$p_version,
 	"vals_mandatory" => 1,
-	"dependency" => "restore;purge",
+	"dependency" => "restore;purge;log",
 	"help_header" => "Job version:",
 	"help_args" => "-version <version>",
 	"help_display" => 0,
