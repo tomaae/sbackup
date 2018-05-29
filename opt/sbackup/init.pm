@@ -24,6 +24,7 @@ our @EXPORT = qw(
 ##
 sub f_output { 
 	my ($msg_type,$err_msg,$additionalcode)=@_;
+	$err_msg =~ s/\n$//;
 	my ($sec,$min,$hour,$mday,$mon,$year, $wday,$yday,$isdst) = localtime;
 	my $debug_type;
 	my $debug_show = 0;
