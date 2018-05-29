@@ -88,39 +88,49 @@ if($job{$p_job}{'SOURCE'}{'-type'} eq "omv4"){
 	require omv;
 	import omv;
 	$source_integ = "OMV ";
-	$source_path = omv_prepare_uuid($job{$p_job}{'SOURCE'}{'-path'});
+	$source_path = omv_prepare_sharedfolder($job{$p_job}{'SOURCE'}{'-path'});
 	if($source_path =~ /^Error:(.*)$/){backup_fail("Source $1");}
 }
-exit 0;
-$source_path = $job{$p_job}{'SOURCE'}{'-path'} if $job{$p_job}{'SOURCE'}{'-path'} =~ /^\//;
-`$cmd_ls $source_path 2>&1`;
-backup_fail("Backup source path not found.") if $? != 0;
-&f_output("DEBUG","Source mnt: \"$source_path\"");
+
+if($job{$p_job}{'SOURCE'}{'-type'} eq "filesystem"){
+	&f_output("DEBUG","Source integration: filesystem");
+	$source_path = $job{$p_job}{'SOURCE'}{'-path'};
+	if($source_path !~  /^\//){backup_fail("Source $1");}
+	backup_fail("Backup source path not found.") if !-d $source_path;
+}
+
+&f_output("DEBUG","Source path: \"$source_path\"");
 
 ##
 ## Get target
 ##
 my $target_integ = "";
 my $target_path = "";
-if(defined $job{$p_job}{'TARGET'}{'-omv'} && $job{$p_job}{'TARGET'}{'-omv'} ne ""){
+if($job{$p_job}{'TARGET'}{'-type'} eq "omv4"){
 	&f_output("DEBUG","Target integration: OMV");
 	require omv;
 	import omv;
 	$target_integ = "OMV ";
-	$target_path = omv_prepare_uuid($job{$p_job}{'TARGET'}{'-omv'});
+	$target_path = omv_prepare_sharedfolder($job{$p_job}{'TARGET'}{'-path'});
 	if($target_path =~ /^Error:(.*)$/){backup_fail("Target $1")}
 }
-`$cmd_ls $target_path 2>&1`;
-backup_fail("Backup target path not found.") if $? != 0;
 
+if($job{$p_job}{'TARGET'}{'-type'} eq "filesystem"){
+	&f_output("DEBUG","Target integration: filesystem");
+	$target_path = $job{$p_job}{'TARGET'}{'-path'};
+	if($target_path !~  /^\//){backup_fail("Target $1");}
+	backup_fail("Backup target path not found.") if !-d $target_path;
+}
+
+## Create job repository on in target path
 $target_path .= $slash."sbackup_".$p_job;
 if(!-d $target_path){
 	`$cmd_mkdir $target_path 2>&1`;
 	backup_fail("Backup target path creation failed.") if $? != 0;
 }
-&f_output("DEBUG","Target mnt: \"$target_path\"");
+&f_output("DEBUG","Target path: \"$target_path\"");
 
-
+exit 0;
 ##
 ## Check backup history
 ##
