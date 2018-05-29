@@ -1,0 +1,211 @@
+###########################################################################################
+#
+#                                         sbackup
+#                                      purge module
+#
+###########################################################################################
+#use diagnostics;
+use strict;
+use warnings;
+our ($p_job);
+our %job;
+our $p_days;
+
+##
+## Check parameters
+##
+if($p_job){
+	my $param_ok = 0;
+	for my $tmp_job(sort keys %job){
+		$param_ok = 1 if $job{$tmp_job}{'NAME'} eq $p_job;
+	}
+
+  if($param_ok == 0){
+  	print "Error: Job \"$p_job\" does not exists.\n\n";
+  	print "Available jobs:\n";
+  	for my $tmp(sort keys %job){
+  		print $job{$tmp}{'NAME'};
+  		print "\n";
+  	}
+  	print "\n";
+  	exit 1;
+  }
+}else{
+	print "Error: Job \"$p_job\" does not exists.\n\n";
+	print "Available jobs:\n";
+	for my $tmp(sort keys %job){
+		print $job{$tmp}{'NAME'};
+		print "\n";
+	}
+	print "\n";
+	exit 1;
+}
+
+##
+## Set variables
+##
+my $SB_TIMESTART = time();
+my $SB_TIMEEND;
+my $SB_ECODE = 0;
+
+my $runfile = $RUNFILEPATH."sbackup_".$job{$p_job}{'NAME'};
+my $sessionlogfile = $SESSIONLOGPATH.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".log";
+
+##
+## backup_fail
+##
+sub backup_fail {
+	my $msg = shift;
+	$SB_TIMEEND = time();
+	print "Error: $msg\n";
+	update_history($p_job,"status=".$msg.",end=".$SB_TIMEEND,"status==running,type==purge,start==".$SB_TIMESTART);
+	append_log($sessionlogfile,"End time: ".$SB_TIMEEND." (".epoch2human($SB_TIMEEND).")\nStatus:Error: $msg\n");
+	rm_runfile($p_job);
+	exit 1;
+}
+
+##
+## Pre-initialization
+##
+&f_output("DEBUG","Starting purge $job{$p_job}{'NAME'}");
+
+if(-f $runfile){
+	&f_output("DEBUG","Runfile found.");
+	
+	my @output = &get_runfile($p_job,'status,type,pid');
+	if($output[0] && $output[2][0]{'pid'} =~ /^\d+$/){
+		&f_output("DEBUG","Runfile pid ".$output[2][0]{'pid'});
+		`ps $output[2][0]{'pid'}`;
+		if($? == 0){
+			print "Job is already running.\n";
+			exit 1;
+		}else{
+			&f_output("DEBUG","Job is no longer running, possible crash or kill.");
+			update_history($p_job,"status=killed", "status==running");
+			rm_runfile($p_job);
+		}
+	}else{
+		&f_output("DEBUG","Runfile is faulty, removing.");
+		update_history($p_job,"status=killed", "status==running");
+		rm_runfile($p_job);
+	}
+}
+
+
+set_runfile($p_job,"type=purge,status=running,pid=".$$);
+insert_history($p_job,"type=purge,status=running,name=".$job{$p_job}{'NAME'}.",start=".$SB_TIMESTART);
+append_log($sessionlogfile,"Purge name: ".$job{$p_job}{'NAME'});
+append_log($sessionlogfile,"Start time: ".$SB_TIMESTART." (".epoch2human($SB_TIMESTART).")\n");
+
+##
+## Get target
+##
+my $target_integ = "";
+my $target_path = "";
+if($job{$p_job}{'TARGET'}{'-type'} eq "omv4"){
+	&f_output("DEBUG","Target integration: OMV4");
+	require omv4;
+	import omv4;
+	$target_integ = "OMV ";
+	$target_path = omv_prepare_sharedfolder($job{$p_job}{'TARGET'}{'-path'});
+	if($target_path =~ /^Error:(.*)$/){backup_fail("Target $1")}
+}
+
+if($job{$p_job}{'TARGET'}{'-type'} eq "filesystem"){
+	&f_output("DEBUG","Target integration: filesystem");
+	$target_path = $job{$p_job}{'TARGET'}{'-path'};
+	if($target_path !~  /^\//){backup_fail("Target $1");}
+	backup_fail("Backup target path not found.") if !-d $target_path;
+}
+
+## Create job repository on in target path
+$target_path .= $slash."sbackup_".$p_job;
+if(!-d $target_path){
+	`$cmd_mkdir $target_path 2>&1`;
+	backup_fail("Backup target path creation failed.") if $? != 0;
+}
+&f_output("DEBUG","Target path: \"$target_path\"");
+
+##
+## Check backup history
+##
+if(-f $VARPATH.'history_'.$p_job){
+	##Get backup status from history
+	&f_output("DEBUG","History log found, checking history.");
+	my $LAST_COMPLETED_STAMP = 0;
+  my @output = &get_history($p_job,'status,start,type');
+  for my $tmp(@{$output[2]}){
+  	next if $$tmp{'start'} eq $SB_TIMESTART;
+  	if($$tmp{'type'} eq "backup" && $$tmp{'start'} ne "" && $$tmp{'start'} > 100 && -d $target_path.$slash."data_".$$tmp{'start'}){
+  		$LAST_COMPLETED_STAMP = $$tmp{'start'} if $$tmp{'status'} =~ /^\d+$/ && $$tmp{'status'} == "0";
+  	}
+  }
+  &f_output("DEBUG","Last completed version: ".$LAST_COMPLETED_STAMP) if $LAST_COMPLETED_STAMP;
+  if($p_days && $p_days > -1){
+  	&f_output("DEBUG","Purge set to: ".$p_days);
+  }elsif($job{$p_job}{'SOURCE'}{'-protect'}){
+  	&f_output("DEBUG","Purge set to: ".$job{$p_job}{'SOURCE'}{'-protect'});
+  }
+  
+  ##Set admin job type protection
+  my $ADMIN_PROTECTION = 3;
+  $ADMIN_PROTECTION += $job{$p_job}{'SOURCE'}{'-protect'} if $job{$p_job}{'SOURCE'}{'-protect'} && $job{$p_job}{'SOURCE'}{'-protect'} > 0;
+  &f_output("DEBUG","Admin type job protection: $ADMIN_PROTECTION.");
+  
+  for my $tmp(@{$output[2]}){
+  	&f_output("DEBUG","Found $$tmp{'type'} version $$tmp{'start'} with status $$tmp{'status'}.");
+  	my $obsolete = 0;
+  	if($$tmp{'start'} eq $LAST_COMPLETED_STAMP){
+  		&f_output("DEBUG","Last successful backup, skipping.");
+  		next;
+  	}
+  	##Purge versions
+  	if($$tmp{'type'} eq "purge" && ($$tmp{'start'} < ($ADMIN_PROTECTION * 86400))){
+  		&f_output("DEBUG","Purge session for removal.");
+  		$obsolete = 1;
+  	}
+  	##Failed backup versions
+  	if($$tmp{'type'} eq "backup" && $$tmp{'status'} ne "0" && ($$tmp{'start'} < ($ADMIN_PROTECTION * 86400))){
+  		&f_output("DEBUG","Failed backup session for removal.");
+  		$obsolete = 1;
+  	}
+  	##Completed backup versions
+  	if($$tmp{'type'} eq "backup" && $$tmp{'status'} eq "0" && ($$tmp{'start'} < ($job{$p_job}{'SOURCE'}{'-protect'} * 86400))){
+  		&f_output("DEBUG","Failed backup session for removal.");
+  		$obsolete = 1;
+  	}
+  	##Remove version
+  	if($obsolete == 1){
+  		&f_output("DEBUG","Removing version $$tmp{'start'}.");
+  		append_log($sessionlogfile,"Removing version $$tmp{'start'}\n");
+  		if(-d $target_path.$slash."data_".$$tmp{'start'}){
+  			&f_output("DEBUG","Found data.");
+  			system("$cmd_rm \"".$target_path.$slash."data_".$$tmp{'start'}."\"");
+  		}
+  		if(-d $target_path.$slash."meta_".$$tmp{'start'}){
+  			&f_output("DEBUG","Found meta.");
+  			system("$cmd_rm \"".$target_path.$slash."meta_".$$tmp{'start'}."\"");
+  		}
+  		if(-f $SESSIONLOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".log"){
+  			&f_output("DEBUG","Found log.");
+  			system("$cmd_rm \"".$SESSIONLOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".log\"");
+  		}
+  		###########Add remove from history
+  	}
+  }
+
+}else{
+	&f_output("DEBUG","History log not found.");
+	$SB_ECODE = 'No history';
+}
+
+$SB_TIMEEND = time();
+update_history($p_job,"status=".$SB_ECODE.",end=".$SB_TIMEEND,"status==running,type==purge,start==".$SB_TIMESTART);
+append_log($sessionlogfile,"End time: ".$SB_TIMEEND." (".epoch2human($SB_TIMEEND).")\nStatus:".$SB_ECODE."\n");
+
+
+rm_runfile($p_job);
+
+&f_output("DEBUG","Purge part end.");
+
+return 1;

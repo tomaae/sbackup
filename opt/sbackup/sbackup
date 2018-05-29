@@ -151,15 +151,15 @@ my %arguments;
 #	"help_args" => "-into <directory>",
 #	"help_display" => 0,
 #);
-#%{$arguments{"days"}} = (
-#	"var" => \$sv_days,
-#	"val1" => \$p_days,
-#	"vals_mandatory" => 1,
-#	"dependency" => "purge",
-#	"help_header" => "Number of days:",
-#	"help_args" => "-days <days>",
-#	"help_display" => 0,
-#);
+%{$arguments{"days"}} = (
+	"var" => \$sv_days,
+	"val1" => \$p_days,
+	"vals_mandatory" => 1,
+	"dependency" => "purge",
+	"help_header" => "Number of days:",
+	"help_args" => "-days <days>",
+	"help_display" => 0,
+);
 
 &f_arguments(\%arguments);
 
@@ -184,16 +184,12 @@ if($sv_backup){
 #	require "modules/restore.sbm";
 #}
 
-#if($sv_purge){
-#	require "modules/purge.sbm";
-#}
-
-if($sv_job){
-	require "modules/report.sbm";
+if($sv_purge){
+	require "modules/purge.sbm";
 }
 
-if($sv_history){
-	require "modules/history.sbm";
+if($sv_job){
+	require "modules/job.sbm";
 }
 
 #if($sv_status){
@@ -208,5 +204,7 @@ if($sv_history){
 ##
 ##CODE END
 ##
+
+print "\n";
 
 exit 0;
