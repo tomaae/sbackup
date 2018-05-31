@@ -151,6 +151,8 @@ if($job{$p_job}{'TARGET'}{'-type'} eq "filesystem"){
 	backup_fail("Backup target path not found.") if !-d $target_path;
 }
 
+backup_fail("Backup source and target are identical.") if $source_path eq $target_path;
+
 ## Create job repository on in target path
 $target_path .= $slash."sbackup_".$p_job;
 if(!-d $target_path){

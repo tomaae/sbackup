@@ -64,9 +64,9 @@ if($p_job){
   }
 }
 
-if($p_type && $p_type !~ /^(backup|purge|copy|verify)$/){
+if($p_type && $p_type !~ /^(backup|purge|verify)$/){
 	print STDERR "Error: Job type \"$p_type\" is not valid.\n\n";
-  print STDERR "Valid job types: backup, purge, copy, verify\n";
+  print STDERR "Valid job types: backup, purge, verify\n";
 	exit 1;
 }
 

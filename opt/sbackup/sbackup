@@ -23,7 +23,7 @@ our %job = load_jobs_config;
 ##
 ## Parameters
 ##
-our ($DEBUGMODE, $sv_history, $sv_job, $sv_log, $sv_backup, $sv_purge, $sv_verify, $sv_copy, $sv_restore, $sv_version, $sv_days, $sv_type, $sv_path, $sv_into, $sv_background, $sv_scheduler);
+our ($DEBUGMODE, $sv_history, $sv_job, $sv_log, $sv_backup, $sv_purge, $sv_verify, $sv_restore, $sv_version, $sv_days, $sv_type, $sv_path, $sv_into, $sv_background, $sv_scheduler, $sv_api);
 our ($p_debug, $p_job, $p_version, $p_days, $p_type, $p_path, $p_into);
 $p_debug = 1;
 my %arguments;
@@ -70,15 +70,6 @@ my %arguments;
 #	"help_args" => "-verify <job name>",
 #	"help_display" => 3,
 #);
-#%{$arguments{"copy"}} = (
-#	"var" => \$sv_copy,
-#	"val1" => \$p_job,
-#	"vals_mandatory" => 1,
-#	"primary" => 1,
-#	"help_header" => "Start copy job:",
-#	"help_args" => "-copy <job name>",
-#	"help_display" => 4,
-#);
 #%{$arguments{"restore"}} = (
 #	"var" => \$sv_restore,
 #	"val1" => \$p_job,
@@ -95,7 +86,7 @@ my %arguments;
 	"val1" => \$p_job,
 	"vals_mandatory" => 0,
 	"help_header" => "Report jobs:",
-	"help_args" => "-job [ <job name> [-type (backup|purge|copy|verify)] [-version <version> [-log]] ]",
+	"help_args" => "-job [ <job name> [-type (backup|purge|verify)] [-version <version> [-log]] ]",
 	"help_display" => 10,
 );
 #%{$arguments{"history"}} = (
@@ -122,7 +113,7 @@ my %arguments;
 	"vals_mandatory" => 1,
 	"dependency" => "job",
 	"help_header" => "Job type:",
-	"help_args" => "-job <job name> -type (backup|purge|copy|verify)",
+	"help_args" => "-job <job name> -type (backup|purge|verify)",
 	"help_display" => 0,
 );
 %{$arguments{"version"}} = (
@@ -170,6 +161,14 @@ my %arguments;
 	"help_args" => "[-background]",
 	"help_display" => 0,
 );
+%{$arguments{"api"}} = (
+	"var" => \$sv_api,
+	"vals_mandatory" => 0,
+	"dependency" => "job",
+	"help_header" => "Run api",
+	"help_args" => "[-api]",
+	"help_display" => 0,
+);
 
 %{$arguments{"scheduler"}} = (
 	"var" => \$sv_scheduler,
@@ -192,10 +191,6 @@ if($sv_backup){
 
 #if($sv_verify){
 #	require "modules/verify.sbm";
-#}
-
-#if($sv_copy){
-#	require "modules/copy.sbm";
 #}
 
 #if($sv_restore){
