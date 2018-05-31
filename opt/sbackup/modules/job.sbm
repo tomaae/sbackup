@@ -80,14 +80,13 @@ for my $tmp_job(sort keys %job){
 	if(-e $RUNFILEPATH."sbackup_queuing_".$job{$tmp_job}{'NAME'}){
 		$out_status = "Queuing";
 	}
-	if(-e $RUNFILEPATH."sbackup_".$job{$tmp_job}{'NAME'}){
-		my @output = read_log($RUNFILEPATH."sbackup_".$job{$tmp_job}{'NAME'});
-		my @val = split /|/, $output[0];
-		$out_status = "backup"    if $val[0] eq "Running";
-		$out_status = "restore"   if $val[0] eq "Restoring";
-		$out_status = "purge"     if $val[0] eq "Purging";
-		$out_status = "migration" if $val[0] eq "Migrating";
-		$out_status = "copy"      if $val[0] eq "Copying";
+	my @output = &get_runfile($tmp_job,'status,type,pid');
+	if($output[0]){
+		$out_status = "Running"   if $output[2][0]{'status'} eq "running";
+#		$out_status = "Restoring" if $output[2][0]{'status'} eq "restoring";
+#		$out_status = "Purging"   if $output[2][0]{'status'} eq "purging";
+#		$out_status = "Migrating" if $output[2][0]{'status'} eq "migrating";
+#		$out_status = "Copying"   if $output[2][0]{'status'} eq "copying";
 	}
 	my $out_versions = 0;
 	my $out_lastcompleted = "N/A";

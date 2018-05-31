@@ -86,10 +86,10 @@ sub get_env{
 	
 	our $BINPATH        = "/opt/sbackup/";
 	our $MODULESPATH    = "/opt/sbackup/modules/";
-	our $ETCPATH        = "/etc/sbackup/";
-	our $JOBCONFIGPATH  = "/etc/sbackup/jobs/";
-	our $VARPATH        = "/var/log/sbackup/";
-	our $SESSIONLOGPATH = "/var/log/sbackup/sessionlogs/";
+	our $ETCPATH        = "/etc/opt/sbackup/";
+	our $JOBCONFIGPATH  = "/etc/opt/sbackup/jobs/";
+	our $VARPATH        = "/var/opt/sbackup/";
+	our $SESSIONLOGPATH = "/var/opt/sbackup/sessionlogs/";
 	our $RUNFILEPATH    = "/var/run/sbackup/";
 	
 	our $cmd_ls         = "ls -l";
