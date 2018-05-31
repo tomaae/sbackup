@@ -77,32 +77,24 @@ for my $tmp_job(sort keys %job){
 	## Parse status/last completed/versions
 	##
 	my $out_status = "N/A";
-	if(-e $RUNFILEPATH."sbackup_queuing_".$job{$tmp_job}{'NAME'}){
-		$out_status = "Queuing";
-	}
-	my @output = &get_runfile($tmp_job,'status,type,pid');
-	if($output[0]){
-		$out_status = "Running"   if $output[2][0]{'status'} eq "running";
-#		$out_status = "Restoring" if $output[2][0]{'status'} eq "restoring";
-#		$out_status = "Purging"   if $output[2][0]{'status'} eq "purging";
-#		$out_status = "Migrating" if $output[2][0]{'status'} eq "migrating";
-#		$out_status = "Copying"   if $output[2][0]{'status'} eq "copying";
-	}
 	my $out_versions = 0;
 	my $out_lastcompleted = "N/A";
-	my @tmp_history = &get_history($job{$tmp_job}{'NAME'},'status,start,name','type==backup');
-	my $last_status = "N/A";
+	my $out_type = "";
+	my @tmp_history = &get_history($job{$tmp_job}{'NAME'},'status,start,name,type');
 	for my $tmp(@{$tmp_history[2]}){
 		$out_versions++ if $$tmp{'status'} eq "0";
-		$out_lastcompleted = strftime("%a, %d %b %G %H:%M:%S", localtime($$tmp{'start'})) if $$tmp{'status'} eq "0";
-		$last_status = $$tmp{'status'};
+		$out_lastcompleted = strftime("%a, %d %b %G %H:%M:%S", localtime($$tmp{'start'})) if $$tmp{'type'} eq "backup" && $$tmp{'status'} eq "0";
+		$out_status = $$tmp{'status'};
+		$out_type = $$tmp{'type'} if $$tmp{'status'} eq "running";
 	}
-	if($out_status eq "N/A"){
-  	$out_status = $last_status;
-  	$out_status = "Error:".$out_status if $out_status ne "0" && $out_status ne "N/A";
-  	$out_status = "Completed" if $out_status eq "0";
-  }
-	
+	$out_status = "Error:".$out_status if $out_status ne "0" && $out_status ne "N/A";
+	$out_status = "Running" if $out_status eq "Error:running" && $out_type eq "backup";
+	$out_status = "Purging" if $out_status eq "Error:running" && $out_type eq "purge";
+	$out_status = "Restoring" if $out_status eq "Error:running" && $out_type eq "restore";
+	$out_status = "Migrating" if $out_status eq "Error:running" && $out_type eq "migration";
+	$out_status = "Verifying" if $out_status eq "Error:running" && $out_type eq "verify";
+  $out_status = "Completed" if $out_status eq "0";
+  
 	##
 	## Parse retention
 	##
@@ -117,19 +109,21 @@ for my $tmp_job(sort keys %job){
 	my $source_integ = "";
 	my $source_name = "N/A";
 	if($job{$tmp_job}{'SOURCE'}{'-type'} eq "omv4" && $job{$tmp_job}{'SOURCE'}{'-path'} ne ""){
-  	require omv4;
-  	import omv4;
+  	#require omv4;
+  	#import omv4;
   	$source_integ = "OMV ";
-  	$source_name = omv_name_by_uuid(omv_uuid_by_name($job{$tmp_job}{'SOURCE'}{'-path'}))
+  	$source_name = $job{$tmp_job}{'SOURCE'}{'-path'};
+  	#$source_name = omv_name_by_uuid(omv_uuid_by_name($job{$tmp_job}{'SOURCE'}{'-path'}))
 	}
 	
 	my $target_integ = "";
 	my $target_name = "N/A";
 	if($job{$tmp_job}{'TARGET'}{'-type'} eq "omv4" && $job{$tmp_job}{'TARGET'}{'-path'} ne ""){
-		require omv4;
-		import omv4;
+		#require omv4;
+		#import omv4;
 		$target_integ = "OMV ";
-		$target_name = omv_name_by_uuid(omv_uuid_by_name($job{$tmp_job}{'TARGET'}{'-path'}))
+  	$target_name = $job{$tmp_job}{'TARGET'}{'-path'};
+		#$target_name = omv_name_by_uuid(omv_uuid_by_name($job{$tmp_job}{'TARGET'}{'-path'}))
 	}
 	
 	##

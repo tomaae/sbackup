@@ -110,7 +110,6 @@ for my $key(sort keys %history){
 	$out_type = "Restore" if $tmp{'type'} eq "restore";
 	$out_type = "Purge" if $tmp{'type'} eq "purge";
 	$out_type = "Migration" if $tmp{'type'} eq "migration";
-	$out_type = "Copy" if $tmp{'type'} eq "copy";
 	$out_type = "Verify" if $tmp{'type'} eq "verify";
 	
 	##Format start/end datetime
