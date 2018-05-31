@@ -14,6 +14,8 @@
 - warning on changing backup source (same as for changing filesystem in shared folders)
 - warning on changing backup target (same as for changing filesystem in shared folders)
 [*]- settings, only one backup at once > queuing
+[] - multiple paths in source
+[] - target concurrency
 
 [*]- report checkbox
 [*]- LVM snapshot (fields: checkbox enable, allow fallback, %sizeslider:sliderfield)

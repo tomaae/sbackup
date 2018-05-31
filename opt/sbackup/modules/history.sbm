@@ -19,19 +19,19 @@ our $p_version;
 if($p_version){
 	my @tmp = &get_history($p_job,'status,name,start,end,size,perf,type','start=='.$p_version);
 	if(!$tmp[0]){
-		print "Invalid job id.\n";
+		print STDERR "Invalid job id.\n";
 		exit 1;
 	}
 }
 
 if($sv_log eq 1){
 	if(!$p_version){
-		print "Missing job id.\n";
+		print STDERR "Missing job id.\n";
 		exit 1;
 	}
 	
 	if( !-f $main::SESSIONLOGPATH.$p_job."_".$p_version.".log"){
-		print "Job log is not available.\n";
+		print STDERR "Job log is not available.\n";
 		exit 1;
 	}
 	
@@ -53,20 +53,20 @@ if($p_job){
 	}
 
   if($param_ok == 0){
-  	print "Error: Job \"$p_job\" does not exists.\n\n";
-  	print "Available jobs:\n";
+  	print STDERR "Error: Job \"$p_job\" does not exists.\n\n";
+  	print STDERR "Available jobs:\n";
   	for my $tmp(sort keys %job){
-  		print $job{$tmp}{'NAME'};
-  		print "\n";
+  		print STDERR $job{$tmp}{'NAME'};
+  		print STDERR "\n";
   	}
-  	print "\n";
+  	print STDERR "\n";
   	exit 1;
   }
 }
 
 if($p_type && $p_type !~ /^(backup|purge|copy|verify)$/){
-	print "Error: Job type \"$p_type\" is not valid.\n\n";
-  print "Valid job types: backup, purge, copy, verify\n";
+	print STDERR "Error: Job type \"$p_type\" is not valid.\n\n";
+  print STDERR "Valid job types: backup, purge, copy, verify\n";
 	exit 1;
 }
 

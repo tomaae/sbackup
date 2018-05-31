@@ -13,6 +13,7 @@ use warnings;
 BEGIN {
 	push (@INC, "/opt/sbackup/");
 }
+
 use init;
 get_env;
 use logger;
@@ -22,8 +23,8 @@ our %job = load_jobs_config;
 ##
 ## Parameters
 ##
-our ($DEBUGMODE, $sv_history, $sv_job, $sv_log, $sv_status, $sv_backup, $sv_purge, $sv_verify, $sv_copy, $sv_restore, $sv_version, $sv_days, $sv_type, $sv_tree, $sv_into);
-our ($p_debug, $p_job, $p_version, $p_days, $p_type, $p_tree, $p_into);
+our ($DEBUGMODE, $sv_history, $sv_job, $sv_log, $sv_status, $sv_backup, $sv_purge, $sv_verify, $sv_copy, $sv_restore, $sv_version, $sv_days, $sv_type, $sv_path, $sv_into, $sv_background);
+our ($p_debug, $p_job, $p_version, $p_days, $p_type, $p_path, $p_into);
 $p_debug = 1;
 my %arguments;
 %{$arguments{"debug"}} = (
@@ -84,7 +85,7 @@ my %arguments;
 #	"vals_mandatory" => 1,
 #	"primary" => 1,
 #	"help_header" => "Start restore job:",
-#	"help_args" => "-restore <job name> [-version <versionid>] [-tree <path>] [-into <path>]",
+#	"help_args" => "-restore <job name> [-version <versionid>] [-path <path>] [-into <path>]",
 #	"help_display" => 5,
 #);
 
@@ -133,13 +134,13 @@ my %arguments;
 	"help_args" => "-version <version>",
 	"help_display" => 0,
 );
-#%{$arguments{"tree"}} = (
-#	"var" => \$sv_tree,
-#	"val1" => \$p_tree,
+#%{$arguments{"path"}} = (
+#	"var" => \$sv_path,
+#	"val1" => \$p_path,
 #	"vals_mandatory" => 1,
 #	"dependency" => "restore",
-#	"help_header" => "Directory tree:",
-#	"help_args" => "-tree <directory>",
+#	"help_header" => "Directory path:",
+#	"help_args" => "-path <directory>",
 #	"help_display" => 0,
 #);
 #%{$arguments{"into"}} = (
@@ -158,6 +159,15 @@ my %arguments;
 	"dependency" => "purge",
 	"help_header" => "Number of days:",
 	"help_args" => "-days <days>",
+	"help_display" => 0,
+);
+
+%{$arguments{"background"}} = (
+	"var" => \$sv_background,
+	"vals_mandatory" => 0,
+	"dependency" => "backup;purge;restore",
+	"help_header" => "Run in background",
+	"help_args" => "[-background]",
 	"help_display" => 0,
 );
 
@@ -204,7 +214,5 @@ if($sv_job){
 ##
 ##CODE END
 ##
-
-print "\n";
 
 exit 0;

@@ -9,6 +9,7 @@ use strict;
 use warnings;
 our ($p_job);
 our %job;
+our $sv_background;
 
 ##
 ## Check parameters
@@ -20,24 +21,35 @@ if($p_job){
 	}
 
   if($param_ok == 0){
-  	print "Error: Job \"$p_job\" does not exists.\n\n";
-  	print "Available jobs:\n";
+  	print STDERR "Error: Job \"$p_job\" does not exists.\n\n";
+  	print STDERR "Available jobs:\n";
   	for my $tmp(sort keys %job){
-  		print $job{$tmp}{'NAME'};
-  		print "\n";
+  		print STDERR $job{$tmp}{'NAME'};
+  		print STDERR "\n";
   	}
-  	print "\n";
+  	print STDERR "\n";
   	exit 1;
   }
 }else{
-	print "Error: Job \"$p_job\" does not exists.\n\n";
-	print "Available jobs:\n";
+	print STDERR "Error: Job \"$p_job\" does not exists.\n\n";
+	print STDERR "Available jobs:\n";
 	for my $tmp(sort keys %job){
-		print $job{$tmp}{'NAME'};
-		print "\n";
+		print STDERR $job{$tmp}{'NAME'};
+		print STDERR "\n";
 	}
-	print "\n";
+	print STDERR "\n";
 	exit 1;
+}
+
+if(!$sv_background && !$::DEBUGMODE){
+	`echo \"/opt/sbackup/sbackup -backup $p_job -background >/dev/null\"|at now >/dev/null 2>&1`;
+	if($? == 0){
+		print "Backup started successfully.\n";
+		exit 0;
+	}else{
+		print STDERR "Backup failed to start.\n";
+		exit 1;
+	}
 }
 
 ##
@@ -55,7 +67,7 @@ my $sessionlogfile = $SESSIONLOGPATH.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".lo
 sub backup_fail {
 	my $msg = shift;
 	$SB_TIMEEND = time();
-	print "Error: $msg\n";
+	print STDERR "Error: $msg\n";
 	update_history($p_job,"status=".$msg.",end=".$SB_TIMEEND,"status==running,type==backup,start==".$SB_TIMESTART);
 	append_log($sessionlogfile,"End time: ".$SB_TIMEEND." (".epoch2human($SB_TIMEEND).")\nStatus:Error: $msg\n");
 	rm_runfile($p_job);
@@ -234,6 +246,7 @@ $SB_TIMEEND = time();
 $SB_ECODE = "-1" if $SB_ECODE eq "";
 update_history($p_job,"status=".$SB_ECODE.",end=".$SB_TIMEEND.",size=".$RSSIZE.",perf=".$RSPERF,"status==running,type==backup,start==".$SB_TIMESTART);
 append_log($sessionlogfile,"End time: ".$SB_TIMEEND." (".epoch2human($SB_TIMEEND).")\nStatus:".$SB_ECODE."\n");
+append_log($sessionlogfile,"Backup completed successfully.") if $SB_ECODE eq "0";
 
 
 if($SB_ECODE eq "0"){
@@ -258,26 +271,28 @@ rm_runfile($p_job);
 if($SB_ECODE == "0"){
 	append_log($sessionlogfile,"Starting post-purge");
 	&f_output("DEBUG","Starting post-purge.");
-	system("/opt/sbackup/sbackup -purge ".$p_job);
+	system("/opt/sbackup/sbackup -purge ".$p_job." >/dev/null");
 	if($? != 0){
-		append_log($sessionlogfile,"Post-purge failed");
-		&f_output("DEBUG","Post-purge failed.");
+		print STDERR "Post-purge failed to start.\n";
+		append_log($sessionlogfile,"Post-purge failed to start.");
+		&f_output("DEBUG","Post-purge failed to start.");
 	}else{
-		append_log($sessionlogfile,"Post-purge completed");
-		&f_output("DEBUG","Post-purge completed.");
+		append_log($sessionlogfile,"Post-purge started successfully.");
+		&f_output("DEBUG","Post-purge started successfully.");
 	}
 }
 
 if($SB_ECODE == "0" && $job{$p_job}{'POST'}{'-job'}{'-name'} ne ""){
 	append_log($sessionlogfile,"Starting post-job ".$job{$p_job}{'POST'}{'-job'}{'-name'});
 	&f_output("DEBUG","Starting ".$job{$p_job}{'POST'}{'-job'}{'-type'}." post-job ".$job{$p_job}{'POST'}{'-job'}{'-name'});
-	system("/opt/sbackup/sbackup -".$job{$p_job}{'POST'}{'-job'}{'-type'}." ".$job{$p_job}{'POST'}{'-job'}{'-name'});
+	system("/opt/sbackup/sbackup -".$job{$p_job}{'POST'}{'-job'}{'-type'}." ".$job{$p_job}{'POST'}{'-job'}{'-name'}." >/dev/null");
 	if($? != 0){
-		append_log($sessionlogfile,"Post-job failed.");
-		&f_output("DEBUG","Post-job failed.");
+		print STDERR "Post-job failed to start.\n";
+		append_log($sessionlogfile,"Post-job failed to start.");
+		&f_output("DEBUG","Post-job failed to start.");
 	}else{
-		append_log($sessionlogfile,"Post-job completed.");
-		&f_output("DEBUG","Post-job completed.");
+		append_log($sessionlogfile,"Post-job started successfully.");
+		&f_output("DEBUG","Post-job started successfully.");
 	}
 }
 

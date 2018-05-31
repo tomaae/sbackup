@@ -10,6 +10,7 @@ use warnings;
 our ($p_job);
 our %job;
 our $p_days;
+our $sv_background;
 
 ##
 ## Check parameters
@@ -39,6 +40,17 @@ if($p_job){
 	}
 	print "\n";
 	exit 1;
+}
+
+if(!$sv_background && !$::DEBUGMODE){
+	`echo \"/opt/sbackup/sbackup -purge $p_job -background >/dev/null\"|at now >/dev/null 2>&1`;
+	if($? == 0){
+		print "Backup started successfully.\n";
+		exit 0;
+	}else{
+		print STDERR "Backup failed to start.\n";
+		exit 1;
+	}
 }
 
 ##
@@ -202,6 +214,7 @@ if(-f $VARPATH.'history_'.$p_job){
 $SB_TIMEEND = time();
 update_history($p_job,"status=".$SB_ECODE.",end=".$SB_TIMEEND,"status==running,type==purge,start==".$SB_TIMESTART);
 append_log($sessionlogfile,"End time: ".$SB_TIMEEND." (".epoch2human($SB_TIMEEND).")\nStatus:".$SB_ECODE."\n");
+append_log($sessionlogfile,"Purge completed successfully.") if $SB_ECODE eq "0";
 
 
 rm_runfile($p_job);
