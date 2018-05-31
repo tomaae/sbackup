@@ -45,7 +45,7 @@ if($p_job){
 if(!$sv_background && !$::DEBUGMODE){
 	my $tmp = "";
 	$tmp = "-days $p_days" if defined($p_days) && ($p_days eq "0" || $p_days > 0);
-	`echo \"${BINPATH}/sbackup -purge $p_job $tmp -background >/dev/null\"|at now >/dev/null 2>&1`;
+	system('echo "'.$BINPATH.'/sbackup -purge '.$p_job.' '.$tmp.' -background >/dev/null"|at now >/dev/null 2>&1');
 	if($? == 0){
 		print "Backup started successfully.\n";
 		exit 0;
@@ -89,7 +89,7 @@ if(-f $runfile){
 	my @output = &get_runfile($p_job,'status,type,pid');
 	if($output[0] && $output[2][0]{'pid'} =~ /^\d+$/){
 		&f_output("DEBUG","Runfile pid ".$output[2][0]{'pid'});
-		`ps $output[2][0]{'pid'}`;
+		system('ps '.$output[2][0]{'pid'});
 		if($? == 0){
 			print "Job is already running.\n";
 			exit 1;
@@ -135,7 +135,7 @@ if($job{$p_job}{'TARGET'}{'-type'} eq "filesystem"){
 ## Create job repository on in target path
 $target_path .= $slash."sbackup_".$p_job;
 if(!-d $target_path){
-	`$cmd_mkdir $target_path 2>&1`;
+	system($cmd_mkdir.' '.$target_path.' 2>&1');
 	backup_fail("Backup target path creation failed.") if $? != 0;
 }
 &f_output("DEBUG","Target path: \"$target_path\"");

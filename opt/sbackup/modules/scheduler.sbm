@@ -44,7 +44,7 @@ for my $tmp_job(sort keys %job){
 	}
 	if($job{$tmp_job}{'SCHEDULE'}{'-time'} eq $curr_time){
 		&f_output("DEBUG","Starting job.");
-  	`echo \"/opt/sbackup/sbackup -backup $tmp_job -background >/dev/null\"|at now >/dev/null 2>&1`;
+		system('echo "'.$BINPATH.'/sbackup -backup '.$tmp_job.' -background >/dev/null"|at now >/dev/null 2>&1');
   	if($? == 0){
   		print "Backup started successfully.\n";
   		exit 0;
