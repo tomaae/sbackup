@@ -25,7 +25,7 @@ my %job_definition = ( ##Default value, Mandatory, Type, Range of type
   },
   'SOURCE' => {
   	'-type' => ["",1,"list","filesystem|omv4"],
-  	#'-host' => ["",0,"",""],
+  	'-host' => ["",0,"",""],
   	'-path' => ["",1,"",""],
   	'-protect' => ["",0,"number",""],
   	'-snapshot' => {
@@ -37,8 +37,13 @@ my %job_definition = ( ##Default value, Mandatory, Type, Range of type
   },
   'TARGET' => {
   	'-type' => ["",1,"list","filesystem|omv4"],
-  	#'-host' => ["",0,"",""],
+  	'-host' => ["",0,"",""],
   	'-path' => ["",1,"",""],
+  },
+  'COPY' => {
+  	'-type' => ["",0,"list","filesystem|omv4"],
+  	'-host' => ["",0,"",""],
+  	'-path' => ["",0,"",""],
   },
   'POST' => {
   	'-job' => {

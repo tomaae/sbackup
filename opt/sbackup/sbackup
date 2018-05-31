@@ -23,7 +23,7 @@ our %job = load_jobs_config;
 ##
 ## Parameters
 ##
-our ($DEBUGMODE, $sv_history, $sv_job, $sv_log, $sv_backup, $sv_purge, $sv_verify, $sv_restore, $sv_version, $sv_days, $sv_type, $sv_path, $sv_into, $sv_background, $sv_scheduler, $sv_api);
+our ($DEBUGMODE, $sv_history, $sv_job, $sv_log, $sv_backup, $sv_purge, $sv_verify, $sv_restore, $sv_copy, $sv_version, $sv_days, $sv_type, $sv_path, $sv_into, $sv_background, $sv_scheduler, $sv_api);
 our ($p_debug, $p_job, $p_version, $p_days, $p_type, $p_path, $p_into);
 $p_debug = 1;
 my %arguments;
@@ -69,6 +69,15 @@ my %arguments;
 #	"help_header" => "Start verify job:",
 #	"help_args" => "-verify <job name>",
 #	"help_display" => 3,
+#);
+#%{$arguments{"copy"}} = (
+#	"var" => \$sv_copy,
+#	"val1" => \$p_job,
+#	"vals_mandatory" => 1,
+#	"primary" => 1,
+#	"help_header" => "Start copy job:",
+#	"help_args" => "-copy <job name>",
+#	"help_display" => 4,
 #);
 #%{$arguments{"restore"}} = (
 #	"var" => \$sv_restore,
@@ -195,6 +204,10 @@ if($sv_backup){
 
 #if($sv_restore){
 #	require "modules/restore.sbm";
+#}
+
+#if($sv_copy){
+#	require "modules/copy.sbm";
 #}
 
 if($sv_purge){

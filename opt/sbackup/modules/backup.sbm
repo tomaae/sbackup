@@ -291,30 +291,56 @@ for(read_log($sessionlogfile)){
 
 $SB_TIMEEND = time();
 $SB_ECODE = "-1" if $SB_ECODE eq "";
-update_history($p_job,"status=".$SB_ECODE.",end=".$SB_TIMEEND.",size=".$RSSIZE.",perf=".$RSPERF,"status==running,type==backup,start==".$SB_TIMESTART);
-append_log($sessionlogfile,"End time: ".$SB_TIMEEND." (".epoch2human($SB_TIMEEND).")\nStatus:".$SB_ECODE."\n");
-append_log($sessionlogfile,"Backup completed successfully.") if $SB_ECODE eq "0";
-
 
 if($SB_ECODE eq "0"){
 	append_log($sessionlogfile,"Writing meta data");
+	my $meta_ecode = 0;
+	
 	##Create meta directory
 	system("$cmd_mkdir ".$target_path.$slash."meta_".$SB_TIMESTART.$slash);
+	$meta_ecode = $? if $? ne "0";
   system("$cmd_chmod 777 ".$target_path.$slash."meta_".$SB_TIMESTART.$slash) if ($? != 0);
+  $meta_ecode = $? if $? ne "0";
 
   ##Copy meta
   system("$cmd_cp \"".$VARPATH.'history_'.$p_job."\"   \"".$target_path.$slash."meta_".$SB_TIMESTART.$slash."\"");
+  $meta_ecode = $? if $? ne "0";
   system("$cmd_cp \"".$sessionlogfile."\"              \"".$target_path.$slash."meta_".$SB_TIMESTART.$slash."\"");
+  $meta_ecode = $? if $? ne "0";
   system("$cmd_cp \"".$JOBCONFIGPATH.$slash.$p_job."\" \"".$target_path.$slash."meta_".$SB_TIMESTART.$slash."\"");
+  $meta_ecode = $? if $? ne "0";
   
 	##Link latest backup
   system("$cmd_rm \"".$target_path.$slash."data_latest\"") if -l $target_path.$slash."data_latest" || -f $target_path.$slash."data_latest";
+  $meta_ecode = $? if $? ne "0";
   system("cd \"$target_path\" && $cmd_ln \"data_".$SB_TIMESTART."\" \"data_latest\"");
+  $meta_ecode = $? if $? ne "0";
   system("$cmd_rm \"".$target_path.$slash."meta_latest\"") if -l $target_path.$slash."meta_latest" || -f $target_path.$slash."meta_latest";
+  $meta_ecode = $? if $? ne "0";
   system("cd \"$target_path\" && $cmd_ln \"meta_".$SB_TIMESTART."\" \"meta_latest\"");
+  $meta_ecode = $? if $? ne "0";
+  if($meta_ecode eq "0"){
+  	append_log($sessionlogfile,"Meta data saved successfully.");
+  }else{
+  	backup_fail("Failed to save meta data.");
+  }
 }
 
+if($job{$p_job}{'TARGET'}{'-host'} ne "" && ($job{$p_job}{'TARGET'}{'-type'} eq "filesystem" || $job{$p_job}{'TARGET'}{'-type'} eq "omv4")){
+  append_log($sessionlogfile,"Flushing write cache.");
+  system("sync -f \"$target_path\"");
+  if($? == 0){
+  	append_log($sessionlogfile,"Write cache successfully flushed.");
+  }else{
+  	backup_fail("Failed to flush write cache.");
+  }
+}
+
+append_log($sessionlogfile,"End time: ".$SB_TIMEEND." (".epoch2human($SB_TIMEEND).")\nStatus:".$SB_ECODE."\n");
+append_log($sessionlogfile,"Backup completed successfully.") if $SB_ECODE eq "0";
+update_history($p_job,"status=".$SB_ECODE.",end=".$SB_TIMEEND.",size=".$RSSIZE.",perf=".$RSPERF,"status==running,type==backup,start==".$SB_TIMESTART);
 rm_runfile($p_job);
+
 if($SB_ECODE == "0"){
 	append_log($sessionlogfile,"Starting post-purge");
 	&f_output("DEBUG","Starting post-purge.");

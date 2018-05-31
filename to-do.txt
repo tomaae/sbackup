@@ -1,3 +1,4 @@
+rclone for sync to cloud
 ==HISTORY========================================================
 []- option to remove version in backup history (create lockfile, delete data_uuid,release lockfile), run with "at now"
 []- start restore from backup history
