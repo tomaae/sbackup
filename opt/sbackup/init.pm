@@ -91,7 +91,7 @@ sub get_env{
 	our $VARPATH        = "/var/log/sbackup/";
 	our $SESSIONLOGPATH = "/var/log/sbackup/sessionlogs/";
 	our $RUNFILEPATH    = "/var/run/sbackup/";
-
+	
 	our $cmd_ls         = "ls -l";
 	our $cmd_ln         = "ln -s";
 	our $cmd_rm         = "rm -r";
@@ -101,6 +101,8 @@ sub get_env{
 	our $cmd_mkdir      = "mkdir -p";
 	our $cmd_chmod      = "chmod";
 	our $cmd_rsync      = "rsync";
+	
+	my $CRONFILE        = "/etc/cron.d/sbackup";
 	
 	if(!-d $JOBCONFIGPATH){
 		system("$cmd_mkdir $JOBCONFIGPATH");
@@ -125,6 +127,19 @@ sub get_env{
 			exit 1;
 		}
 	}
+	
+	if(!-f $CRONFILE){
+		if(!$main::SIMULATEMODE){
+    	open log_file,">>$CRONFILE" or die "Error: Insufficient access rights\n";
+    	flock log_file,2;
+    	truncate log_file,0;
+    	print log_file '# '.$CRONFILE.': crontab entries for sbackup'."\n\n";
+    	print log_file '0,15,30,45 * * * * root '.$BINPATH.'/sbackup -scheduler >/dev/null'."\n";
+    	flock log_file,8;
+    	close log_file;
+  	}
+  }
+
 }
 
 ##

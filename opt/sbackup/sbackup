@@ -23,7 +23,7 @@ our %job = load_jobs_config;
 ##
 ## Parameters
 ##
-our ($DEBUGMODE, $sv_history, $sv_job, $sv_log, $sv_backup, $sv_purge, $sv_verify, $sv_copy, $sv_restore, $sv_version, $sv_days, $sv_type, $sv_path, $sv_into, $sv_background);
+our ($DEBUGMODE, $sv_history, $sv_job, $sv_log, $sv_backup, $sv_purge, $sv_verify, $sv_copy, $sv_restore, $sv_version, $sv_days, $sv_type, $sv_path, $sv_into, $sv_background, $sv_scheduler);
 our ($p_debug, $p_job, $p_version, $p_days, $p_type, $p_path, $p_into);
 $p_debug = 1;
 my %arguments;

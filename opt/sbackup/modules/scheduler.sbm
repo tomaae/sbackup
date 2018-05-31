@@ -1,0 +1,64 @@
+###########################################################################################
+#
+#                                         sbackup
+#                                     scheduler module
+#
+###########################################################################################
+use strict;
+use warnings;
+our %job;
+use POSIX qw(strftime ceil);
+
+&f_output("DEBUG","Scheduler part start.");
+##
+## Set variables
+##
+my $SB_TIMESTART = time();
+my $curr_wday = strftime("%a", localtime($SB_TIMESTART));
+my $curr_time = strftime("%H:%M", localtime($SB_TIMESTART));
+&f_output("DEBUG","Scheduler wday $curr_wday, time $curr_time.");
+
+for my $tmp_job(sort keys %job){
+	&f_output("DEBUG","Checking schedule for $tmp_job.");
+	
+	if($job{$tmp_job}{'ENABLED'} == 0){
+		&f_output("DEBUG","Job is disabled, skipping.");
+		next;
+	}
+	
+	if($job{$tmp_job}{'SCHEDULE'}{'-enabled'} ne "1"){
+		&f_output("DEBUG","Job schedule is disabled, skipping.");
+		next;
+	}
+	
+	if($job{$tmp_job}{'SCHEDULE'}{'-day'} ne ""){
+		my @tmp_schedules = split /,| /, $job{$tmp_job}{'SCHEDULE'}{'-day'};
+		my $scheduled = 0;
+		for my $tmp(@tmp_schedules){
+			$scheduled = 1 if $tmp eq $curr_wday;
+		}
+		if($scheduled == 0){
+			&f_output("DEBUG","Job is not scheduled for today, skipping.");
+			next;
+		}
+	}
+	if($job{$tmp_job}{'SCHEDULE'}{'-time'} eq $curr_time){
+		&f_output("DEBUG","Starting job.");
+  	`echo \"/opt/sbackup/sbackup -backup $tmp_job -background >/dev/null\"|at now >/dev/null 2>&1`;
+  	if($? == 0){
+  		print "Backup started successfully.\n";
+  		exit 0;
+  	}else{
+  		print STDERR "Backup failed to start.\n";
+  		exit 1;
+  	}
+	}else{
+		&f_output("DEBUG","Job is not scheduled for this time, skipping.");
+	}
+	
+	
+}
+
+&f_output("DEBUG","Scheduler part end.");
+
+return 1;
