@@ -23,7 +23,7 @@ our %job = load_jobs_config;
 ##
 ## Parameters
 ##
-our ($DEBUGMODE, $sv_history, $sv_job, $sv_log, $sv_status, $sv_backup, $sv_purge, $sv_verify, $sv_copy, $sv_restore, $sv_version, $sv_days, $sv_type, $sv_path, $sv_into, $sv_background);
+our ($DEBUGMODE, $sv_history, $sv_job, $sv_log, $sv_backup, $sv_purge, $sv_verify, $sv_copy, $sv_restore, $sv_version, $sv_days, $sv_type, $sv_path, $sv_into, $sv_background);
 our ($p_debug, $p_job, $p_version, $p_days, $p_type, $p_path, $p_into);
 $p_debug = 1;
 my %arguments;
@@ -58,7 +58,7 @@ my %arguments;
 	"vals_mandatory" => 1,
 	"primary" => 1,
 	"help_header" => "Start purge job:",
-	"help_args" => "-purge <job name> [-days <n>] [-version <versionid>]",
+	"help_args" => "-purge <job name> [-days <n>]",# [-version <versionid>]",
 	"help_display" => 2,
 );
 #%{$arguments{"verify"}} = (
@@ -171,6 +171,14 @@ my %arguments;
 	"help_display" => 0,
 );
 
+%{$arguments{"scheduler"}} = (
+	"var" => \$sv_scheduler,
+	"vals_mandatory" => 0,
+	"help_header" => "Run scheduler",
+	"help_args" => "[-scheduler]",
+	"help_display" => 0,
+);
+
 &f_arguments(\%arguments);
 
 
@@ -202,14 +210,9 @@ if($sv_job){
 	require "modules/job.sbm";
 }
 
-#if($sv_status){
-#	require "modules/running.sbm";
-#}
-
-#if($sv_log){
-#	require "modules/sessionlog.sbm";
-#}
-
+if($sv_scheduler){
+	require "modules/scheduler.sbm";
+}
 
 ##
 ##CODE END

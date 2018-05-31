@@ -301,7 +301,7 @@ sub f_arguments {
   		  				
   		##Get argument values
   		my $vals_no = 0;
-  		while($ARGV[0] && $ARGV[0] !~ /^-/){
+  		while(defined $ARGV[0] && ($ARGV[0] || $ARGV[0] eq "0") && $ARGV[0] !~ /^-/){
   			##Argument does not support values
   			if(!defined ${$arguments}{$arg_s}{val1}){
   				print "\nSyntax error.\nArgument \"$arg\" does not support values.\n\n";

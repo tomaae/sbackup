@@ -15,7 +15,7 @@ use init;
 use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(append_log write_log read_log
-								get_history insert_history update_history 
+								get_history insert_history update_history delete_history
 								get_runfile set_runfile rm_runfile);
 
 ##
@@ -182,6 +182,51 @@ sub update_history{
    				}
    			}
    			print log_file join("|",@{$tmp1}),"\n";
+    	}
+    	flock log_file,8;
+      close log_file;
+  	}
+  	$returncodes[0] = 1;
+	}
+	return @returncodes;
+}
+
+sub delete_history{
+	my ($p_job,$where)=@_;
+	my %columns;
+	my @cache;
+	my $tmp;
+	my $tmp2;
+	my $line;
+	my $delete_value;
+	my @val;
+	my @returncodes;
+	
+	if( !-f $main::VARPATH.'history_'.$p_job){
+		print "Error: History file for $p_job does not exists.\n";
+		return;
+	}
+	
+	if($p_job && $where){
+		&f_output("DEBUG","History delete $p_job, $where");
+		my @where_request  = parse_where('history',$where);
+  	
+  	if(!$main::SIMULATEMODE){
+    	open log_file,"+<".$main::VARPATH.'history_'.$p_job;
+    	flock log_file,2;
+    	while($line = <log_file>){
+      	chomp($line);
+      	@val = split '\|',$line;
+      	push @cache,[@val];
+    	}
+    	seek log_file,0,0;
+    	truncate log_file,0;
+    	for my $tmp1(@cache){
+    		$delete_value = 0;
+   			for $tmp2(@where_request){
+   				$delete_value = 1 if $$tmp1[$$tmp2{'key'}] eq $$tmp2{'value'};
+   			}
+   			print log_file join("|",@{$tmp1}),"\n" if !$delete_value;
     	}
     	flock log_file,8;
       close log_file;

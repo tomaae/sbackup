@@ -43,7 +43,9 @@ if($p_job){
 }
 
 if(!$sv_background && !$::DEBUGMODE){
-	`echo \"/opt/sbackup/sbackup -purge $p_job -background >/dev/null\"|at now >/dev/null 2>&1`;
+	my $tmp = "";
+	$tmp = "-days $p_days" if defined($p_days) && ($p_days eq "0" || $p_days > 0);
+	`echo \"/opt/sbackup/sbackup -purge $p_job $tmp -background >/dev/null\"|at now >/dev/null 2>&1`;
 	if($? == 0){
 		print "Backup started successfully.\n";
 		exit 0;
@@ -153,8 +155,9 @@ if(-f $VARPATH.'history_'.$p_job){
   	}
   }
   &f_output("DEBUG","Last completed version: ".$LAST_COMPLETED_STAMP) if $LAST_COMPLETED_STAMP;
-  if($p_days && $p_days > -1){
+  if(defined $p_days && ($p_days eq "0" || $p_days > 0)){
   	&f_output("DEBUG","Purge set to: ".$p_days);
+  	$job{$p_job}{'SOURCE'}{'-protect'} = $p_days;
   }elsif($job{$p_job}{'SOURCE'}{'-protect'}){
   	&f_output("DEBUG","Purge set to: ".$job{$p_job}{'SOURCE'}{'-protect'});
   }
@@ -171,6 +174,10 @@ if(-f $VARPATH.'history_'.$p_job){
   		&f_output("DEBUG","Last successful backup, skipping.");
   		next;
   	}
+  	if($$tmp{'start'} > $LAST_COMPLETED_STAMP){
+  		&f_output("DEBUG","Newer then last successful backup, skipping.");
+  		next;
+  	}
   	##Purge versions
   	if($$tmp{'type'} eq "purge" && ($$tmp{'start'} < ($ADMIN_PROTECTION * 86400))){
   		&f_output("DEBUG","Purge session for removal.");
@@ -183,9 +190,16 @@ if(-f $VARPATH.'history_'.$p_job){
   	}
   	##Completed backup versions
   	if($$tmp{'type'} eq "backup" && $$tmp{'status'} eq "0" && ($$tmp{'start'} < ($job{$p_job}{'SOURCE'}{'-protect'} * 86400))){
-  		&f_output("DEBUG","Failed backup session for removal.");
+  		&f_output("DEBUG","Obsolete backup session for removal.");
   		$obsolete = 1;
   	}
+  	
+  	##Completed backup versions with 0 protection (keep last version)
+  	if($$tmp{'type'} eq "backup" && $job{$p_job}{'SOURCE'}{'-protect'} eq "0" && $$tmp{'start'} < $LAST_COMPLETED_STAMP){
+  		&f_output("DEBUG","Obsolete backup session for removal.");
+  		$obsolete = 1;
+  	}
+  	
   	##Remove version
   	if($obsolete == 1){
   		&f_output("DEBUG","Removing version $$tmp{'start'}.");
@@ -203,6 +217,7 @@ if(-f $VARPATH.'history_'.$p_job){
   			system("$cmd_rm \"".$SESSIONLOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".log\"");
   		}
   		###########Add remove from history
+  		delete_history($p_job,"start==".$$tmp{'start'});
   	}
   }
 
