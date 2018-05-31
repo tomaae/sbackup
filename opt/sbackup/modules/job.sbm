@@ -80,12 +80,13 @@ for my $tmp_job(sort keys %job){
 	my $out_versions = 0;
 	my $out_lastcompleted = "N/A";
 	my $out_type = "";
-	my @tmp_history = &get_history($job{$tmp_job}{'NAME'},'status,start,name,type');
+	my @tmp_history = &get_history($job{$tmp_job}{'NAME'},'status,start,name,type,perf');
 	for my $tmp(@{$tmp_history[2]}){
-		$out_versions++ if $$tmp{'status'} eq "0";
+		$out_versions++ if $$tmp{'type'} eq "backup" && $$tmp{'status'} eq "0";
 		$out_lastcompleted = strftime("%a, %d %b %G %H:%M:%S", localtime($$tmp{'start'})) if $$tmp{'type'} eq "backup" && $$tmp{'status'} eq "0";
 		$out_status = $$tmp{'status'};
 		$out_type = $$tmp{'type'} if $$tmp{'status'} eq "running";
+		$out_lastcompleted =  $$tmp{'perf'} if $$tmp{'status'} eq "running" && $$tmp{'perf'} =~ /%$/;
 	}
 	$out_status = "Error:".$out_status if $out_status ne "0" && $out_status ne "N/A";
 	$out_status = "Running" if $out_status eq "Error:running" && $out_type eq "backup";

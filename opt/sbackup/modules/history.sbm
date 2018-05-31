@@ -129,11 +129,13 @@ for my $key(sort keys %history){
 			$out_size = ceil($tmp{'size'} / 1024 / 1024 / 1024)." GiB" if $tmp{'size'} > (9 * 1024 * 1024 * 1024);
 		}
 		
-		if($tmp{'perf'} ne "" && $tmp{'perf'} >= 0){
+		if($tmp{'perf'} ne "" && $tmp{'perf'} !~ /%$/ && $tmp{'perf'} >= 0){
 			$out_perf = $tmp{'perf'}." B";
 			$out_perf = ceil($tmp{'perf'} / 1024)." K/s" if $tmp{'perf'} > (100 * 1024);
 			$out_perf = ceil($tmp{'perf'} / 1024 / 1024)." M/s" if $tmp{'perf'} > (9 * 1024 * 1024);
 			$out_perf = ceil($tmp{'perf'} / 1024 / 1024 / 1024)." G/s" if $tmp{'perf'} > (9 * 1024 * 1024 * 1024);
+		}elsif($tmp{'perf'} =~ /%$/){
+			$out_perf = $tmp{'perf'};
 		}
 	}
 	

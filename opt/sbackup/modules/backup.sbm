@@ -223,24 +223,69 @@ if(!$main::SIMULATEMODE){
 ##
 ## Run backup
 ##
-my $SB_ECODE = "";
 system("$cmd_sleep 1") if !$main::SIMULATEMODE;
-&f_output("DEBUG","Starting backup.");
-my $cmd = " --verbose --stats -aEAX --delete ".$INCR." \"".$source_path.$slash."\" \"".$target_path.$slash."data_".$SB_TIMESTART.$slash."\"";
-&f_output("DEBUG3","Execute: \"$cmd_rsync $cmd\"");
-system("$cmd_rsync $cmd >> $sessionlogfile") if !$main::SIMULATEMODE;
-$SB_ECODE=$? if !$main::SIMULATEMODE;
-
-##Check backup status
+my $SB_ECODE = "";
 my $RSSIZE = "";
 my $RSPERF = "";
+my $total_files      = 0;
+my $copied_files     = 0;
+my $progress_percent = 0;
+my $progress_percent_old = 0;
+&f_output("DEBUG","Getting change list for backup.");
+my $cmd_param = " --stats -aEAXvi --out-format='%i|%n' --delete ".$INCR." \"".$source_path.$slash."\" \"".$target_path.$slash."data_".$SB_TIMESTART.$slash."\"";
+
+if(!$main::SIMULATEMODE){
+  open(my $cmd_out,"-|","$cmd_rsync --dry-run $cmd_param 2>&1") || die "Failed: $!\n";
+  while (my $line = <$cmd_out>){
+  	$total_files++ if $line =~ /^\>f\+/;
+  	if($line =~ /^Total file size: ([0-9,\.]+) bytes/){
+			$RSSIZE = $1;
+			$RSSIZE =~ s/,//g;
+		}
+  }
+  close($cmd_out);
+  update_history($p_job,"size=".$RSSIZE.",perf=0%","status==running,type==backup,start==".$SB_TIMESTART);
+}
+$total_files = 1 if $total_files == 0; ## Never divide by 0;
+
+&f_output("DEBUG","Starting backup.");
+&f_output("DEBUG3","Execute: \"$cmd_rsync $cmd_param\"");
+if(!$main::SIMULATEMODE){
+	my @val;
+  open(my $cmd_out,"-|","$cmd_rsync $cmd_param 2>&1") || die "Failed: $!\n";
+  while (my $line = <$cmd_out>){
+  	chomp($line);
+  	if($line =~ /^\>f\+/){
+  		@val = split(/\|/,$line);
+  		$copied_files++;
+  		$copied_files = $total_files - 1 if $copied_files >= $total_files; ## Should not display 100%
+  		$progress_percent = ($copied_files/$total_files)*100;
+  		$progress_percent =~ /(\d+)\.?\d?\d?/;
+  		$progress_percent = $1;
+  		append_log($sessionlogfile,'+'.$val[1]);
+  		update_history($p_job,"perf=".$progress_percent."%","status==running,type==backup,start==".$SB_TIMESTART) if $progress_percent ne $progress_percent_old;
+  		$progress_percent_old = $progress_percent;
+  	}else{
+  		if($line =~ /^\*deleting/){
+  			append_log($sessionlogfile,'-'.$val[1]);
+  		}
+  		append_log($sessionlogfile,$line) if $line !~ /\|/;
+  	}
+  }
+  close($cmd_out);
+  $SB_ECODE=$?;
+}
+
+##Check backup status
 for(read_log($sessionlogfile)){
 	chomp;
-	if(/^Total file size: (\d+) bytes/){
+	if(/^Total file size: ([0-9,\.]+) bytes/){
 		$RSSIZE = $1;
+		$RSSIZE =~ s/,//g;
 	}
-	if(/ (\d+).00 bytes\/sec$/){
+	if(/ ([0-9,]+).\d\d bytes\/sec$/){
 		$RSPERF = $1;
+		$RSPERF =~ s/,//g;
 	}
 }
 
