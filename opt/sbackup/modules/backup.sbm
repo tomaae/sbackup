@@ -103,7 +103,7 @@ if(-f $runfile){
 
 
 set_runfile($p_job,"type=backup,status=running,pid=".$$);
-insert_history($p_job,"type=backup,status=running,name=".$job{$p_job}{'NAME'}.",start=".$SB_TIMESTART);
+insert_history($p_job,"type=backup,status=running,name=".$job{$p_job}{'NAME'}.",start=".$SB_TIMESTART.",perf=(Starting) 0%");
 append_log($sessionlogfile,"Backup name: ".$job{$p_job}{'NAME'});
 append_log($sessionlogfile,"Start time: ".$SB_TIMESTART." (".epoch2human($SB_TIMESTART).")\n");
 
@@ -294,6 +294,7 @@ $SB_ECODE = "-1" if $SB_ECODE eq "";
 
 if($SB_ECODE eq "0"){
 	append_log($sessionlogfile,"Writing meta data");
+	update_history($p_job,"perf=(Meta) 100%","status==running,type==backup,start==".$SB_TIMESTART);
 	my $meta_ecode = 0;
 	
 	##Create meta directory
@@ -326,7 +327,8 @@ if($SB_ECODE eq "0"){
   }
 }
 
-if($job{$p_job}{'TARGET'}{'-host'} ne "" && ($job{$p_job}{'TARGET'}{'-type'} eq "filesystem" || $job{$p_job}{'TARGET'}{'-type'} eq "omv4")){
+if($job{$p_job}{'TARGET'}{'-host'} eq "" && ($job{$p_job}{'TARGET'}{'-type'} eq "filesystem" || $job{$p_job}{'TARGET'}{'-type'} eq "omv4")){
+	update_history($p_job,"perf=(Flushing) 100%","status==running,type==backup,start==".$SB_TIMESTART);
   append_log($sessionlogfile,"Flushing write cache.");
   system("sync -f \"$target_path\"");
   if($? == 0){
