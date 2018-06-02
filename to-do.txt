@@ -1,14 +1,15 @@
-rclone for sync to cloud
+==SCHEDULE========================================================
+[] -automatic
+- types [daily|biweekly|weekly]
+- after midninght, scheduler checks if backup did not run in last x days.
+- automatic copy, after all backups are done
+- only one backup at time per TARGET
 ==HISTORY========================================================
 []- option to remove version in backup history (create lockfile, delete data_uuid,release lockfile), run with "at now"
 []- start restore from backup history
-=================================================================
 
 ==BKPLIST========================================================
 - import backup. (save backup configuration within backup_uuid folder), select share point, search subdirectories for configs, show only those which have correct config and are not imported already
-
-[]- ?running job status
-=================================================================
 
 ==BACKUP=========================================================
 [*]- restart failed jobs
@@ -40,6 +41,8 @@ rclone for sync to cloud
 =================================================================
 
 ==COPY===========================================================
+[] rclone for sync to cloud
+
 -fields:
 backup_uuid
 target_type (shared folder, rsync server, ssh) < (rsync: user, pwd, ip), (ssh: user, ip)
