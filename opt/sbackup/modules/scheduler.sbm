@@ -134,12 +134,12 @@ for my $tmp_job(sort keys %job){
   }
   
   if($job{$tmp_job}{'SCHEDULE'}{'-automatic'} eq "daily" && $midnight_daily_epoch >= $LAST_COMPLETED_STAMP){
-  	&f_output("DEBUG","Backup is older then 24 hours and did not run today.");
+  	&f_output("DEBUG","Backup did not run today.");
   	$start_backup = 1;
   }
   
   if($job{$tmp_job}{'SCHEDULE'}{'-automatic'} eq "weekly" && $midnight_weekly_epoch >= $LAST_COMPLETED_STAMP){
-  	&f_output("DEBUG","Backup is older then 7 days and did not run today.");
+  	&f_output("DEBUG","Backup did not run in last 7 days.");
   	$start_backup = 1;
   }
   
