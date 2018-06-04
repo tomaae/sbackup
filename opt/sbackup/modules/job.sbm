@@ -34,19 +34,13 @@ for my $tmp_job(sort keys %job){
 	##
 	## Parse schedule
 	##
-	my $out_schedule;
+	my $out_schedule = "";
 	if($job{$tmp_job}{'SCHEDULE'}{'-enabled'} ne "1"){
 		##Schedule disabled
 		$out_schedule = "Disabled";
-		for my $tmp_job2(keys %job){
-			##Check for post job
-			if($job{$tmp_job}{'NAME'} eq $job{$tmp_job2}{'POST'}{'-job'}{'-name'}){
-				$out_schedule .= ", Post Job";
-			}
-		}
 	}else{
 		##Schedule Enabled
-		$out_schedule .= $job{$tmp_job}{'SCHEDULE'}{'-time'}." ";
+		$out_schedule .= $job{$tmp_job}{'SCHEDULE'}{'-time'}." " if $job{$tmp_job}{'SCHEDULE'}{'-time'} ne "";
 		my $tmp_noofschedules = 0;
 		##Format schedule days
 		if($job{$tmp_job}{'SCHEDULE'}{'-day'} ne ""){
@@ -71,6 +65,18 @@ for my $tmp_job(sort keys %job){
   			$out_schedule = substr($out_schedule, 0, -1) if substr($out_schedule, -1, 1) eq ",";
   		}
   	}
+  	if($job{$tmp_job}{'SCHEDULE'}{'-automatic'} ne ""){
+  		$out_schedule .= "," if $out_schedule ne "";
+  		$out_schedule .= "Daily" if $job{$tmp_job}{'SCHEDULE'}{'-automatic'} eq "daily";
+  		$out_schedule .= "Weekly" if $job{$tmp_job}{'SCHEDULE'}{'-automatic'} eq "weekly";
+  	}
+	}
+	
+	for my $tmp_job2(keys %job){
+		##Check for post job
+		if($job{$tmp_job}{'NAME'} eq $job{$tmp_job2}{'POST'}{'-job'}{'-name'}){
+			$out_schedule .= ", Post Job";
+		}
 	}
 	
 	##

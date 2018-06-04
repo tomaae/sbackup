@@ -22,6 +22,7 @@ my %job_definition = ( ##Default value, Mandatory, Type, Range of type
   	'-enabled' => ["0",0,"bool",""],
   	'-day' => ["",0,"day",""],
   	'-time' => ["",0,"time",""],
+  	'-automatic' => ["",0,"list","daily|weekly"],
   },
   'SOURCE' => {
   	'-type' => ["",1,"list","filesystem|omv4"],

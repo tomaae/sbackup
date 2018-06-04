@@ -95,6 +95,7 @@ sub get_env{
 	our $cmd_ls         = "ls -l";
 	our $cmd_ln         = "ln -s";
 	our $cmd_rm         = "rm -r";
+	our $cmd_ps         = "ps";
 	our $cmd_sleep      = "sleep";
 	our $cmd_cp         = "cp";
 	our $cmd_mv         = "mv";

@@ -1,9 +1,8 @@
 ==SCHEDULE========================================================
 [] -automatic
-- types [daily|biweekly|weekly]
-- after midninght, scheduler checks if backup did not run in last x days.
 - automatic copy, after all backups are done
-- only one backup at time per TARGET
+==ABORT BACKUP========================================================
+
 ==HISTORY========================================================
 []- option to remove version in backup history (create lockfile, delete data_uuid,release lockfile), run with "at now"
 []- start restore from backup history
@@ -12,7 +11,7 @@
 - import backup. (save backup configuration within backup_uuid folder), select share point, search subdirectories for configs, show only those which have correct config and are not imported already
 
 ==BACKUP=========================================================
-[*]- restart failed jobs
+[*]- restart failed jobs (done for automatic backup)
 - warning on changing backup source (same as for changing filesystem in shared folders)
 - warning on changing backup target (same as for changing filesystem in shared folders)
 [*]- settings, only one backup at once > queuing

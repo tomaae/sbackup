@@ -24,9 +24,9 @@ if($p_version){
 	}
 }
 
-if($sv_log eq 1){
+if($sv_log){
 	if(!$p_version){
-		print STDERR "Missing job id.\n";
+		print STDERR "Missing job version.\n";
 		exit 1;
 	}
 	
@@ -154,7 +154,5 @@ for my $key(sort keys %history){
   	$out_perf,
   	$out_log;
 }
-
-print "\n";
 
 return 1;
