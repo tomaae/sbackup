@@ -15,7 +15,7 @@ our @ISA = qw(Exporter);
 our @EXPORT = qw(
 									f_output get_env f_arguments epoch2human
 									$slash $BINPATH $MODULESPATH $ETCPATH $JOBCONFIGPATH $VARPATH $SESSIONLOGPATH $RUNFILEPATH
-									$cmd_ls $cmd_ln $cmd_rm $cmd_sleep $cmd_cp $cmd_mv $cmd_mkdir $cmd_chmod $cmd_rsync
+									$cmd_ls $cmd_ln $cmd_rm $cmd_ps $cmd_sleep $cmd_cp $cmd_mv $cmd_mkdir $cmd_chmod $cmd_rsync
 							  );
 
 
@@ -84,13 +84,14 @@ sub get_env{
 	&f_output("DEBUG","Setting required parameters.");
 	our $slash					= "/";
 	
-	our $BINPATH        = "/opt/sbackup/";
-	our $MODULESPATH    = "/opt/sbackup/modules/";
-	our $ETCPATH        = "/etc/opt/sbackup/";
-	our $JOBCONFIGPATH  = "/etc/opt/sbackup/jobs/";
-	our $VARPATH        = "/var/opt/sbackup/";
-	our $SESSIONLOGPATH = "/var/opt/sbackup/sessionlogs/";
-	our $RUNFILEPATH    = "/var/run/sbackup/";
+	our $BINPATH        = "/opt/sbackup".$slash;
+	our $MODULESPATH    = "/opt/sbackup/modules".$slash;
+	our $ETCPATH        = "/etc/opt/sbackup".$slash;
+	our $JOBCONFIGPATH  = "/etc/opt/sbackup/jobs".$slash;
+	our $VARPATH        = "/var/opt/sbackup".$slash;
+	our $SESSIONLOGPATH = "/var/opt/sbackup/sessionlogs".$slash;
+	our $RUNFILEPATH    = "/var/run/sbackup".$slash;
+	my $CRONFILE        = "/etc/cron.d/sbackup";
 	
 	our $cmd_ls         = "ls -l";
 	our $cmd_ln         = "ln -s";
@@ -103,7 +104,6 @@ sub get_env{
 	our $cmd_chmod      = "chmod";
 	our $cmd_rsync      = "rsync";
 	
-	my $CRONFILE        = "/etc/cron.d/sbackup";
 	
 	if(!-d $JOBCONFIGPATH){
 		system("$cmd_mkdir $JOBCONFIGPATH");
@@ -376,6 +376,6 @@ sub f_arguments {
   	}
   	print "\nSyntax error.\nArguments ".join(", ",@mixed_args)." cannot be used together.\n\n";exit 1;
   }
-} 
+}
 
 1;
