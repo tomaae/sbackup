@@ -28,7 +28,7 @@ my %job_definition = ( ##Default value, Mandatory, Type, Range of type
   	'-type' => ["",1,"list","filesystem|omv4"],
   	'-host' => ["",0,"",""],
   	'-path' => ["",1,"",""],
-  	'-protect' => ["",0,"number",""],
+  	'-protect' => ["0",1,"number",""],
   	'-snapshot' => {
   		'-enabled' => ["0",1,"bool",""],
   		'-type' => ["",0,"list","lvm"],
@@ -51,7 +51,6 @@ my %job_definition = ( ##Default value, Mandatory, Type, Range of type
   		'-type' => ["",0,"list","backup|restore"],
   		'-name' => ["",0,"",""],
   	},
-  	'-autorestart' => ["0",0,"bool",""],
   }
 );
 
