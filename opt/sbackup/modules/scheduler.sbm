@@ -23,19 +23,15 @@ my $midnight_weekly_epoch = $midnight_daily_epoch - 604800;
 
 &f_output("DEBUG","Scheduler wday $curr_wday, time $curr_time.");
 
+##
+## Classic scheduler
+##
 for my $tmp_job(sort keys %job){
 	&f_output("DEBUG","Checking schedule for $tmp_job.");
-	
-	if($job{$tmp_job}{'ENABLED'} == 0){
-		&f_output("DEBUG","Job is disabled, skipping.");
-		next;
-	}
-	
-	if($job{$tmp_job}{'SCHEDULE'}{'-enabled'} ne "1"){
-		&f_output("DEBUG","Job schedule is disabled, skipping.");
-		next;
-	}
-	
+	next if $job{$tmp_job}{'ENABLED'} == 0;
+	next if $job{$tmp_job}{'SCHEDULE'}{'-enabled'} ne "1";
+
+	## Check scheduled day
 	if($job{$tmp_job}{'SCHEDULE'}{'-day'} ne ""){
 		my @tmp_schedules = split /,| /, $job{$tmp_job}{'SCHEDULE'}{'-day'};
 		my $scheduled = 0;
@@ -47,7 +43,10 @@ for my $tmp_job(sort keys %job){
 			next;
 		}
 	}
+	
+	## Check scheduled time
 	if($job{$tmp_job}{'SCHEDULE'}{'-time'} eq $curr_time){
+		## Run backup
 		&f_output("DEBUG","Starting job.");
 		system('echo "'.$BINPATH.'/sbackup -backup '.$tmp_job.' -background >/dev/null"|at now >/dev/null 2>&1') if !$main::SIMULATEMODE;
   	if($? == 0){
@@ -56,104 +55,119 @@ for my $tmp_job(sort keys %job){
   		print STDERR "Backup failed to start.\n";
   	}
   	system("$cmd_sleep 1") if !$main::SIMULATEMODE;
-	}else{
-		&f_output("DEBUG","Job is not scheduled for this time, skipping.");
 	}
 }
 
+##
+## Automatic scheduler
+##
 &f_output("DEBUG","Starting autocheduler.");
-
 for my $tmp_job(sort keys %job){
 	my $start_backup = 0;
   my $LAST_FAILED_STAMP    = 0;
   my $LAST_COMPLETED_STAMP = 0;
   my $LAST_FAILURES_NO = 0;
 	&f_output("DEBUG","Checking automatic schedule for $tmp_job.");
-	if($job{$tmp_job}{'ENABLED'} == 0){
-		#&f_output("DEBUG","Job is disabled, skipping.");
-		next;
-	}
-	if($job{$tmp_job}{'SCHEDULE'}{'-enabled'} ne "1"){
-		#&f_output("DEBUG","Job schedule is disabled, skipping.");
-		next;
-	}
-	if(!$job{$tmp_job}{'SCHEDULE'}{'-automatic'}){
-		#&f_output("DEBUG","Job automatic schedule is disabled, skipping.");
-		next;
-	}
+	next if $job{$tmp_job}{'ENABLED'} == 0;
+	next if $job{$tmp_job}{'SCHEDULE'}{'-enabled'} ne "1";
+	next if !$job{$tmp_job}{'SCHEDULE'}{'-automatic'};
 	&f_output("DEBUG","Job automatic schedule is enabled.");
 	
+	## Check runfile
   if(-f $RUNFILEPATH."sbackup_".$job{$tmp_job}{'NAME'}){
   	&f_output("DEBUG","Runfile found.");
-  	
+  	## Get runfile data
   	my @output = &get_runfile($tmp_job,'status,type,pid');
   	if($output[0] && $output[2][0]{'pid'} =~ /^\d+$/){
+  		## Runfile data contain PID
   		&f_output("DEBUG","Runfile pid ".$output[2][0]{'pid'});
+  		## Check if PID is still running
   		system('ps '.$output[2][0]{'pid'}.' >/dev/null 2>&1');
   		if($? == 0){
   			&f_output("DEBUG","Job is already running.");
   			next;
   		}else{
+  			## Close job if PID is no longer running
   			&f_output("DEBUG","Job is no longer running, possible crash or kill.");
   			update_history($tmp_job,"status=killed", "status==running");
   			rm_runfile($tmp_job);
   		}
   	}else{
+  		## Close job if pidfile does not contain valid PID
   		&f_output("DEBUG","Runfile is faulty, removing.");
   		update_history($tmp_job,"status=killed", "status==running");
   		rm_runfile($tmp_job);
   	}
   }
 	
+	## Check history file
   if(-f $VARPATH.'history_'.$tmp_job){
   	##Get backup status from history
   	&f_output("DEBUG","History log found, checking history.");
     my @output = &get_history($tmp_job,'status,start','type==backup');
     for my $tmp(@{$output[2]}){
   		if($$tmp{'status'} =~ /^\d+$/ && $$tmp{'status'} == "0"){
+  			## Successful backup
   			$LAST_COMPLETED_STAMP = $$tmp{'start'};
   			$LAST_FAILURES_NO = 0;
   		}else{
+  			## Failed backup
   			$LAST_FAILED_STAMP = $$tmp{'start'};
   			$LAST_FAILURES_NO++ if $$tmp{'status'} ne "running";
   		}
     }
   }else{
+  	## No backup found in job history
   	&f_output("DEBUG","Job did not run yet.");
   	$start_backup = 1;
   }
   
+  ## Last backup is failed
   if($LAST_FAILED_STAMP > $LAST_COMPLETED_STAMP){
   	if($LAST_FAILURES_NO == 1){
+  		## Only one failure, restart
   		&f_output("DEBUG","Last job is failed, restarting.");
   		$start_backup = 1;
   	}else{
+  		## More then one failure/failed restart, do nothing
   		&f_output("DEBUG","Last job is failed twice already, not restarting.");
   		next;
   	}
   }
   
+  ## Daily schedule
   if($job{$tmp_job}{'SCHEDULE'}{'-automatic'} eq "daily" && $midnight_daily_epoch >= $LAST_COMPLETED_STAMP){
   	&f_output("DEBUG","Backup did not run today.");
   	$start_backup = 1;
   }
   
+  ## Weekly schedule
   if($job{$tmp_job}{'SCHEDULE'}{'-automatic'} eq "weekly" && $midnight_weekly_epoch >= $LAST_COMPLETED_STAMP){
   	&f_output("DEBUG","Backup did not run in last 7 days.");
   	$start_backup = 1;
   }
   
+  ## Check other running jobs
   if($start_backup == 1){
 		for my $ps_line(`ps -ef|grep sbackup|grep background`){
 			chomp($ps_line);
-			next if $ps_line !~ /sbackup -\w+ (.+) -background/i;
-			if(defined($job{$1}) && $job{$1}{'TARGET'}{'-path'} ne "" && $job{$tmp_job}{'TARGET'}{'-path'} eq $job{$1}{'TARGET'}{'-path'}){
+			next if $ps_line !~ /sbackup -(\w+) (.+) -background/i;
+			
+			## Compare target device for backup jobs
+			if(defined($job{$2}) && $1 eq "backup" && $job{$2}{'TARGET'}{'-path'} ne "" && $job{$tmp_job}{'TARGET'}{'-path'} eq $job{$2}{'TARGET'}{'-path'}){
+				&f_output("DEBUG","Target device is already in use by another backup.");
+				$start_backup = 0;
+			}
+			
+			## Compare target device for copy jobs
+			if(defined($job{$2}) && $1 eq "copy" && $job{$2}{'COPY'}{'-path'} ne "" && $job{$tmp_job}{'TARGET'}{'-path'} eq $job{$2}{'COPY'}{'-path'}){
 				&f_output("DEBUG","Target device is already in use by another backup.");
 				$start_backup = 0;
 			}
 		}
 	}
 	
+	## Start backup job
 	if($start_backup == 1){
 		&f_output("DEBUG","Starting job.");
 		system('echo "'.$BINPATH.'/sbackup -backup '.$tmp_job.' -background >/dev/null"|at now >/dev/null 2>&1') if !$main::SIMULATEMODE;
@@ -163,10 +177,7 @@ for my $tmp_job(sort keys %job){
   		print STDERR "Backup failed to start.\n";
   	}
   	system("$cmd_sleep 1") if !$main::SIMULATEMODE;
-	}else{
-		&f_output("DEBUG","Not starting backup.");
-	}
-	
+	}	
 }
 
 &f_output("DEBUG","Scheduler part end.");
