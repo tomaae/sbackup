@@ -8,7 +8,6 @@ use strict;
 use warnings;
 our %job;
 use POSIX qw(strftime ceil mktime);
-use Time::Zone;
 
 &f_output("DEBUG","Scheduler part start.");
 ##
@@ -18,7 +17,7 @@ my $SB_TIMESTART = time();
 my $curr_wday = strftime("%a", localtime($SB_TIMESTART));
 my $curr_time = strftime("%H:%M", localtime($SB_TIMESTART));
 my ($sec, $min, $hour, $day,$month,$year) = gmtime($SB_TIMESTART);
-my $midnight_daily_epoch = mktime(0,0,0,$day,$month,$year) + tz_local_offset();
+my $midnight_daily_epoch = mktime(0,0,0,$day,$month,$year);
 my $midnight_weekly_epoch = $midnight_daily_epoch - 604800;
 
 &f_output("DEBUG","Scheduler wday $curr_wday, time $curr_time.");
