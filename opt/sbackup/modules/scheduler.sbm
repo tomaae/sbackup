@@ -73,31 +73,7 @@ for my $tmp_job(sort keys %job){
 	&f_output("DEBUG","Job automatic schedule is enabled.");
 	
 	## Check runfile
-  if(-f $RUNFILEPATH."sbackup_".$job{$tmp_job}{'NAME'}){
-  	&f_output("DEBUG","Runfile found.");
-  	## Get runfile data
-  	my @output = &get_runfile($tmp_job,'status,type,pid');
-  	if($output[0] && $output[2][0]{'pid'} =~ /^\d+$/){
-  		## Runfile data contain PID
-  		&f_output("DEBUG","Runfile pid ".$output[2][0]{'pid'});
-  		## Check if PID is still running
-  		system('ps '.$output[2][0]{'pid'}.' >/dev/null 2>&1');
-  		if($? == 0){
-  			&f_output("DEBUG","Job is already running.");
-  			next;
-  		}else{
-  			## Close job if PID is no longer running
-  			&f_output("DEBUG","Job is no longer running, possible crash or kill.");
-  			update_history($tmp_job,"status=killed", "status==running");
-  			rm_runfile($tmp_job);
-  		}
-  	}else{
-  		## Close job if pidfile does not contain valid PID
-  		&f_output("DEBUG","Runfile is faulty, removing.");
-  		update_history($tmp_job,"status=killed", "status==running");
-  		rm_runfile($tmp_job);
-  	}
-  }
+	check_runfile($tmp_job,$RUNFILEPATH."sbackup_".$job{$tmp_job}{'NAME'});
 	
 	## Check history file
   if(-f $VARPATH.'history_'.$tmp_job){

@@ -314,20 +314,24 @@ sub check_runfile{
 	
   if(-f $runfile){
   	&f_output("DEBUG","Runfile found.");
-  	
+  	## Get runfile data
   	my @output = &get_runfile($p_job,'status,type,pid');
   	if($output[0] && $output[2][0]{'pid'} =~ /^\d+$/){
+  		## Runfile data contain PID
   		&f_output("DEBUG","Runfile pid ".$output[2][0]{'pid'});
-  		system('ps '.$output[2][0]{'pid'});
+  		## Check if PID is still running
+  		system('ps '.$output[2][0]{'pid'}.' >/dev/null 2>&1');
   		if($? == 0){
   			print "Job is already running.\n";
   			exit 1;
   		}else{
+  			## Close job if PID is no longer running
   			&f_output("DEBUG","Job is no longer running, possible crash or kill.");
   			update_history($p_job,"status=killed", "status==running");
   			rm_runfile($p_job);
   		}
   	}else{
+  		## Close job if pidfile does not contain valid PID
   		&f_output("DEBUG","Runfile is faulty, removing.");
   		update_history($p_job,"status=killed", "status==running");
   		rm_runfile($p_job);

@@ -62,7 +62,6 @@ my $SB_TIMESTART = time();
 my $SB_TIMEEND;
 my $SB_ECODE = 0;
 
-my $runfile = $RUNFILEPATH."sbackup_".$job{$p_job}{'NAME'};
 my $sessionlogfile = $SESSIONLOGPATH.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".log";
 
 ##
@@ -82,30 +81,7 @@ sub backup_fail {
 ## Pre-initialization
 ##
 &f_output("DEBUG","Starting purge $job{$p_job}{'NAME'}");
-
-if(-f $runfile){
-	&f_output("DEBUG","Runfile found.");
-	
-	my @output = &get_runfile($p_job,'status,type,pid');
-	if($output[0] && $output[2][0]{'pid'} =~ /^\d+$/){
-		&f_output("DEBUG","Runfile pid ".$output[2][0]{'pid'});
-		system('ps '.$output[2][0]{'pid'});
-		if($? == 0){
-			print "Job is already running.\n";
-			exit 1;
-		}else{
-			&f_output("DEBUG","Job is no longer running, possible crash or kill.");
-			update_history($p_job,"status=killed", "status==running");
-			rm_runfile($p_job);
-		}
-	}else{
-		&f_output("DEBUG","Runfile is faulty, removing.");
-		update_history($p_job,"status=killed", "status==running");
-		rm_runfile($p_job);
-	}
-}
-
-
+check_runfile($p_job,$RUNFILEPATH."sbackup_".$job{$p_job}{'NAME'});
 set_runfile($p_job,"type=purge,status=running,pid=".$$);
 insert_history($p_job,"type=purge,status=running,name=".$job{$p_job}{'NAME'}.",start=".$SB_TIMESTART);
 append_log($sessionlogfile,"Purge name: ".$job{$p_job}{'NAME'});
