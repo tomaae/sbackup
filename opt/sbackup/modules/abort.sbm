@@ -1,0 +1,92 @@
+###########################################################################################
+#
+#                                         sbackup
+#                                      abort module
+#
+###########################################################################################
+use strict;
+use warnings;
+our ($p_job);
+our %job;
+
+##
+## Check parameters
+##
+if($p_job){
+	my $param_ok = 0;
+	for my $tmp_job(sort keys %job){
+		$param_ok = 1 if $job{$tmp_job}{'NAME'} eq $p_job;
+	}
+	
+	if($param_ok == 1){
+		$param_ok = 0;
+		if(-f $RUNFILEPATH."sbackup_".$job{$p_job}{'NAME'}){
+			$param_ok = 1;
+		}else{
+			print STDERR "Error: Job \"$p_job\" is not running.\n\n";
+		}
+	}else{
+		print STDERR "Error: Job \"$p_job\" does not exists.\n\n";
+	}
+	
+  if($param_ok == 0){
+  	print STDERR "Running jobs:\n";
+  	for my $tmp(sort keys %job){
+  		print STDERR $job{$tmp}{'NAME'}."\n" if -f $RUNFILEPATH."sbackup_".$job{$tmp}{'NAME'};
+  	}
+  	print STDERR "\n";
+  	exit 1;
+  }
+}else{
+	print STDERR "Error: Job \"$p_job\" is not running.\n\n";
+	print STDERR "Running jobs:\n";
+	for my $tmp(sort keys %job){
+		print STDERR $job{$tmp}{'NAME'}."\n" if -f $RUNFILEPATH."sbackup_".$job{$tmp}{'NAME'};
+	}
+	print STDERR "\n";
+	exit 1;
+}
+
+my @pid_output = &get_runfile($p_job,'status,type,rpid');
+if($pid_output[0] && $pid_output[2][0]{'rpid'} && $pid_output[2][0]{'rpid'}  =~ /^\d+$/){
+	if($pid_output[2][0]{'type'} ne 'backup'){
+		print STDERR "Abort is available only for backup jobs.\n";
+		exit 1;
+	}
+	
+	if($pid_output[2][0]{'status'} eq 'aborting'){
+		print STDERR "Job is already aborting.\n";
+		exit 1;
+	}
+	
+	if($pid_output[2][0]{'status'} ne 'running'){
+		print STDERR "Unable to abort, job may still be starting or finishing.\n";
+		exit 1;
+	}
+	
+	system("$cmd_ps $pid_output[2][0]{'rpid'}|grep rsync >/dev/null 2>&1");
+	if($? != 0){
+		print STDERR "Unable to abort, job may still be starting or finishing.\n";
+		exit 1;
+	}
+	
+	print "Sending abort request to $p_job...\n";
+	system("$cmd_pkill -P $pid_output[2][0]{'rpid'} >/dev/null 2>&1");
+	if($? == 0){
+		print "Abort request sent successfully.\n";
+		update_runfile($p_job,"status=aborting");
+		exit 0;
+	}else{
+		print STDERR "Failed to send abort request.\n";
+		exit 1;
+	}	
+}else{
+	print STDERR "Unable to abort, job may still be starting or finishing.\n";
+	exit 1;
+}
+
+
+
+&f_output("DEBUG","Abort part end.");
+
+return 1;

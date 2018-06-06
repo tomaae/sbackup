@@ -102,6 +102,7 @@ for my $key(sort keys %history){
 	my $out_status = "";
 	$out_status = "Completed" if $tmp{'status'} eq "0";
 	$out_status = "Err:".$tmp{'status'} if $tmp{'status'} ne "0" && $tmp{'status'} ne "running";
+	$out_status = "Aborted" if $out_status eq "Err:aborted";
 	$out_status = "Running" if $tmp{'status'} eq "running";
 	
 	##Format job type

@@ -1,8 +1,3 @@
-[] - move runfile check to subrutine
-[] - check for runfile before starting job in background
-=================================================================
-==ABORT BACKUP===================================================
-
 =================================================================
 ==JOB============================================================
 [] add "all" parameter to display versions for all jobs

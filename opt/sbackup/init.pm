@@ -15,7 +15,7 @@ our @ISA = qw(Exporter);
 our @EXPORT = qw(
 									f_output get_env f_arguments epoch2human
 									$slash $BINPATH $MODULESPATH $ETCPATH $JOBCONFIGPATH $VARPATH $SESSIONLOGPATH $RUNFILEPATH
-									$cmd_ls $cmd_ln $cmd_rm $cmd_ps $cmd_sleep $cmd_cp $cmd_mv $cmd_mkdir $cmd_chmod $cmd_rsync
+									$cmd_ls $cmd_ln $cmd_rm $cmd_ps $cmd_sleep $cmd_cp $cmd_mv $cmd_mkdir $cmd_chmod $cmd_rsync $cmd_kill $cmd_pkill
 							  );
 
 
@@ -103,6 +103,8 @@ sub get_env{
 	our $cmd_mkdir      = "mkdir -p";
 	our $cmd_chmod      = "chmod";
 	our $cmd_rsync      = "rsync";
+	our $cmd_kill       = "kill";
+	our $cmd_pkill      = "pkill";
 	
 	
 	if(!-d $JOBCONFIGPATH){

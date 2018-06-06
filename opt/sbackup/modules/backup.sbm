@@ -218,7 +218,6 @@ my $progress_percent = 0;
 my $progress_percent_old = 0;
 &f_output("DEBUG","Getting change list for backup.");
 my $cmd_param = " --stats -aEAXvi --out-format='%i|%n' --delete ".$INCR." \"".$source_path.$slash."\" \"".$target_path.$slash."data_".$SB_TIMESTART.$slash."\"";
-
 if(!$main::SIMULATEMODE){
   open(my $cmd_out,"-|","$cmd_rsync --dry-run $cmd_param 2>&1") || die "Failed: $!\n";
   while (my $line = <$cmd_out>){
@@ -235,9 +234,13 @@ $total_files = 1 if $total_files == 0; ## Never divide by 0;
 
 &f_output("DEBUG","Starting backup.");
 &f_output("DEBUG3","Execute: \"$cmd_rsync $cmd_param\"");
-if(!$main::SIMULATEMODE){
+my $aborting = 0;
+my @pid_output = &get_runfile($p_job,'status,type,pid');
+$aborting = 1 if $pid_output[0] && $pid_output[2][0]{'pid'}  =~ /^\d+$/ && $pid_output[2][0]{'status'} eq 'aborting';
+if(!$main::SIMULATEMODE && !$aborting){
 	my @val;
-  open(my $cmd_out,"-|","$cmd_rsync $cmd_param 2>&1") || die "Failed: $!\n";
+  my $rpid = open(my $cmd_out,"-|","$cmd_rsync $cmd_param 2>&1") || die "Failed: $!\n";
+  update_runfile($p_job,"rpid=".$rpid) if $rpid && $rpid > 0;
   while (my $line = <$cmd_out>){
   	chomp($line);
   	if($line =~ /^\>f\+/){
@@ -261,6 +264,16 @@ if(!$main::SIMULATEMODE){
   close($cmd_out);
   $SB_ECODE=$?;
 }
+if($SB_ECODE ne "" && $SB_ECODE != 0){
+	if(!$aborting){
+		my @pid_output = &get_runfile($p_job,'status,type,pid');
+		$aborting = 1 if $pid_output[0] && $pid_output[2][0]{'pid'}  =~ /^\d+$/ && $pid_output[2][0]{'status'} eq 'aborting';
+	}
+	if($aborting){
+		$SB_ECODE = "aborted";
+		append_log($sessionlogfile,"Job aborted by user.");
+	}
+}
 
 ##Check backup status
 for(read_log($sessionlogfile)){
@@ -279,7 +292,7 @@ $SB_TIMEEND = time();
 $SB_ECODE = "-1" if $SB_ECODE eq "";
 
 if($SB_ECODE eq "0"){
-	append_log($sessionlogfile,"Writing meta data");
+	append_log($sessionlogfile,"Writing meta data...");
 	update_history($p_job,"perf=(Meta) 100%","status==running,type==backup,start==".$SB_TIMESTART);
 	my $meta_ecode = 0;
 	
@@ -329,7 +342,7 @@ append_log($sessionlogfile,"Backup completed successfully.") if $SB_ECODE eq "0"
 update_history($p_job,"status=".$SB_ECODE.",end=".$SB_TIMEEND.",size=".$RSSIZE.",perf=".$RSPERF,"status==running,type==backup,start==".$SB_TIMESTART);
 rm_runfile($p_job);
 
-if($SB_ECODE == "0"){
+if($SB_ECODE eq "0"){
 	append_log($sessionlogfile,"Starting post-purge");
 	&f_output("DEBUG","Starting post-purge.");
 	system("${BINPATH}/sbackup -purge ".$p_job." >/dev/null");
@@ -343,7 +356,7 @@ if($SB_ECODE == "0"){
 	}
 }
 
-if($SB_ECODE == "0" && $job{$p_job}{'POST'}{'-job'}{'-name'} ne ""){
+if($SB_ECODE eq "0" && $job{$p_job}{'POST'}{'-job'}{'-name'} ne ""){
 	append_log($sessionlogfile,"Starting post-job ".$job{$p_job}{'POST'}{'-job'}{'-name'});
 	&f_output("DEBUG","Starting ".$job{$p_job}{'POST'}{'-job'}{'-type'}." post-job ".$job{$p_job}{'POST'}{'-job'}{'-name'});
 	system("${BINPATH}/sbackup -".$job{$p_job}{'POST'}{'-job'}{'-type'}." ".$job{$p_job}{'POST'}{'-job'}{'-name'}." >/dev/null");

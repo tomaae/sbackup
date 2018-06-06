@@ -16,7 +16,7 @@ use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(append_log write_log read_log
 								get_history insert_history update_history delete_history
-								get_runfile set_runfile rm_runfile check_runfile);
+								get_runfile set_runfile update_runfile rm_runfile check_runfile);
 
 ##
 ## HISTORY
@@ -37,7 +37,8 @@ our %table;
 %{$table{"runfile"}} = (
     "type"=>0,
     "pid"=>1,
-    "status"=>2
+    "status"=>2,
+    "rpid"=>3
   );
 
 sub parse_select{
@@ -254,6 +255,53 @@ sub set_runfile{
   		$columns[$table{'runfile'}{$val[0]}] = $val[1];
   	}
   	write_log($main::RUNFILEPATH.'sbackup_'.$p_job,join('|',@columns));
+  	$returncodes[0] = 1;
+	}
+	return @returncodes;
+}
+
+sub update_runfile{
+	my ($p_job,$update)=@_;
+	my %columns;
+	my @cache;
+	my $tmp;
+	my $tmp2;
+	my $line;
+	my @val;
+	my @returncodes;
+	
+	if( !-f $main::RUNFILEPATH.'sbackup_'.$p_job){
+		$returncodes[0] = 0;
+		return @returncodes;
+	}
+	
+	if($p_job && $update){
+		&f_output("DEBUG","Runfile update $p_job, $update");
+  	my @entries = split(/,/,$update,-1);
+  	for $tmp(@entries){
+  		@val = split(/=/,$tmp,-1);
+  		$columns{$table{'runfile'}{$val[0]}} = $val[1];
+  	}
+  	
+  	if(!$main::SIMULATEMODE){
+    	open log_file,"+<".$main::RUNFILEPATH.'sbackup_'.$p_job;
+    	flock log_file,2;
+    	while($line = <log_file>){
+      	chomp($line);
+      	@val = split '\|',$line;
+      	push @cache,[@val];
+    	}
+    	seek log_file,0,0;
+    	truncate log_file,0;
+    	for my $tmp1(@cache){
+ 				for $tmp2(keys %columns){
+ 					$$tmp1[$tmp2] = $columns{$tmp2};
+ 				}
+   			print log_file join("|",@{$tmp1}),"\n";
+    	}
+    	flock log_file,8;
+      close log_file;
+  	}
   	$returncodes[0] = 1;
 	}
 	return @returncodes;

@@ -90,11 +90,12 @@ for my $tmp_job(sort keys %job){
 	for my $tmp(@{$tmp_history[2]}){
 		$out_versions++ if $$tmp{'type'} eq "backup" && $$tmp{'status'} eq "0";
 		$out_lastcompleted = strftime("%a, %d %b %G %H:%M:%S", localtime($$tmp{'start'})) if $$tmp{'type'} eq "backup" && $$tmp{'status'} eq "0";
-		$out_status = $$tmp{'status'};
+		$out_status = $$tmp{'status'} if $$tmp{'type'} ne "purge";
 		$out_type = $$tmp{'type'} if $$tmp{'status'} eq "running";
 		$out_lastcompleted =  $$tmp{'perf'} if $$tmp{'status'} eq "running" && $$tmp{'perf'} =~ /%$/;
 	}
 	$out_status = "Error:".$out_status if $out_status ne "0" && $out_status ne "N/A";
+	$out_status = "Aborted" if $out_status eq "Error:aborted";
 	$out_status = "Running" if $out_status eq "Error:running" && $out_type eq "backup";
 	$out_status = "Purging" if $out_status eq "Error:running" && $out_type eq "purge";
 	$out_status = "Restoring" if $out_status eq "Error:running" && $out_type eq "restore";
