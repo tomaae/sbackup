@@ -16,7 +16,7 @@ use POSIX qw(strftime ceil mktime);
 my $SB_TIMESTART = time();
 my $curr_wday = strftime("%a", localtime($SB_TIMESTART));
 my $curr_time = strftime("%H:%M", localtime($SB_TIMESTART));
-my ($sec, $min, $hour, $day,$month,$year) = gmtime($SB_TIMESTART);
+my ($sec, $min, $hour, $day,$month,$year) = localtime($SB_TIMESTART);
 my $midnight_daily_epoch = mktime(0,0,0,$day,$month,$year);
 my $midnight_weekly_epoch = $midnight_daily_epoch - 604800;
 
@@ -66,7 +66,7 @@ for my $tmp_job(sort keys %job){
   my $LAST_FAILED_STAMP    = 0;
   my $LAST_COMPLETED_STAMP = 0;
   my $LAST_FAILURES_NO = 0;
-	&f_output("DEBUG","Checking automatic schedule for $tmp_job.");
+	&f_output("DEBUG","Checking automatic schedule for >>>>> $tmp_job <<<<<.");
 	next if $job{$tmp_job}{'ENABLED'} == 0;
 	next if $job{$tmp_job}{'SCHEDULE'}{'-enabled'} ne "1";
 	next if !$job{$tmp_job}{'SCHEDULE'}{'-automatic'};
@@ -135,6 +135,7 @@ for my $tmp_job(sort keys %job){
   }
   
   ## Daily schedule
+  &f_output("DEBUG","Checking for daily $midnight_daily_epoch ".localtime($midnight_daily_epoch).", last:$LAST_COMPLETED_STAMP ".localtime($LAST_COMPLETED_STAMP));
   if($job{$tmp_job}{'SCHEDULE'}{'-automatic'} eq "daily" && $midnight_daily_epoch >= $LAST_COMPLETED_STAMP){
   	&f_output("DEBUG","Backup did not run today.");
   	$start_backup = 1;

@@ -16,7 +16,7 @@ use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(append_log write_log read_log
 								get_history insert_history update_history delete_history
-								get_runfile set_runfile rm_runfile);
+								get_runfile set_runfile rm_runfile check_runfile);
 
 ##
 ## HISTORY
@@ -307,6 +307,32 @@ sub get_runfile{
   	}
   }
 	return @returncodes;
+}
+
+sub check_runfile{
+	my ($p_job, $runfile)=@_;
+	
+  if(-f $runfile){
+  	&f_output("DEBUG","Runfile found.");
+  	
+  	my @output = &get_runfile($p_job,'status,type,pid');
+  	if($output[0] && $output[2][0]{'pid'} =~ /^\d+$/){
+  		&f_output("DEBUG","Runfile pid ".$output[2][0]{'pid'});
+  		system('ps '.$output[2][0]{'pid'});
+  		if($? == 0){
+  			print "Job is already running.\n";
+  			exit 1;
+  		}else{
+  			&f_output("DEBUG","Job is no longer running, possible crash or kill.");
+  			update_history($p_job,"status=killed", "status==running");
+  			rm_runfile($p_job);
+  		}
+  	}else{
+  		&f_output("DEBUG","Runfile is faulty, removing.");
+  		update_history($p_job,"status=killed", "status==running");
+  		rm_runfile($p_job);
+  	}
+  }
 }
 
 ##
