@@ -45,6 +45,13 @@ for my $tmp_job(sort keys %job){
 	
 	## Check scheduled time
 	if($job{$tmp_job}{'SCHEDULE'}{'-time'} eq $curr_time){
+		## Check runfile
+  	my $result = check_runfile($tmp_job,$RUNFILEPATH."sbackup_".$job{$tmp_job}{'NAME'});
+  	if($result){
+  		print STDERR "$result\n\n";
+  		next;
+  	}
+		
 		## Run backup
 		&f_output("DEBUG","Starting job.");
 		system('echo "'.$BINPATH.'/sbackup -backup '.$tmp_job.' -background >/dev/null"|at now >/dev/null 2>&1') if !$main::SIMULATEMODE;
@@ -73,7 +80,7 @@ for my $tmp_job(sort keys %job){
 	&f_output("DEBUG","Job automatic schedule is enabled.");
 	
 	## Check runfile
-	check_runfile($tmp_job,$RUNFILEPATH."sbackup_".$job{$tmp_job}{'NAME'});
+	next if check_runfile($tmp_job,$RUNFILEPATH."sbackup_".$job{$tmp_job}{'NAME'});
 	
 	## Check history file
   if(-f $VARPATH.'history_'.$tmp_job){

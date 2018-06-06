@@ -43,6 +43,11 @@ if($p_job){
 }
 
 if(!$sv_background && !$::DEBUGMODE){
+	my $result = check_runfile($p_job,$RUNFILEPATH."sbackup_".$job{$p_job}{'NAME'});
+	if($result){
+		print STDERR "$result\n\n";
+		exit 1;
+	}	
 	my $tmp = "";
 	$tmp = "-days $p_days" if defined($p_days) && ($p_days eq "0" || $p_days > 0);
 	system('echo "'.$BINPATH.'/sbackup -purge '.$p_job.' '.$tmp.' -background >/dev/null"|at now >/dev/null 2>&1');
@@ -81,7 +86,11 @@ sub backup_fail {
 ## Pre-initialization
 ##
 &f_output("DEBUG","Starting purge $job{$p_job}{'NAME'}");
-check_runfile($p_job,$RUNFILEPATH."sbackup_".$job{$p_job}{'NAME'});
+my $result = check_runfile($p_job,$RUNFILEPATH."sbackup_".$job{$p_job}{'NAME'});
+if($result){
+	print STDERR "$result\n\n";
+	exit 1;
+}
 set_runfile($p_job,"type=purge,status=running,pid=".$$);
 insert_history($p_job,"type=purge,status=running,name=".$job{$p_job}{'NAME'}.",start=".$SB_TIMESTART);
 append_log($sessionlogfile,"Purge name: ".$job{$p_job}{'NAME'});

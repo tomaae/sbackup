@@ -42,6 +42,11 @@ if($p_job){
 }
 
 if(!$sv_background && !$::DEBUGMODE){
+	my $result = check_runfile($p_job,$RUNFILEPATH."sbackup_".$job{$p_job}{'NAME'});
+	if($result){
+		print STDERR "$result\n\n";
+		exit 1;
+	}
 	system('echo "'.$BINPATH.'/sbackup -backup '.$p_job.' -background >/dev/null"|at now >/dev/null 2>&1');
 	if($? == 0){
 		print "Backup started successfully.\n";
@@ -77,7 +82,11 @@ sub backup_fail {
 ## Pre-initialization
 ##
 &f_output("DEBUG","Starting backup $job{$p_job}{'NAME'}");
-check_runfile($p_job,$RUNFILEPATH."sbackup_".$job{$p_job}{'NAME'});
+my $result = check_runfile($p_job,$RUNFILEPATH."sbackup_".$job{$p_job}{'NAME'});
+if($result){
+	print STDERR "$result\n\n";
+	exit 1;
+}
 set_runfile($p_job,"type=backup,status=running,pid=".$$);
 insert_history($p_job,"type=backup,status=running,name=".$job{$p_job}{'NAME'}.",start=".$SB_TIMESTART.",perf=(Starting) 0%");
 append_log($sessionlogfile,"Backup name: ".$job{$p_job}{'NAME'});
@@ -243,6 +252,7 @@ if(!$main::SIMULATEMODE){
   		$progress_percent_old = $progress_percent;
   	}else{
   		if($line =~ /^\*deleting/){
+  			@val = split(/\|/,$line);
   			append_log($sessionlogfile,'-'.$val[1]);
   		}
   		append_log($sessionlogfile,$line) if $line !~ /\|/;

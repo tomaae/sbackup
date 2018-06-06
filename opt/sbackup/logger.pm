@@ -322,8 +322,7 @@ sub check_runfile{
   		## Check if PID is still running
   		system('ps '.$output[2][0]{'pid'}.' >/dev/null 2>&1');
   		if($? == 0){
-  			print "Job is already running.\n";
-  			exit 1;
+  			return "Job (".$output[2][0]{'type'}.") is already running.";
   		}else{
   			## Close job if PID is no longer running
   			&f_output("DEBUG","Job is no longer running, possible crash or kill.");
@@ -337,6 +336,7 @@ sub check_runfile{
   		rm_runfile($p_job);
   	}
   }
+  return 0;
 }
 
 ##
