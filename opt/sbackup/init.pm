@@ -93,7 +93,7 @@ sub get_env{
 	our $RUNFILEPATH    = "/var/run/sbackup".$slash;
 	my $CRONFILE        = "/etc/cron.d/sbackup";
 	
-	our $cmd_ls         = "ls -l";
+	our $cmd_ls         = "ls";
 	our $cmd_ln         = "ln -s";
 	our $cmd_rm         = "rm -r";
 	our $cmd_ps         = "ps";

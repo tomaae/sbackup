@@ -1,0 +1,111 @@
+###########################################################################################
+#
+#                                         sbackup
+#                                      import module
+#
+###########################################################################################
+use strict;
+use warnings;
+our ($p_path);
+our %job;
+
+##
+## Check parameters
+##
+$p_path =~ s/\/$//;
+$p_path .= $slash;
+if($p_path){
+	if(!-e $p_path){
+		print STDERR "Error: Path does not exists.\n\n";
+		exit 1;
+	}	
+}else{
+	print STDERR "Error: Path to import not specified.\n\n";
+	exit 1;
+}
+
+if(!-d $p_path){
+	print STDERR "Error: Invalid path specified.\n\n";
+	exit 1;
+}
+
+if(!-l $p_path."meta_latest"){
+	print STDERR "Repository error: Missing meta link.\n\n";
+	exit 1;
+}
+
+if(!-d $p_path."meta_latest/"){
+	print STDERR "Repository error: Invalid meta link.\n\n";
+	exit 1;
+}
+
+if(!-l $p_path."data_latest"){
+	print STDERR "Repository error: Missing data link.\n\n";
+	exit 1;
+}
+
+if(!-d $p_path."data_latest/"){
+	print STDERR "Repository error: Invalid data link.\n\n";
+	exit 1;
+}
+
+$p_path =~ /\/sbackup_([^\/]*)\/$/;
+my $p_job = $1;
+
+if(-f $JOBCONFIGPATH.$p_job){
+	print STDERR "Error: Job using name $p_job already exists.\n\n";
+	exit 1;
+}
+
+print "Importing job $p_job...\n";
+
+if(!-f $p_path."meta_latest/".$p_job){
+	print STDERR "Repository error: missing job configuration.\n\n";
+	exit 1;
+}
+if(!-f $p_path."meta_latest/history_".$p_job){
+	print STDERR "Repository error: missing job history.\n\n";
+	exit 1;
+}
+
+
+print "Importing job history...";
+system("$cmd_cp ${p_path}meta_latest/history_${p_job} ${VARPATH}");
+if($? == 0){
+	print "done\n";
+}else{
+	print STDERR "failed\n";
+	exit 1;
+}
+
+print "Importing job logs...";
+my $success = 0;
+for my $tmp(`$cmd_ls ${p_path}meta_latest/`){
+	chomp($tmp);
+	next if $tmp !~ /^${p_job}_(\d+)\.log+$/;
+	system("$cmd_cp ${p_path}meta_latest/${p_job}_${1}.log ${SESSIONLOGPATH}");
+	if($? == 0){
+		print "done\n";
+		$success = 1;
+	}else{
+		print "failed\n";
+		$success = 1;
+	}
+}
+if(!$success){
+	print "not found\n";
+}
+
+print "Importing job configuration...";
+system("$cmd_cp ${p_path}meta_latest/${p_job} ${JOBCONFIGPATH}$p_job");
+if($? == 0){
+	print "done\n";
+}else{
+	print STDERR "failed\n";
+	exit 1;
+}
+
+
+&f_output("DEBUG","Import part end.");
+
+return 1;

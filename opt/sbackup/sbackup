@@ -23,7 +23,7 @@ our %job = load_jobs_config;
 ##
 ## Parameters
 ##
-our ($DEBUGMODE, $sv_history, $sv_job, $sv_log, $sv_backup, $sv_purge, $sv_verify, $sv_restore, $sv_copy, $sv_abort, $sv_version, $sv_days, $sv_type, $sv_path, $sv_into, $sv_background, $sv_scheduler, $sv_api);
+our ($DEBUGMODE, $sv_history, $sv_job, $sv_log, $sv_backup, $sv_purge, $sv_verify, $sv_restore, $sv_copy, $sv_abort, $sv_export, $sv_import, $sv_version, $sv_days, $sv_type, $sv_path, $sv_into, $sv_background, $sv_scheduler, $sv_api);
 our ($p_debug, $p_job, $p_version, $p_days, $p_type, $p_path, $p_into);
 $p_debug = 1;
 my %arguments;
@@ -103,19 +103,32 @@ my %arguments;
 	"primary" => 1,
 	"val1" => \$p_job,
 	"vals_mandatory" => 0,
-	"help_header" => "Report jobs:",
+	"help_header" => "List jobs:",
 	"help_args" => "-job [ <job name> [-type (backup|purge|verify)] [-version <version> [-log]] ]",
 	"help_display" => 10,
 );
-#%{$arguments{"history"}} = (
-#	"var" => \$sv_history,
-#	"val1" => \$p_job,
-#	"vals_mandatory" => 0,
-#	"primary" => 1,
-#	"help_header" => "Job history:",
-#	"help_args" => "-history [<job name>]",
-#	"help_display" => 11,
-#);
+
+
+%{$arguments{"export"}} = (
+	"var" => \$sv_export,
+	"val1" => \$p_job,
+	"vals_mandatory" => 1,
+	"primary" => 1,
+	"help_header" => "Export job:",
+	"help_args" => "-export <job name>",
+	"help_display" => 31,
+);
+%{$arguments{"import"}} = (
+	"var" => \$sv_import,
+	"val1" => \$p_path,
+	"vals_mandatory" => 1,
+	"primary" => 1,
+	"help_header" => "Import job:",
+	"help_args" => "-import <location>",
+	"help_display" => 32,
+);
+
+
 %{$arguments{"log"}} = (
 	"var" => \$sv_log,
 	"vals_mandatory" => 0,
@@ -229,6 +242,14 @@ if($sv_abort){
 
 if($sv_job){
 	require "modules/job.sbm";
+}
+
+if($sv_import){
+	require "modules/import.sbm";
+}
+
+if($sv_export){
+	require "modules/export.sbm";
 }
 
 if($sv_scheduler){
