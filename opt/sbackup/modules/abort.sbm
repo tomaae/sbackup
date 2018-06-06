@@ -77,6 +77,10 @@ if($pid_output[0] && $pid_output[2][0]{'rpid'} && $pid_output[2][0]{'rpid'}  =~ 
 		update_runfile($p_job,"status=aborting");
 		exit 0;
 	}else{
+		system("which $cmd_pkill >/dev/null 2>&1");
+		if($? != 0){
+			print STDERR "pkill binary is missing, install pkill.\n";
+		}
 		print STDERR "Failed to send abort request.\n";
 		exit 1;
 	}	
