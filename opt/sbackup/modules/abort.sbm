@@ -30,19 +30,29 @@ if($p_job){
 	}
 	
   if($param_ok == 0){
+  	my $runningno = 0;
   	print STDERR "Running jobs:\n";
   	for my $tmp(sort keys %job){
-  		print STDERR $job{$tmp}{'NAME'}."\n" if -f $RUNFILEPATH."sbackup_".$job{$tmp}{'NAME'};
+  		if(-f $RUNFILEPATH."sbackup_".$job{$tmp}{'NAME'}){
+  			print STDERR $job{$tmp}{'NAME'}."\n";
+  			$runningno++;
+  		}
   	}
+  	print STDERR "There are no running jobs\n" if !$runningno;
   	print STDERR "\n";
   	exit 1;
   }
 }else{
+	my $runningno = 0;
 	print STDERR "Error: Job \"$p_job\" is not running.\n\n";
 	print STDERR "Running jobs:\n";
 	for my $tmp(sort keys %job){
-		print STDERR $job{$tmp}{'NAME'}."\n" if -f $RUNFILEPATH."sbackup_".$job{$tmp}{'NAME'};
+		if(-f $RUNFILEPATH."sbackup_".$job{$tmp}{'NAME'}){
+		 	print STDERR $job{$tmp}{'NAME'}."\n";
+			$runningno++;
+		}
 	}
+	print STDERR "There are no running jobs\n" if !$runningno;
 	print STDERR "\n";
 	exit 1;
 }
