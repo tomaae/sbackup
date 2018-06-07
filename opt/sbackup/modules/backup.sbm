@@ -14,31 +14,14 @@ our $sv_background;
 ##
 ## Check parameters
 ##
-if($p_job){
-	my $param_ok = 0;
-	for my $tmp_job(sort keys %job){
-		$param_ok = 1 if $job{$tmp_job}{'NAME'} eq $p_job;
+my $param_ok = 0;
+$param_ok = job_exists($p_job) if $p_job;
+if($param_ok == 0){
+	print STDERR "Error: Job \"$p_job\" does not exists.\n\nAvailable jobs:\n";
+	for my $tmp_job(list_jobs()){
+		print STDERR "\t$tmp_job\n";
 	}
-
-  if($param_ok == 0){
-  	print STDERR "Error: Job \"$p_job\" does not exists.\n\n";
-  	print STDERR "Available jobs:\n";
-  	for my $tmp(sort keys %job){
-  		print STDERR $job{$tmp}{'NAME'};
-  		print STDERR "\n";
-  	}
-  	print STDERR "\n";
-  	exit 1;
-  }
-}else{
-	print STDERR "Error: Job \"$p_job\" does not exists.\n\n";
-	print STDERR "Available jobs:\n";
-	for my $tmp(sort keys %job){
-		print STDERR $job{$tmp}{'NAME'};
-		print STDERR "\n";
-	}
-	print STDERR "\n";
-	exit 1;
+	f_output("ERROR","",1);
 }
 
 if(!$sv_background && !$::DEBUGMODE){

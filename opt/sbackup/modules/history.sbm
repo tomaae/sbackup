@@ -20,15 +20,14 @@ our $p_version;
 ##
 ## Check parameters
 ##
-if($p_job){
-  if(!job_exists($p_job)){
-  	print STDERR "Error: Job \"$p_job\" does not exists.\n\nAvailable jobs:\n";
-  	for my $tmp_job(list_jobs()){
-  		print STDERR "\t$tmp_job\n";
-  	}
-  	print STDERR "\n";
-  	exit 1;
-  }
+my $param_ok = 0;
+$param_ok = job_exists($p_job) if $p_job;
+if($param_ok == 0){
+	print STDERR "Error: Job \"$p_job\" does not exists.\n\nAvailable jobs:\n";
+	for my $tmp_job(list_jobs()){
+		print STDERR "\t$tmp_job\n";
+	}
+	f_output("ERROR","",1);
 }
 
 f_output("ERROR","Error: Job type \"$p_type\" is not valid.\n\nValid job types: backup, purge, verify.",1) if $p_type && $p_type !~ /^(backup|purge|verify)$/;
