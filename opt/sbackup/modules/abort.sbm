@@ -12,43 +12,26 @@ our %job;
 ##
 ## Check parameters
 ##
+my $param_ok = 0;
 if($p_job){
-	my $param_ok = 0;
-	for my $tmp_job(sort keys %job){
-		$param_ok = 1 if $job{$tmp_job}{'NAME'} eq $p_job;
-	}
-	
+	$param_ok = job_exists($p_job);
 	if($param_ok == 1){
-		$param_ok = 0;
-		if(-f $RUNFILEPATH."sbackup_".$job{$p_job}{'NAME'}){
-			$param_ok = 1;
-		}else{
+		if(!-f $RUNFILEPATH."sbackup_".$job{$p_job}{'NAME'}){
 			print STDERR "Error: Job \"$p_job\" is not running.\n\n";
+			$param_ok = 0;
 		}
 	}else{
 		print STDERR "Error: Job \"$p_job\" does not exists.\n\n";
 	}
-	
-  if($param_ok == 0){
-  	my $runningno = 0;
-  	print STDERR "Running jobs:\n";
-  	for my $tmp(sort keys %job){
-  		if(-f $RUNFILEPATH."sbackup_".$job{$tmp}{'NAME'}){
-  			print STDERR $job{$tmp}{'NAME'}."\n";
-  			$runningno++;
-  		}
-  	}
-  	print STDERR "There are no running jobs\n" if !$runningno;
-  	print STDERR "\n";
-  	exit 1;
-  }
-}else{
+}
+
+## List running jobs
+if($param_ok == 0){
 	my $runningno = 0;
-	print STDERR "Error: Job \"$p_job\" is not running.\n\n";
 	print STDERR "Running jobs:\n";
 	for my $tmp(sort keys %job){
 		if(-f $RUNFILEPATH."sbackup_".$job{$tmp}{'NAME'}){
-		 	print STDERR $job{$tmp}{'NAME'}."\n";
+			print STDERR $job{$tmp}{'NAME'}."\n";
 			$runningno++;
 		}
 	}
@@ -57,29 +40,18 @@ if($p_job){
 	exit 1;
 }
 
+## Get job pidfile
 my @pid_output = &get_runfile($p_job,'status,type,rpid');
 if($pid_output[0] && $pid_output[2][0]{'rpid'} && $pid_output[2][0]{'rpid'}  =~ /^\d+$/){
-	if($pid_output[2][0]{'type'} ne 'backup'){
-		print STDERR "Abort is available only for backup jobs.\n";
-		exit 1;
-	}
+	f_output("ERROR","Abort is available only for backup jobs.",1) if $pid_output[2][0]{'type'} ne 'backup';
+	f_output("ERROR","Job is already aborting.",1) if $pid_output[2][0]{'status'} eq 'aborting';
+	f_output("ERROR","Unable to abort, job may still be starting or finishing.",1) if $pid_output[2][0]{'status'} ne 'running';
 	
-	if($pid_output[2][0]{'status'} eq 'aborting'){
-		print STDERR "Job is already aborting.\n";
-		exit 1;
-	}
-	
-	if($pid_output[2][0]{'status'} ne 'running'){
-		print STDERR "Unable to abort, job may still be starting or finishing.\n";
-		exit 1;
-	}
-	
+	## Verify rpid, it must belong to rsync
 	system("$cmd_ps $pid_output[2][0]{'rpid'}|grep rsync >/dev/null 2>&1");
-	if($? != 0){
-		print STDERR "Unable to abort, job may still be starting or finishing.\n";
-		exit 1;
-	}
+	f_output("ERROR","Unable to abort, job may still be starting or finishing.",1) if $? != 0;
 	
+	## Send kill request
 	print "Sending abort request to $p_job...\n";
 	system("$cmd_pkill -P $pid_output[2][0]{'rpid'} >/dev/null 2>&1");
 	if($? == 0){
@@ -87,16 +59,13 @@ if($pid_output[0] && $pid_output[2][0]{'rpid'} && $pid_output[2][0]{'rpid'}  =~ 
 		update_runfile($p_job,"status=aborting");
 		exit 0;
 	}else{
+		## Verify pkill binary
 		system("which $cmd_pkill >/dev/null 2>&1");
-		if($? != 0){
-			print STDERR "pkill binary is missing, install pkill.\n";
-		}
-		print STDERR "Failed to send abort request.\n";
-		exit 1;
+		f_output("ERROR","pkill binary is missing, install pkill.") if $? != 0;
+		f_output("ERROR","Failed to send abort request.",1);
 	}	
 }else{
-	print STDERR "Unable to abort, job may still be starting or finishing.\n";
-	exit 1;
+	f_output("ERROR","Unable to abort, job may still be starting or finishing.",1);
 }
 
 return 1;
