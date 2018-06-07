@@ -14,60 +14,40 @@ my %history;
 our $p_job;
 our $p_type;
 our $sv_log;
+our $sv_all;
 our $p_version;
-
-if($p_version){
-	my @tmp = &get_history($p_job,'status,name,start,end,size,perf,type','start=='.$p_version);
-	if(!$tmp[0]){
-		print STDERR "Invalid job id.\n";
-		exit 1;
-	}
-}
-
-if($sv_log){
-	if(!$p_version){
-		print STDERR "Missing job version.\n";
-		exit 1;
-	}
-	
-	if( !-f $main::SESSIONLOGPATH.$p_job."_".$p_version.".log"){
-		print STDERR "Job log is not available.\n";
-		exit 1;
-	}
-	
-	for my $tmp(&read_log($main::SESSIONLOGPATH.$p_job."_".$p_version.".log")){
-		print $tmp;
-	}
-	
-	return 1;
-}
-
 
 ##
 ## Check parameters
 ##
 if($p_job){
-	my $param_ok = 0;
-	for my $tmp_job(sort keys %job){
-		$param_ok = 1 if $job{$tmp_job}{'NAME'} eq $p_job;
-	}
-
-  if($param_ok == 0){
-  	print STDERR "Error: Job \"$p_job\" does not exists.\n\n";
-  	print STDERR "Available jobs:\n";
-  	for my $tmp(sort keys %job){
-  		print STDERR $job{$tmp}{'NAME'};
-  		print STDERR "\n";
+  if(!job_exists($p_job)){
+  	print STDERR "Error: Job \"$p_job\" does not exists.\n\nAvailable jobs:\n";
+  	for my $tmp_job(list_jobs()){
+  		print STDERR "\t$tmp_job\n";
   	}
   	print STDERR "\n";
   	exit 1;
   }
 }
 
-if($p_type && $p_type !~ /^(backup|purge|verify)$/){
-	print STDERR "Error: Job type \"$p_type\" is not valid.\n\n";
-  print STDERR "Valid job types: backup, purge, verify\n";
-	exit 1;
+f_output("ERROR","Error: Job type \"$p_type\" is not valid.\n\nValid job types: backup, purge, verify.",1) if $p_type && $p_type !~ /^(backup|purge|verify)$/;
+
+if($p_version){
+	my @tmp = &get_history($p_job,'status,name,start,end,size,perf,type','start=='.$p_version);
+	f_output("ERROR","Invalid job id.",1) if !$tmp[0];
+}
+
+##
+## Get version log
+##
+if($sv_log){
+	f_output("ERROR","Missing job version.",1) if !$p_version;
+	f_output("ERROR","Job log is not available.",1) if !-f $main::SESSIONLOGPATH.$p_job."_".$p_version.".log";
+	for my $tmp(&read_log($main::SESSIONLOGPATH.$p_job."_".$p_version.".log")){
+		print $tmp;
+	}
+	return 1;
 }
 
 ##

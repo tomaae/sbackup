@@ -10,7 +10,8 @@ use warnings;
 use POSIX qw(strftime ceil);
 our %job;
 our $p_job;
-if($p_job){
+our $sv_all;
+if($p_job || (!$p_job && $sv_all)){
 	require "modules/history.sbm";
 	return 1;
 }
@@ -119,9 +120,10 @@ for my $tmp_job(sort keys %job){
 	if($job{$tmp_job}{'SOURCE'}{'-type'} eq "omv4" && $job{$tmp_job}{'SOURCE'}{'-path'} ne ""){
   	#require omv4;
   	#import omv4;
+  	#$source_name = omv_name_by_uuid(omv_uuid_by_name($job{$tmp_job}{'SOURCE'}{'-path'}));
   	$source_integ = "OMV ";
   	$source_name = $job{$tmp_job}{'SOURCE'}{'-path'};
-  	#$source_name = omv_name_by_uuid(omv_uuid_by_name($job{$tmp_job}{'SOURCE'}{'-path'}))
+  	
 	}
 	
 	my $target_integ = "";
@@ -129,9 +131,9 @@ for my $tmp_job(sort keys %job){
 	if($job{$tmp_job}{'TARGET'}{'-type'} eq "omv4" && $job{$tmp_job}{'TARGET'}{'-path'} ne ""){
 		#require omv4;
 		#import omv4;
+		#$target_name = omv_name_by_uuid(omv_uuid_by_name($job{$tmp_job}{'TARGET'}{'-path'}));
 		$target_integ = "OMV ";
   	$target_name = $job{$tmp_job}{'TARGET'}{'-path'};
-		#$target_name = omv_name_by_uuid(omv_uuid_by_name($job{$tmp_job}{'TARGET'}{'-path'}))
 	}
 	
 	##

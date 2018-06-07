@@ -1,8 +1,4 @@
 =================================================================
-==JOB============================================================
-[] add "all" parameter to display versions for all jobs
-
-=================================================================
 ==MIGRATION======================================================
 [] - sbackup -migrate testbkp -type filesystem/omv4 -into test_share
 - "mv" data migration. started with "at", change state to "migrating", creates lockfile with old source for restart in case of failure
