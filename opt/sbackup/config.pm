@@ -12,7 +12,7 @@ use warnings;
 
 use Exporter qw(import);
 our @ISA = qw(Exporter);
-our @EXPORT = qw(load_jobs_config parse_job_config);
+our @EXPORT = qw(load_jobs_config parse_job_config job_exists list_jobs);
 
 
 my %job_definition = ( ##Default value, Mandatory, Type, Range of type
@@ -180,6 +180,24 @@ sub load_jobs_config {
 		%job = (%job, parse_job_config($file));
 	}
 	return %job;
+}
+
+sub job_exists {
+	my ($p_job)=@_;
+	
+	my $jobexists = 0;
+	for my $tmp_job(sort keys %::job){
+		$jobexists = 1 if $::job{$tmp_job}{'NAME'} eq $p_job;
+	}
+	return $jobexists;
+}
+
+sub list_jobs {
+	my @joblist = ();
+	for my $tmp(sort keys %::job){
+		push @joblist, $::job{$tmp}{'NAME'}
+	}
+	return @joblist;
 }
 
 1;

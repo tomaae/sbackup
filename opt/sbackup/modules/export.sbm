@@ -13,47 +13,51 @@ our %job;
 ## Check parameters
 ##
 if($p_job){
-	my $param_ok = 0;
-	for my $tmp_job(sort keys %job){
-		$param_ok = 1 if $job{$tmp_job}{'NAME'} eq $p_job;
-	}
-
-  if($param_ok == 0){
-  	print STDERR "Error: Job \"$p_job\" does not exists.\n\n";
-  	print STDERR "Available jobs:\n";
-  	for my $tmp(sort keys %job){
-  		print STDERR $job{$tmp}{'NAME'};
-  		print STDERR "\n";
+  if(!job_exists($p_job)){
+  	print STDERR "Error: Job \"$p_job\" does not exists.\n\nAvailable jobs:\n";
+  	for my $tmp_job(list_jobs()){
+  		print STDERR "\t$tmp_job\n";
   	}
   	print STDERR "\n";
   	exit 1;
   }
 }else{
-	print STDERR "Error: Job \"$p_job\" does not exists.\n\n";
-	print STDERR "Available jobs:\n";
-	for my $tmp(sort keys %job){
-		print STDERR $job{$tmp}{'NAME'};
-		print STDERR "\n";
+	print STDERR "Error: Job \"$p_job\" does not exists.\n\nAvailable jobs:\n";
+	for my $tmp_job(list_jobs()){
+		print STDERR "\t$tmp_job\n";
 	}
 	print STDERR "\n";
 	exit 1;
 }
 
+print "Exporting job history...";
 if(-f $VARPATH.'history_'.$p_job){
-	print "Exporting job history...\n";
 	system("$cmd_rm ${VARPATH}history_$p_job");
+  if($? == 0){
+  	print "done\n";
+  }else{
+  	f_output("ERROR","failed",1);
+  }
+}else{
+	print "not found\n";
 }
 
-print "Exporting job version logs...\n";
+print "Exporting job version logs...";
 for my $tmp(`$cmd_ls $SESSIONLOGPATH`){
 	chomp($tmp);
 	next if $tmp !~ /^$job{$p_job}{'NAME'}_\d+\.log+$/;
 	system("$cmd_rm $SESSIONLOGPATH$tmp");
 }
+print "done\n";
 
 if(-f $JOBCONFIGPATH.$p_job){
-	print "Exporting job configuration...\n";
+	print "Exporting job configuration...";
 	system("$cmd_rm ${JOBCONFIGPATH}$p_job");
+  if($? == 0){
+  	print "done\n";
+  }else{
+  	f_output("ERROR","failed",1);
+  }
 }
 
 print "Job $p_job exported.\n";
