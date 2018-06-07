@@ -22,7 +22,7 @@ our $p_version;
 ##
 my $param_ok = 0;
 $param_ok = job_exists($p_job) if $p_job;
-if($param_ok == 0){
+if($p_job && $param_ok == 0){
 	print STDERR "Error: Job \"$p_job\" does not exists.\n\nAvailable jobs:\n";
 	for my $tmp_job(list_jobs()){
 		print STDERR "\t$tmp_job\n";
