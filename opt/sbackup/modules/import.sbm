@@ -14,98 +14,59 @@ our %job;
 ##
 $p_path =~ s/\/$//;
 $p_path .= $slash;
-if($p_path){
-	if(!-e $p_path){
-		print STDERR "Error: Path does not exists.\n\n";
-		exit 1;
-	}	
-}else{
-	print STDERR "Error: Path to import not specified.\n\n";
-	exit 1;
-}
 
-if(!-d $p_path){
-	print STDERR "Error: Invalid path specified.\n\n";
-	exit 1;
-}
-
-if(!-l $p_path."meta_latest"){
-	print STDERR "Repository error: Missing meta link.\n\n";
-	exit 1;
-}
-
-if(!-d $p_path."meta_latest/"){
-	print STDERR "Repository error: Invalid meta link.\n\n";
-	exit 1;
-}
-
-if(!-l $p_path."data_latest"){
-	print STDERR "Repository error: Missing data link.\n\n";
-	exit 1;
-}
-
-if(!-d $p_path."data_latest/"){
-	print STDERR "Repository error: Invalid data link.\n\n";
-	exit 1;
-}
-
-$p_path =~ /\/sbackup_([^\/]*)\/$/;
+## Verify repository
+f_output("ERROR","Path does not exists.",1) if $p_path && !-e $p_path;
+f_output("ERROR","Path to import not specified.",1) if !$p_path;
+f_output("ERROR","Invalid path specified.",1) if !-d $p_path;
+f_output("ERROR","Repository error: Missing meta link.",1) if !-l $p_path."meta_latest";
+f_output("ERROR","Repository error: Invalid meta link.",1) if !-d $p_path."meta_latest/";
+f_output("ERROR","Repository error: Missing data link.",1) if !-l $p_path."data_latest";
+f_output("ERROR","Repository error: Invalid data link.",1) if !-d $p_path."data_latest/";
+f_output("ERROR","Not a repository.",1) if $p_path !~ /\/sbackup_([^\/]*)\/$/;
 my $p_job = $1;
-
-if(-f $JOBCONFIGPATH.$p_job){
-	print STDERR "Error: Job using name $p_job already exists.\n\n";
-	exit 1;
-}
+f_output("ERROR","Job using name $p_job already exists.",1) if -f $JOBCONFIGPATH.$p_job;
+f_output("ERROR","Repository error: Missing job configuration.",1) if !-f $p_path."meta_latest/".$p_job;
+f_output("ERROR","Repository error: Missing job history.",1) if !-f $p_path."meta_latest/history_".$p_job;
 
 print "Importing job $p_job...\n";
 
-if(!-f $p_path."meta_latest/".$p_job){
-	print STDERR "Repository error: missing job configuration.\n\n";
-	exit 1;
-}
-if(!-f $p_path."meta_latest/history_".$p_job){
-	print STDERR "Repository error: missing job history.\n\n";
-	exit 1;
-}
 
-
+## Import job history
 print "Importing job history...";
 system("$cmd_cp ${p_path}meta_latest/history_${p_job} ${VARPATH}");
 if($? == 0){
 	print "done\n";
+	print "Verifying job history...";
+	my @output = &get_history($p_job,'status,start,type,perf');
+  for my $tmp(@{$output[2]}){
+  	delete_history($p_job,"start==".$$tmp{'start'}) if $$tmp{'type'} eq "backup" && !-d $p_path."data_".$$tmp{'start'}."/";
+  	update_history($p_job,"status=0,perf=","type==backup,start==".$$tmp{'start'}) if $$tmp{'type'} eq "backup" && $$tmp{'perf'} eq "(Meta) 100%";
+  }
+  print "done\n";
 }else{
-	print STDERR "failed\n";
-	exit 1;
+	f_output("ERROR","failed",1);
 }
 
-print "Importing job logs...";
+## Import job version logs
+print "Importing job version logs...";
 my $success = 0;
 for my $tmp(`$cmd_ls ${p_path}meta_latest/`){
 	chomp($tmp);
 	next if $tmp !~ /^${p_job}_(\d+)\.log+$/;
 	system("$cmd_cp ${p_path}meta_latest/${p_job}_${1}.log ${SESSIONLOGPATH}");
-	if($? == 0){
-		print "done\n";
-		$success = 1;
-	}else{
-		print "failed\n";
-		$success = 1;
-	}
+	print $? == 0 ? "done\n" : "failed\n";
+	$success = 1;
 }
-if(!$success){
-	print "not found\n";
-}
+print "not found\n" if !$success;
 
+## Import job configuration
 print "Importing job configuration...";
 system("$cmd_cp ${p_path}meta_latest/${p_job} ${JOBCONFIGPATH}$p_job");
 if($? == 0){
 	print "done\n";
 }else{
-	print STDERR "failed\n";
-	exit 1;
+	f_output("ERROR","failed",1);
 }
-
-
-&f_output("DEBUG","Import part end.");
 
 return 1;

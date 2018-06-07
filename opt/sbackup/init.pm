@@ -31,9 +31,11 @@ sub f_output {
 	#my $reportdate = ($year+1900).'.'.substr(($mon + 101),1,2).'.'.substr(($mday + 100),1,2).' '.substr(($hour + 100),1,2).':'.substr(($min + 100),1,2).':'.substr(($sec + 100),1,2);
 	my $reportdate = substr(($hour + 100),1,2).':'.substr(($min + 100),1,2).':'.substr(($sec + 100),1,2);
 	if($msg_type eq "ERROR"){
-	  print "\n$err_msg\n";
-	  #if($exitcode == 9){&f_startsafemode;}
-    if($additionalcode){exit $additionalcode;}
+	  print STDERR "$err_msg\n";
+    if($additionalcode){
+    	print STDERR "\n";
+    	exit $additionalcode;
+    }
   }
   if($main::DEBUGMODE){
     if($msg_type eq "DEBUG"){
