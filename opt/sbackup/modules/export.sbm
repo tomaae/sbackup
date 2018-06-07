@@ -58,6 +58,4 @@ if(-f $JOBCONFIGPATH.$p_job){
 
 print "Job $p_job exported.\n";
 
-&f_output("DEBUG","Export part end.");
-
 return 1;

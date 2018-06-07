@@ -99,8 +99,4 @@ if($pid_output[0] && $pid_output[2][0]{'rpid'} && $pid_output[2][0]{'rpid'}  =~ 
 	exit 1;
 }
 
-
-
-&f_output("DEBUG","Abort part end.");
-
 return 1;

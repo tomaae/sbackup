@@ -7,9 +7,8 @@
 use strict;
 use warnings;
 our %job;
-use POSIX qw(strftime ceil mktime);
+use POSIX qw(strftime mktime);
 
-&f_output("DEBUG","Scheduler part start.");
 ##
 ## Set variables
 ##
@@ -162,7 +161,5 @@ for my $tmp_job(sort keys %job){
   	system("$cmd_sleep 1") if !$main::SIMULATEMODE;
 	}	
 }
-
-&f_output("DEBUG","Scheduler part end.");
 
 return 1;

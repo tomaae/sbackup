@@ -201,7 +201,6 @@ if(-f $VARPATH.'history_'.$p_job){
   			&f_output("DEBUG","Found log.");
   			system("$cmd_rm \"".$SESSIONLOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".log\"");
   		}
-  		###########Add remove from history
   		delete_history($p_job,"start==".$$tmp{'start'});
   	}
   }
@@ -216,9 +215,6 @@ update_history($p_job,"status=".$SB_ECODE.",end=".$SB_TIMEEND,"status==running,t
 append_log($sessionlogfile,"End time: ".$SB_TIMEEND." (".epoch2human($SB_TIMEEND).")\nStatus:".$SB_ECODE."\n");
 append_log($sessionlogfile,"Purge completed successfully.") if $SB_ECODE eq "0";
 
-
 rm_runfile($p_job);
-
-&f_output("DEBUG","Purge part end.");
 
 return 1;

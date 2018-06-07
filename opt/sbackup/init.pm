@@ -18,7 +18,6 @@ our @EXPORT = qw(
 									$cmd_ls $cmd_ln $cmd_rm $cmd_ps $cmd_sleep $cmd_cp $cmd_mv $cmd_mkdir $cmd_chmod $cmd_rsync $cmd_kill $cmd_pkill
 							  );
 
-
 ##
 ##OUTPUT HANDLER
 ##

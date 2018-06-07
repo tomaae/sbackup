@@ -370,6 +370,4 @@ if($SB_ECODE eq "0" && $job{$p_job}{'POST'}{'-job'}{'-name'} ne ""){
 	}
 }
 
-&f_output("DEBUG","Backup part end.");
-
 return 1;
