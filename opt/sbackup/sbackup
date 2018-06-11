@@ -24,7 +24,7 @@ our %job = load_jobs_config;
 ## Parameters
 ##
 our ($DEBUGMODE, $sv_history, $sv_job, $sv_log, $sv_backup, $sv_purge, $sv_verify, $sv_restore, $sv_copy, $sv_abort, $sv_export, $sv_import, $sv_version, $sv_days, $sv_type, $sv_path, $sv_into, $sv_background, $sv_scheduler, $sv_api, $sv_all);
-our ($p_debug, $p_job, $p_version, $p_days, $p_type, $p_path, $p_into);
+our ($p_debug, $p_job, $p_version, $p_days, $p_type, $p_path, $p_into, $p_api);
 $p_debug = 1;
 my %arguments;
 %{$arguments{"debug"}} = (
@@ -194,10 +194,10 @@ my %arguments;
 );
 %{$arguments{"api"}} = (
 	"var" => \$sv_api,
-	"vals_mandatory" => 0,
-	"dependency" => "job",
-	"help_header" => "Run api",
-	"help_args" => "[-api]",
+	"val1" => \$p_api,
+	"vals_mandatory" => 1,
+	"help_header" => "Use api",
+	"help_args" => "[-api <api name>]",
 	"help_display" => 0,
 );
 
@@ -224,6 +224,11 @@ my %arguments;
 ##
 ##CODE START
 ##
+
+if($sv_api){
+	require "modules/api.sbm";
+	exit 0;
+}
 
 if($sv_backup){
 	require "modules/backup.sbm";

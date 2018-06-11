@@ -1,0 +1,33 @@
+###########################################################################################
+#
+#                                         sbackup
+#                                        api module
+#
+###########################################################################################
+use strict;
+use warnings;
+our $p_api;
+
+if($p_api eq "ac_available_jobs"){
+	for my $tmp_job(list_jobs()){
+		print "$tmp_job\n";
+	}
+	exit 0;
+}
+
+if($p_api eq "ac_available_versions"){
+	our $p_job;
+	print "asasas";
+	exit 1 if !$p_job;
+	exit 1 if !job_exists($p_job);
+	
+	my @tmp_history = &get_history($p_job,'status,name,start,end,size,perf,type');
+	for my $tmp(@{$tmp_history[2]}){
+		#next if $p_type && $$tmp{'type'} ne $p_type;
+		print $$tmp{'start'},"\n";
+	}
+	exit 0;
+}
+
+
+return 1;

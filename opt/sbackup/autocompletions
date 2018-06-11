@@ -1,0 +1,76 @@
+# bash completion for sbackup                                  -*- shell-script -*-
+
+_sbackup_available_jobs()
+{
+    COMPREPLY=( $(compgen -W "$( /opt/sbackup/sbackup -api ac_available_jobs 2>/dev/null | \
+        sed -n -e 's|^\(.*\)$|\1|p' )" -- "$cur" ) )
+}
+
+_sbackup_available_versions()
+{
+		for e in ${!words[@]}; do
+			if [[ "${words[e]}" == -job* ]]; then
+				p_job=${words[e + 1]}
+			fi
+		done
+		if [[ "$p_job" == -* ]]; then
+			return 1;
+		fi
+    COMPREPLY=( $(compgen -W "$( /opt/sbackup/sbackup -api ac_available_versions -job $p_job 2>/dev/null | \
+        sed -n -e 's|^\(.*\)$|\1|p' )" -- "$cur" ) )
+}
+
+_sbackup_job()
+{
+	local cur prev words cword
+	_init_completion || return
+
+	case $prev in
+		-job*)
+			_sbackup_available_jobs
+			return 0
+			;;
+		-ver*)
+			_sbackup_available_versions
+			return 0
+			;;
+		-typ*)
+			COMPREPLY=( $( compgen -W "backup purge verify" -- "$cur" ) )
+			return 0
+			;;
+	esac
+
+	COMPREPLY=( $( compgen -W "-type -version" -- "$cur" ) )
+	for i in ${!COMPREPLY[@]}; do
+		for e in ${!words[@]}; do
+			if [[ "${words[e]}" == "${COMPREPLY[i]}" ]]; then
+				unset COMPREPLY[i]
+			fi
+		done
+	done
+}
+
+
+_sbackup()
+{
+	local cur prev words cword
+	_init_completion || return
+
+	local command options
+	
+	commands='-backup -purge -abort -job -export -import'
+
+	if [[ $cword -eq 1 ]]; then
+		COMPREPLY=( $( compgen -W "$commands" -- "$cur" ) )
+	else
+		command=${words[1]}
+		case $command in
+			-job)
+				_sbackup_job
+				;;
+		esac
+	fi
+} &&
+complete -F _sbackup sbackup #/usr/share/bash-completion/completions
+
+# ex: ts=4 sw=4 et filetype=sh
