@@ -116,16 +116,13 @@ if(-f $VARPATH.'history_'.$p_job){
   	}
   }
   &f_output("DEBUG","Last completed version: ".$LAST_COMPLETED_STAMP) if $LAST_COMPLETED_STAMP;
-  if(defined $p_days && ($p_days eq "0" || $p_days > 0)){
-  	&f_output("DEBUG","Purge set to: ".$p_days);
-  	$job{$p_job}{'SOURCE'}{'-protect'} = $p_days;
-  }elsif($job{$p_job}{'SOURCE'}{'-protect'}){
-  	&f_output("DEBUG","Purge set to: ".$job{$p_job}{'SOURCE'}{'-protect'});
-  }
+  my $DATA_PROTECTION = $job{$p_job}{'SOURCE'}{'-protect'};
+  $DATA_PROTECTION = $p_days if (defined $p_days && ($p_days eq "0" || $p_days > 0));
+  &f_output("DEBUG","Purge set to: ".$DATA_PROTECTION);
   
   ##Set admin job type protection
   my $ADMIN_PROTECTION = 3;
-  $ADMIN_PROTECTION += $job{$p_job}{'SOURCE'}{'-protect'} if $job{$p_job}{'SOURCE'}{'-protect'} && $job{$p_job}{'SOURCE'}{'-protect'} > 0;
+  $ADMIN_PROTECTION += $DATA_PROTECTION if $DATA_PROTECTION && $DATA_PROTECTION > 0;
   &f_output("DEBUG","Admin type job protection: $ADMIN_PROTECTION.");
   
   for my $tmp(@{$output[2]}){
@@ -140,23 +137,23 @@ if(-f $VARPATH.'history_'.$p_job){
   		next;
   	}
   	##Purge versions
-  	if($$tmp{'type'} eq "purge" && ($$tmp{'start'} < ($ADMIN_PROTECTION * 86400))){
+  	if($$tmp{'type'} eq "purge" && ($$tmp{'start'} < ($SB_TIMESTART - ($ADMIN_PROTECTION * 86400)))){
   		&f_output("DEBUG","Purge session for removal.");
   		$obsolete = 1;
   	}
   	##Failed backup versions
-  	if($$tmp{'type'} eq "backup" && $$tmp{'status'} ne "0" && ($$tmp{'start'} < ($ADMIN_PROTECTION * 86400))){
+  	if($$tmp{'type'} eq "backup" && $$tmp{'status'} ne "0" && ($$tmp{'start'} < ( $SB_TIMESTART - ($ADMIN_PROTECTION * 86400)))){
   		&f_output("DEBUG","Failed backup session for removal.");
   		$obsolete = 1;
   	}
   	##Completed backup versions
-  	if($$tmp{'type'} eq "backup" && $$tmp{'status'} eq "0" && ($$tmp{'start'} < ($job{$p_job}{'SOURCE'}{'-protect'} * 86400))){
+  	if($$tmp{'type'} eq "backup" && $$tmp{'status'} eq "0" && ($$tmp{'start'} < ( $SB_TIMESTART - ($DATA_PROTECTION * 86400)))){
   		&f_output("DEBUG","Obsolete backup session for removal.");
   		$obsolete = 1;
   	}
   	
   	##Completed backup versions with 0 protection (keep last version)
-  	if($$tmp{'type'} eq "backup" && $job{$p_job}{'SOURCE'}{'-protect'} eq "0" && $$tmp{'start'} < $LAST_COMPLETED_STAMP){
+  	if($$tmp{'type'} eq "backup" && $DATA_PROTECTION eq "0" && $$tmp{'start'} < $LAST_COMPLETED_STAMP){
   		&f_output("DEBUG","Obsolete backup session for removal.");
   		$obsolete = 1;
   	}

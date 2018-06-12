@@ -142,7 +142,7 @@ my %arguments;
 	"var" => \$sv_type,
 	"val1" => \$p_type,
 	"vals_mandatory" => 1,
-	"dependency" => "job",
+	"dependency" => "job;purge",
 	"help_header" => "Job type:",
 	"help_args" => "-job <job name> -type (backup|purge|verify)",
 	"help_display" => 0,
