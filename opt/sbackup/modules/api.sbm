@@ -6,7 +6,10 @@
 ###########################################################################################
 use strict;
 use warnings;
+use POSIX qw(floor);
+
 our $p_api;
+our %job;
 
 if($p_api eq "ac_available_jobs"){
 	for my $tmp_job(list_jobs()){
@@ -15,15 +18,44 @@ if($p_api eq "ac_available_jobs"){
 	exit 0;
 }
 
+if($p_api eq "ac_running_jobs"){
+	for my $tmp(sort keys %job){
+		print $job{$tmp}{'NAME'}."\n" if -f $RUNFILEPATH."sbackup_".$job{$tmp}{'NAME'};
+	}
+	exit 0;
+}
+
+if($p_api eq "ac_purgeable_days"){
+	our $p_job;
+	exit 1 if !$p_job;
+	exit 1 if !job_exists($p_job);
+	
+	my $CURRENT_EPOCH = time();
+	my $OLDEST_EPOCH = $CURRENT_EPOCH;
+	my @tmp_history = &get_history($p_job,'status,name,start,end,size,perf,type');
+	for my $tmp(@{$tmp_history[2]}){
+		next if $$tmp{'type'} eq "purge";
+		next if $$tmp{'type'} eq "verify";
+		next if $$tmp{'type'} eq "restore";
+		$OLDEST_EPOCH = $$tmp{'start'} if $OLDEST_EPOCH > $$tmp{'start'};
+	}
+	
+	for ( my $i = floor(($CURRENT_EPOCH - $OLDEST_EPOCH) /60 /60 /24) ; $i >= 0; $i--) {
+		print "$i\n";
+	}
+	exit 0;
+}
+
+
 if($p_api eq "ac_available_versions"){
 	our $p_job;
-	print "asasas";
+	our $p_type;
 	exit 1 if !$p_job;
 	exit 1 if !job_exists($p_job);
 	
 	my @tmp_history = &get_history($p_job,'status,name,start,end,size,perf,type');
 	for my $tmp(@{$tmp_history[2]}){
-		#next if $p_type && $$tmp{'type'} ne $p_type;
+		next if $p_type && $$tmp{'type'} ne $p_type;
 		print $$tmp{'start'},"\n";
 	}
 	exit 0;

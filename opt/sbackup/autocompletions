@@ -2,36 +2,68 @@
 
 _sbackup_available_jobs()
 {
-    COMPREPLY=( $(compgen -W "$( /opt/sbackup/sbackup -api ac_available_jobs 2>/dev/null | \
-        sed -n -e 's|^\(.*\)$|\1|p' )" -- "$cur" ) )
+  COMPREPLY=( $(compgen -W "$( /opt/sbackup/sbackup -api ac_available_jobs 2>/dev/null | \
+      sed -n -e 's|^\(.*\)$|\1|p' )" -- "$cur" ) )
+}
+
+_sbackup_running_jobs()
+{
+  COMPREPLY=( $(compgen -W "$( /opt/sbackup/sbackup -api ac_running_jobs 2>/dev/null | \
+      sed -n -e 's|^\(.*\)$|\1|p' )" -- "$cur" ) )
+}
+
+_sbackup_purgeable_days()
+{
+	if [[ "$1" == -* ]]; then
+		return 1;
+	fi
+	
+  COMPREPLY=( $(compgen -W "$( /opt/sbackup/sbackup -api ac_purgeable_days -job $1 2>/dev/null | \
+      sed -n -e 's|^\(.*\)$|\1|p' )" -- "$cur" ) )
 }
 
 _sbackup_available_versions()
 {
-		for e in ${!words[@]}; do
-			if [[ "${words[e]}" == -job* ]]; then
-				p_job=${words[e + 1]}
-			fi
-		done
-		if [[ "$p_job" == -* ]]; then
-			return 1;
+	local cli_type
+	for e in ${!words[@]}; do
+		if [[ "${words[e]}" == -job* ]]; then
+			p_job=${words[e + 1]}
 		fi
-    COMPREPLY=( $(compgen -W "$( /opt/sbackup/sbackup -api ac_available_versions -job $p_job 2>/dev/null | \
-        sed -n -e 's|^\(.*\)$|\1|p' )" -- "$cur" ) )
+	done
+	if [[ "$p_job" == -* ]]; then
+		return 1;
+	fi
+	
+	for e in ${!words[@]}; do
+		if [[ "${words[e]}" == -typ* ]]; then
+			cli_type="-type "
+			cli_type+=${words[e + 1]}
+		fi
+	done
+	
+  COMPREPLY=( $(compgen -W "$( /opt/sbackup/sbackup -api ac_available_versions $cli_type -job $p_job 2>/dev/null | \
+      sed -n -e 's|^\(.*\)$|\1|p' )" -- "$cur" ) )
 }
 
 _sbackup_job()
 {
 	local cur prev words cword
 	_init_completion || return
-
+	
+	local p_job
+	
 	case $prev in
 		-job*)
 			_sbackup_available_jobs
 			return 0
 			;;
 		-ver*)
-			_sbackup_available_versions
+    	for e in ${!words[@]}; do
+    		if [[ "${words[e]}" == -pur* ]]; then
+    			p_job=${words[e + 1]}
+    		fi
+    	done
+			_sbackup_available_versions $p_job
 			return 0
 			;;
 		-typ*)
@@ -39,8 +71,17 @@ _sbackup_job()
 			return 0
 			;;
 	esac
+	
+	commands='-type -version'
+	
+	for e in ${!words[@]}; do
+		if [[ "${words[e]}" == -ver* ]]; then
+			commands+=' -log'
+			p_job=${words[e + 1]}
+		fi
+	done
 
-	COMPREPLY=( $( compgen -W "-type -version" -- "$cur" ) )
+	COMPREPLY=( $( compgen -W "$commands" -- "$cur" ) )
 	for i in ${!COMPREPLY[@]}; do
 		for e in ${!words[@]}; do
 			if [[ "${words[e]}" == "${COMPREPLY[i]}" ]]; then
@@ -48,6 +89,66 @@ _sbackup_job()
 			fi
 		done
 	done
+}
+
+_sbackup_backup()
+{
+	local cur prev words cword
+	_init_completion || return
+
+
+	case $prev in
+		-backup*|-export*)
+			_sbackup_available_jobs
+			return 0
+			;;
+	esac
+}
+
+_sbackup_purge()
+{
+	local cur prev words cword
+	_init_completion || return
+	
+	local p_job
+	
+	case $prev in
+		-purge)
+			_sbackup_available_jobs
+			return 0
+			;;
+		-day*)
+    	for e in ${!words[@]}; do
+    		if [[ "${words[e]}" == -pur* ]]; then
+    			p_job=${words[e + 1]}
+    		fi
+    	done
+			_sbackup_purgeable_days $p_job
+			return 0
+			;;
+	esac
+	
+	COMPREPLY=( $( compgen -W '-days' -- "$cur" ) )
+	for i in ${!COMPREPLY[@]}; do
+		for e in ${!words[@]}; do
+			if [[ "${words[e]}" == "${COMPREPLY[i]}" ]]; then
+				unset COMPREPLY[i]
+			fi
+		done
+	done
+}
+
+_sbackup_abort()
+{
+	local cur prev words cword
+	_init_completion || return
+
+	case $prev in
+		-abort)
+			_sbackup_running_jobs
+			return 0
+			;;
+	esac
 }
 
 
@@ -67,6 +168,15 @@ _sbackup()
 		case $command in
 			-job)
 				_sbackup_job
+				;;
+			-backup|-export)
+				_sbackup_backup
+				;;
+			-purge)
+				_sbackup_purge
+				;;
+			-abort)
+				_sbackup_abort
 				;;
 		esac
 	fi
