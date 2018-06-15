@@ -114,9 +114,14 @@ if($source_result[0]){
 
 &f_output("DEBUG","Source path: \"$source_path\"");
 
-## LVM
+##
+## LVM snapshot
+##
 if($job{$p_job}{'SOURCE'}{'-snapshot'}{'-enabled'} eq 1 && $job{$p_job}{'SOURCE'}{'-snapshot'}{'-type'} eq "lvm"){
-	
+  &f_output("DEBUG","Integration: LVM");
+  require lvm;
+  import lvm;
+	lvm_create_snapshot($p_job, $source_path, $job{$p_job}{'SOURCE'}{'-snapshot'}{'-size'}, $job{$p_job}{'SOURCE'}{'-snapshot'}{'-fallback'}, $sessionlogfile, $SB_TIMESTART);
 }
 
 ##
@@ -270,17 +275,29 @@ if($SB_ECODE ne "" && $SB_ECODE != 0){
 	}
 }
 
+##
+## LVM snapshot
+##
+if($job{$p_job}{'SOURCE'}{'-snapshot'}{'-enabled'} eq 1 && $job{$p_job}{'SOURCE'}{'-snapshot'}{'-type'} eq "lvm"){
+  &f_output("DEBUG","Integration: LVM");
+  require lvm;
+  import lvm;
+	lvm_remove_snapshot($p_job, $source_path, $job{$p_job}{'SOURCE'}{'-snapshot'}{'-size'}, $job{$p_job}{'SOURCE'}{'-snapshot'}{'-fallback'}, $sessionlogfile, $SB_TIMESTART);
+}
+
 ##Check backup status
-for(read_log($sessionlogfile)){
-	chomp;
-	if(/^Total file size: ([0-9,\.]+) bytes/){
-		$RSSIZE = $1;
-		$RSSIZE =~ s/,//g;
-	}
-	if(/ ([0-9,]+).\d\d bytes\/sec$/){
-		$RSPERF = $1;
-		$RSPERF =~ s/,//g;
-	}
+if($SB_ECODE eq "0"){
+  for(read_log($sessionlogfile)){
+  	chomp;
+  	if(/^Total file size: ([0-9,\.]+) bytes/){
+  		$RSSIZE = $1;
+  		$RSSIZE =~ s/,//g;
+  	}
+  	if(/ ([0-9,]+).\d\d bytes\/sec$/){
+  		$RSPERF = $1;
+  		$RSPERF =~ s/,//g;
+  	}
+  }
 }
 
 $SB_TIMEEND = time();

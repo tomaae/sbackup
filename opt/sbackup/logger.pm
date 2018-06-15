@@ -420,6 +420,11 @@ sub write_log{
 
 sub read_log{
 	my ($logfile)=@_;
+	&f_output("DEBUG","Reading log $logfile");
+	if(!-f $logfile){
+		&f_output("DEBUG","File does not exists $logfile");
+		return;
+	}
 	open log_file,"<$logfile";
 	flock log_file,1;
 	my @tmp = <log_file>;
