@@ -80,7 +80,7 @@ sub get_integ_path{
 	
 	## OMV4
   if($type eq "omv4"){
-  	&f_output("DEBUG","Source integration: OMV4");
+  	&f_output("DEBUG","Integration: OMV4");
   	require omv4;
   	import omv4;
   	$returncodes[2]{'integ'} = "OMV ";
@@ -91,7 +91,7 @@ sub get_integ_path{
   
   ## Filesystem
   if($type eq "filesystem"){
-  	&f_output("DEBUG","Source integration: filesystem");
+  	&f_output("DEBUG","Integration: filesystem");
   	$returncodes[2]{'path'} = $path;
   	if($returncodes[2]{'path'} !~  /^\//){job_failed("Source $1");}
   	job_failed("Backup source path not found.") if !-d $returncodes[2]{'path'};
@@ -218,18 +218,16 @@ my $progress_percent = 0;
 my $progress_percent_old = 0;
 &f_output("DEBUG","Getting change list for backup.");
 my $cmd_param = " --stats -aEAXvi --out-format='%i|%n' --delete ".$INCR." \"".$source_path.$slash."\" \"".$target_path.$slash."data_".$SB_TIMESTART.$slash."\"";
-if(!$main::SIMULATEMODE){
-  open(my $cmd_out,"-|","$cmd_rsync --dry-run $cmd_param 2>&1") || die "Failed: $!\n";
-  while (my $line = <$cmd_out>){
-  	$total_files++ if $line =~ /^\>f\+/;
-  	if($line =~ /^Total file size: ([0-9,\.]+) bytes/){
-			$RSSIZE = $1;
-			$RSSIZE =~ s/,//g;
-		}
-  }
-  close($cmd_out);
-  update_history($p_job,"size=".$RSSIZE.",perf=0%","status==running,type==backup,start==".$SB_TIMESTART);
+open(my $cmd_out,"-|","$cmd_rsync --dry-run $cmd_param 2>&1") || die "Failed: $!\n";
+while (my $line = <$cmd_out>){
+	$total_files++ if $line =~ /^\>f\+/;
+	if($line =~ /^Total file size: ([0-9,\.]+) bytes/){
+		$RSSIZE = $1;
+		$RSSIZE =~ s/,//g;
+	}
 }
+close($cmd_out);
+update_history($p_job,"size=".$RSSIZE.",perf=0%","status==running,type==backup,start==".$SB_TIMESTART);
 $total_files = 1 if $total_files == 0; ## Never divide by 0;
 
 &f_output("DEBUG","Starting backup.");
@@ -237,32 +235,34 @@ $total_files = 1 if $total_files == 0; ## Never divide by 0;
 my $aborting = 0;
 my @pid_output = &get_runfile($p_job,'status,type,pid');
 $aborting = 1 if $pid_output[0] && $pid_output[2][0]{'pid'}  =~ /^\d+$/ && $pid_output[2][0]{'status'} eq 'aborting';
-if(!$main::SIMULATEMODE && !$aborting){
-	my @val;
-  my $rpid = open(my $cmd_out,"-|","$cmd_rsync $cmd_param 2>&1") || die "Failed: $!\n";
-  update_runfile($p_job,"rpid=".$rpid) if $rpid && $rpid > 0;
-  while (my $line = <$cmd_out>){
-  	chomp($line);
-  	if($line =~ /^\>f\+/){
-  		@val = split(/\|/,$line);
-  		$copied_files++;
-  		$copied_files = $total_files - 1 if $copied_files >= $total_files; ## Should not display 100%
-  		$progress_percent = ($copied_files/$total_files)*100;
-  		$progress_percent =~ /(\d+)\.?\d?\d?/;
-  		$progress_percent = $1;
-  		append_log($sessionlogfile,'+'.$val[1]);
-  		update_history($p_job,"perf=".$progress_percent."%","status==running,type==backup,start==".$SB_TIMESTART) if $progress_percent ne $progress_percent_old;
-  		$progress_percent_old = $progress_percent;
-  	}else{
-  		if($line =~ /^\*deleting/){
-  			@val = split(/\|/,$line);
-  			append_log($sessionlogfile,'-'.$val[1]);
-  		}
-  		append_log($sessionlogfile,$line) if $line !~ /\|/;
-  	}
-  }
-  close($cmd_out);
-  $SB_ECODE=$?;
+if(!$aborting){
+my @val;
+my $rsync_simulate = "";
+$rsync_simulate = ' --dry-run ' if $main::SIMULATEMODE;
+my $rpid = open(my $cmd_out,"-|","$cmd_rsync $rsync_simulate $cmd_param 2>&1") || die "Failed: $!\n";
+update_runfile($p_job,"rpid=".$rpid) if $rpid && $rpid > 0;
+while (my $line = <$cmd_out>){
+	chomp($line);
+	if($line =~ /^\>f\+/){
+		@val = split(/\|/,$line);
+		$copied_files++;
+		$copied_files = $total_files - 1 if $copied_files >= $total_files; ## Should not display 100%
+		$progress_percent = ($copied_files/$total_files)*100;
+		$progress_percent =~ /(\d+)\.?\d?\d?/;
+		$progress_percent = $1;
+		append_log($sessionlogfile,'+'.$val[1]);
+		update_history($p_job,"perf=".$progress_percent."%","status==running,type==backup,start==".$SB_TIMESTART) if $progress_percent ne $progress_percent_old;
+		$progress_percent_old = $progress_percent;
+	}else{
+		if($line =~ /^\*deleting/){
+			@val = split(/\|/,$line);
+			append_log($sessionlogfile,'-'.$val[1]);
+		}
+		append_log($sessionlogfile,$line) if $line !~ /\|/;
+	}
+}
+close($cmd_out);
+$SB_ECODE=$?;
 }
 if($SB_ECODE ne "" && $SB_ECODE != 0){
 	if(!$aborting){
@@ -308,29 +308,31 @@ if($SB_ECODE eq "0"){
 	update_history($p_job,"perf=(Meta) 100%","status==running,type==backup,start==".$SB_TIMESTART);
 	my $meta_ecode = 0;
 	
-	##Create meta directory
-	system("$cmd_mkdir ".$target_path.$slash."meta_".$SB_TIMESTART.$slash);
-	$meta_ecode = $? if $? ne "0";
-  system("$cmd_chmod 777 ".$target_path.$slash."meta_".$SB_TIMESTART.$slash) if ($? != 0);
-  $meta_ecode = $? if $? ne "0";
+	if(!$main::SIMULATEMODE){
+  	##Create meta directory
+  	system("$cmd_mkdir ".$target_path.$slash."meta_".$SB_TIMESTART.$slash);
+  	$meta_ecode = $? if $? ne "0";
+    system("$cmd_chmod 777 ".$target_path.$slash."meta_".$SB_TIMESTART.$slash) if ($? != 0);
+    $meta_ecode = $? if $? ne "0";
 
-  ##Copy meta
-  system("$cmd_cp \"".$VARPATH.'history_'.$p_job."\"   \"".$target_path.$slash."meta_".$SB_TIMESTART.$slash."\"");
-  $meta_ecode = $? if $? ne "0";
-  system("$cmd_cp \"".$sessionlogfile."\"              \"".$target_path.$slash."meta_".$SB_TIMESTART.$slash."\"");
-  $meta_ecode = $? if $? ne "0";
-  system("$cmd_cp \"".$JOBCONFIGPATH.$slash.$p_job."\" \"".$target_path.$slash."meta_".$SB_TIMESTART.$slash."\"");
-  $meta_ecode = $? if $? ne "0";
-  
-	##Link latest backup
-  system("$cmd_rm \"".$target_path.$slash."data_latest\"") if -l $target_path.$slash."data_latest" || -f $target_path.$slash."data_latest";
-  $meta_ecode = $? if $? ne "0";
-  system("cd \"$target_path\" && $cmd_ln \"data_".$SB_TIMESTART."\" \"data_latest\"");
-  $meta_ecode = $? if $? ne "0";
-  system("$cmd_rm \"".$target_path.$slash."meta_latest\"") if -l $target_path.$slash."meta_latest" || -f $target_path.$slash."meta_latest";
-  $meta_ecode = $? if $? ne "0";
-  system("cd \"$target_path\" && $cmd_ln \"meta_".$SB_TIMESTART."\" \"meta_latest\"");
-  $meta_ecode = $? if $? ne "0";
+    ##Copy meta
+    system("$cmd_cp \"".$VARPATH.'history_'.$p_job."\"   \"".$target_path.$slash."meta_".$SB_TIMESTART.$slash."\"");
+    $meta_ecode = $? if $? ne "0";
+    system("$cmd_cp \"".$sessionlogfile."\"              \"".$target_path.$slash."meta_".$SB_TIMESTART.$slash."\"");
+    $meta_ecode = $? if $? ne "0";
+    system("$cmd_cp \"".$JOBCONFIGPATH.$slash.$p_job."\" \"".$target_path.$slash."meta_".$SB_TIMESTART.$slash."\"");
+    $meta_ecode = $? if $? ne "0";
+    
+  	##Link latest backup
+    system("$cmd_rm \"".$target_path.$slash."data_latest\"") if -l $target_path.$slash."data_latest" || -f $target_path.$slash."data_latest";
+    $meta_ecode = $? if $? ne "0";
+    system("cd \"$target_path\" && $cmd_ln \"data_".$SB_TIMESTART."\" \"data_latest\"");
+    $meta_ecode = $? if $? ne "0";
+    system("$cmd_rm \"".$target_path.$slash."meta_latest\"") if -l $target_path.$slash."meta_latest" || -f $target_path.$slash."meta_latest";
+    $meta_ecode = $? if $? ne "0";
+    system("cd \"$target_path\" && $cmd_ln \"meta_".$SB_TIMESTART."\" \"meta_latest\"");
+    $meta_ecode = $? if $? ne "0";
+	}
   if($meta_ecode eq "0"){
   	append_log($sessionlogfile,"Meta data saved successfully.");
   }else{
