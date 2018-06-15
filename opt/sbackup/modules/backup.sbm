@@ -69,49 +69,66 @@ insert_history($p_job,"type=backup,status=running,name=".$job{$p_job}{'NAME'}.",
 append_log($sessionlogfile,"Backup name: ".$job{$p_job}{'NAME'});
 append_log($sessionlogfile,"Start time: ".$SB_TIMESTART." (".epoch2human($SB_TIMESTART).")\n");
 
+
+##
+## Get integ target
+##
+sub get_integ_path{
+	my ($type,$path)=@_;
+	my @returncodes;
+	$returncodes[0] = 0;
+	
+	## OMV4
+  if($type eq "omv4"){
+  	&f_output("DEBUG","Source integration: OMV4");
+  	require omv4;
+  	import omv4;
+  	$returncodes[2]{'integ'} = "OMV ";
+  	$returncodes[2]{'path'} = omv_prepare_sharedfolder($path);
+  	if($returncodes[2]{'path'} =~ /^Error:(.*)$/){job_failed("Source $1");}
+  	$returncodes[0] = 1;
+  }
+  
+  ## Filesystem
+  if($type eq "filesystem"){
+  	&f_output("DEBUG","Source integration: filesystem");
+  	$returncodes[2]{'path'} = $path;
+  	if($returncodes[2]{'path'} !~  /^\//){job_failed("Source $1");}
+  	job_failed("Backup source path not found.") if !-d $returncodes[2]{'path'};
+  	$returncodes[0] = 1;
+  }
+
+	return @returncodes;
+}
+
 ##
 ## Get source
 ##
 my $source_integ = "";
 my $source_path = "";
-if($job{$p_job}{'SOURCE'}{'-type'} eq "omv4"){
-	&f_output("DEBUG","Source integration: OMV4");
-	require omv4;
-	import omv4;
-	$source_integ = "OMV ";
-	$source_path = omv_prepare_sharedfolder($job{$p_job}{'SOURCE'}{'-path'});
-	if($source_path =~ /^Error:(.*)$/){job_failed("Source $1");}
-}
-
-if($job{$p_job}{'SOURCE'}{'-type'} eq "filesystem"){
-	&f_output("DEBUG","Source integration: filesystem");
-	$source_path = $job{$p_job}{'SOURCE'}{'-path'};
-	if($source_path !~  /^\//){job_failed("Source $1");}
-	job_failed("Backup source path not found.") if !-d $source_path;
+my @source_result = get_integ_path($job{$p_job}{'SOURCE'}{'-type'}, $job{$p_job}{'SOURCE'}{'-path'});
+if($source_result[0]){
+	$source_integ = $source_result[2]{'integ'};
+	$source_path = $source_result[2]{'path'};
 }
 
 &f_output("DEBUG","Source path: \"$source_path\"");
 
+## LVM
+if($job{$p_job}{'SOURCE'}{'-snapshot'}{'-enabled'} eq 1 && $job{$p_job}{'SOURCE'}{'-snapshot'}{'-type'} eq "lvm"){
+	
+}
 
 ##
 ## Get target
 ##
 my $target_integ = "";
 my $target_path = "";
-if($job{$p_job}{'TARGET'}{'-type'} eq "omv4"){
-	&f_output("DEBUG","Target integration: OMV4");
-	require omv4;
-	import omv4;
-	$target_integ = "OMV ";
-	$target_path = omv_prepare_sharedfolder($job{$p_job}{'TARGET'}{'-path'});
-	if($target_path =~ /^Error:(.*)$/){job_failed("Target $1")}
-}
 
-if($job{$p_job}{'TARGET'}{'-type'} eq "filesystem"){
-	&f_output("DEBUG","Target integration: filesystem");
-	$target_path = $job{$p_job}{'TARGET'}{'-path'};
-	if($target_path !~  /^\//){job_failed("Target $1");}
-	job_failed("Backup target path not found.") if !-d $target_path;
+my @target_result = get_integ_path($job{$p_job}{'TARGET'}{'-type'}, $job{$p_job}{'TARGET'}{'-path'});
+if($target_result[0]){
+	$target_integ = $target_result[2]{'integ'};
+	$target_path = $target_result[2]{'path'};
 }
 
 job_failed("Backup source and target are identical.") if $source_path eq $target_path;
