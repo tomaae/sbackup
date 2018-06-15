@@ -16,17 +16,31 @@ use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(lvm_create_snapshot lvm_remove_snapshot);
 
+
 ##
 ## lvm_create_snapshot
 ##
 sub lvm_create_snapshot {
-	my ($p_job, $source_path,$lvm_size,$lvm_fallback, $sessionlogfile, $SB_TIMESTART)=@_;
+	my ($p_job, $SB_TIMESTART, $source_path, $lvm_size, $lvm_fallback)=@_;
+	my $sessionlogfile = $::SESSIONLOGPATH.$p_job."_".$SB_TIMESTART.".log";
 
 	&f_output("DEBUG","Attempting to create LVM snapshot for path: \"$source_path\"");
 	append_log($sessionlogfile,"Attempting to create LVM snapshot...");
 	update_history($p_job,"perf=(Snapshot) 0%","status==running,type==backup,start==".$SB_TIMESTART);
 	my $error = 0;
 	my $result = "";
+	my $source_dir = "";
+	
+	## Get dir on source
+	my $tmp = `df --output=target \"$source_path\"|tail -1 2>&1`;
+	chomp($tmp);
+	if($? == 0){
+		$source_dir = $source_path;
+		$source_dir =~ s/^$tmp//;
+	}else{
+		append_log($sessionlogfile,"Could not get source dir.");
+		$error = 1;
+	}
 	
 	## Get block device
 	my $lvm_blockdevice = `df --output=source \"$source_path\"|tail -1 2>&1`;
@@ -134,19 +148,22 @@ sub lvm_create_snapshot {
 		## Check LVM fallback
 		if($lvm_fallback == 0){
 			append_log($sessionlogfile,"Snapshot fallback is disabled, aborting.");
-			job_failed("Snapshot creation failed.");
+			::job_failed("Snapshot creation failed.");
 		}
 		append_log($sessionlogfile,"Falling back to regular backup.");
 	}
-
-	return $result;
+	
+	$error = "/mnt/sbackup_${p_job}_snap".$source_dir if $error == 0;
+	
+	return $error;
 }
 
 ##
 ## lvm_remove_snapshot
 ##
 sub lvm_remove_snapshot {
-	my ($p_job, $source_path,$lvm_size,$lvm_fallback, $sessionlogfile, $SB_TIMESTART)=@_;
+	my ($p_job, $SB_TIMESTART, $source_path, $lvm_size, $lvm_fallback)=@_;
+	my $sessionlogfile = $::SESSIONLOGPATH.$p_job."_".$SB_TIMESTART.".log";
 
 	&f_output("DEBUG","Attempting to remove LVM snapshot for path: \"$source_path\"");
 	append_log($sessionlogfile,"Attempting to remove LVM snapshot...");
@@ -236,7 +253,7 @@ sub lvm_remove_snapshot {
 	if($error != 0){
 		## Check LVM fallback
 		append_log($sessionlogfile,"Snapshot removal failed.");
-		#job_failed("Snapshot removal failed.");
+		#::job_failed("Snapshot removal failed.");
 	}
 
 	return $result;

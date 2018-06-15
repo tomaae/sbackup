@@ -117,11 +117,17 @@ if($source_result[0]){
 ##
 ## LVM snapshot
 ##
+my $lvm_path = "";
 if($job{$p_job}{'SOURCE'}{'-snapshot'}{'-enabled'} eq 1 && $job{$p_job}{'SOURCE'}{'-snapshot'}{'-type'} eq "lvm"){
   &f_output("DEBUG","Integration: LVM");
   require lvm;
   import lvm;
-	lvm_create_snapshot($p_job, $source_path, $job{$p_job}{'SOURCE'}{'-snapshot'}{'-size'}, $job{$p_job}{'SOURCE'}{'-snapshot'}{'-fallback'}, $sessionlogfile, $SB_TIMESTART);
+	$lvm_path = lvm_create_snapshot($p_job, $SB_TIMESTART, $source_path, $job{$p_job}{'SOURCE'}{'-snapshot'}{'-size'}, $job{$p_job}{'SOURCE'}{'-snapshot'}{'-fallback'});
+	if($lvm_path ne "1"){
+		&f_output("DEBUG","Snapshot path: \"$lvm_path\"");
+	}else{
+		$lvm_path = "" if $lvm_path eq "1";
+	}
 }
 
 ##
@@ -218,6 +224,9 @@ my $progress_percent = 0;
 my $progress_percent_old = 0;
 &f_output("DEBUG","Getting change list for backup.");
 my $cmd_param = " --stats -aEAXvi --out-format='%i|%n' --delete ".$INCR." \"".$source_path.$slash."\" \"".$target_path.$slash."data_".$SB_TIMESTART.$slash."\"";
+if($lvm_path ne ""){
+	$cmd_param = " --stats -aEAXvi --out-format='%i|%n' --delete ".$INCR." \"".$lvm_path.$slash."\" \"".$target_path.$slash."data_".$SB_TIMESTART.$slash."\"";
+}
 open(my $cmd_out,"-|","$cmd_rsync --dry-run $cmd_param 2>&1") || die "Failed: $!\n";
 while (my $line = <$cmd_out>){
 	$total_files++ if $line =~ /^\>f\+/;
@@ -282,7 +291,7 @@ if($job{$p_job}{'SOURCE'}{'-snapshot'}{'-enabled'} eq 1 && $job{$p_job}{'SOURCE'
   &f_output("DEBUG","Integration: LVM");
   require lvm;
   import lvm;
-	lvm_remove_snapshot($p_job, $source_path, $job{$p_job}{'SOURCE'}{'-snapshot'}{'-size'}, $job{$p_job}{'SOURCE'}{'-snapshot'}{'-fallback'}, $sessionlogfile, $SB_TIMESTART);
+	lvm_remove_snapshot($p_job, $SB_TIMESTART, $source_path, $job{$p_job}{'SOURCE'}{'-snapshot'}{'-size'}, $job{$p_job}{'SOURCE'}{'-snapshot'}{'-fallback'});
 }
 
 ##Check backup status
