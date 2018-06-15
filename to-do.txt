@@ -12,6 +12,8 @@
 [?] - multiple paths in source
 [?] - target concurrency
 
+[] - pre/postexec (export shell variables JOB_NAME, JOB_TYPE, STATUS, START_TIME)
+
 =================================================================
 ==REPORT=========================================================
 [] - generate 24 hour/7day report
