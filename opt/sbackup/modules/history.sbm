@@ -7,7 +7,7 @@
 
 use strict;
 use warnings;
-use POSIX qw(strftime ceil);
+use POSIX qw(strftime mktime ceil);
 our %job;
 
 my %history;
@@ -33,8 +33,10 @@ if($p_job && $param_ok == 0){
 f_output("ERROR","Error: Job type \"$p_type\" is not valid.\n\nValid job types: backup, purge, verify.",1) if $p_type && $p_type !~ /^(backup|purge|verify)$/;
 
 if($p_version){
+	f_output("ERROR","Invalid version.",1) if $p_version !~ /^(\d{4})\/(\d{2})\/(\d{2})\-(\d{2})(\d{2})(\d{2})$/;
+	$p_version = mktime($6,$5,$4,$3,$2 - 1,$1 - 1900);
 	my @tmp = &get_history($p_job,'status,name,start,end,size,perf,type','start=='.$p_version);
-	f_output("ERROR","Invalid job id.",1) if !$tmp[0];
+	f_output("ERROR","Invalid version.",1) if !$tmp[0];
 }
 
 ##
@@ -61,7 +63,7 @@ for my $tmp_job(sort keys %job){
 	}
 }
 
-printf "%-10.10s %-7.7s %-18.18s %-14.14s %-25.25s %-25.25s %-8.8s %-8.8s %-3.3s\n",
+printf "%-17.17s %-9.9s %-18.18s %-14.14s %-25.25s %-25.25s %-8.8s %-8.8s %-3.3s\n",
 	"Version",
 	"Type",
 	"Name",
@@ -71,7 +73,7 @@ printf "%-10.10s %-7.7s %-18.18s %-14.14s %-25.25s %-25.25s %-8.8s %-8.8s %-3.3s
 	"Size",
 	"Perf",
 	"Log";
-print "==============================================================================================================================\n";
+print "=======================================================================================================================================\n";
 ##
 ## Display history
 ##
@@ -98,6 +100,10 @@ for my $key(sort keys %history){
 	$out_start = strftime("%a, %d %b %G %H:%M:%S", localtime($tmp{'start'})) if $tmp{'start'} ne "";
 	$out_end = strftime("%a, %d %b %G %H:%M:%S", localtime($tmp{'end'})) if $tmp{'end'} ne "";
 	
+	##Format version
+	my $out_version = "N/A";
+	$out_version = strftime("%G/%m/%d-%H%M%S", localtime($tmp{'start'})) if $tmp{'start'} ne "";
+	
 	##Format Size/Perf
 	my $out_size = "N/A";
 	my $out_perf = "N/A";
@@ -123,8 +129,8 @@ for my $key(sort keys %history){
 	my $out_log = "N";
 	$out_log = "Y" if -f $main::SESSIONLOGPATH.$tmp{'name'}."_".$tmp{'start'}.".log";
 
-	printf "%-10.10s %-7.7s %-18.18s %-14.14s %-25.25s %-25.25s %-8.8s %-8.8s %-3.3s\n",
-  	$tmp{'start'},
+	printf "%-17.17s %-9.9s %-18.18s %-14.14s %-25.25s %-25.25s %-8.8s %-8.8s %-3.3s\n",
+  	$out_version,
   	$out_type,
   	$tmp{'name'},
   	$out_status,

@@ -6,7 +6,7 @@
 ###########################################################################################
 use strict;
 use warnings;
-use POSIX qw(floor);
+use POSIX qw(strftime floor);
 
 our $p_api;
 our %job;
@@ -56,7 +56,7 @@ if($p_api eq "ac_available_versions"){
 	my @tmp_history = &get_history($p_job,'status,name,start,end,size,perf,type');
 	for my $tmp(@{$tmp_history[2]}){
 		next if $p_type && $$tmp{'type'} ne $p_type;
-		print $$tmp{'start'},"\n";
+		print strftime("%G/%m/%d-%H%M%S", localtime($$tmp{'start'}))."\n";
 	}
 	exit 0;
 }
