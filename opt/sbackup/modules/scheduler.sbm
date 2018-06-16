@@ -158,7 +158,7 @@ for my $tmp_job(sort keys %job){
   	}else{
   		print STDERR "Backup failed to start.\n";
   	}
-  	system("$cmd_sleep 1") if !$main::SIMULATEMODE;
+  	system("$cmd_sleep 2") if !$main::SIMULATEMODE;
 	}	
 }
 

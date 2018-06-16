@@ -32,22 +32,27 @@ sub lvm_create_snapshot {
 	my $source_dir = "";
 	
 	## Get dir on source
-	my $tmp = `df --output=target \"$source_path\"|tail -1 2>&1`;
-	chomp($tmp);
-	if($? == 0){
-		$source_dir = $source_path;
-		$source_dir =~ s/^$tmp//;
-	}else{
-		append_log($sessionlogfile,"Could not get source dir.");
-		$error = 1;
+	if($error == 0){
+  	my $tmp = `df --output=target \"$source_path\"|tail -1 2>&1`;
+  	chomp($tmp);
+  	if($? == 0){
+  		$source_dir = $source_path;
+  		$source_dir =~ s/^$tmp//;
+  	}else{
+  		append_log($sessionlogfile,"Could not get source dir.");
+  		$error = 1;
+  	}
 	}
 	
 	## Get block device
-	my $lvm_blockdevice = `df --output=source \"$source_path\"|tail -1 2>&1`;
-	chomp($lvm_blockdevice);
-	if($? != 0){
-		append_log($sessionlogfile,"Could not get block device.");
-		$error = 1;
+	my $lvm_blockdevice = "";
+	if($error == 0){
+  	$lvm_blockdevice = `df --output=source \"$source_path\"|tail -1 2>&1`;
+  	chomp($lvm_blockdevice);
+  	if($? != 0){
+  		append_log($sessionlogfile,"Could not get block device.");
+  		$error = 1;
+  	}
 	}
 	
 	## Check block device
@@ -59,10 +64,11 @@ sub lvm_create_snapshot {
 	## Get LV name
 	my $lv_name = "";
 	if($error == 0){
-		$lv_name = `lvs --noheadings -o lv_name $lvm_blockdevice 2>&1`;
-		$lv_name =~ s/^\s+|\s+$//g;
-		if($? != 0){
-			append_log($sessionlogfile,"Source is not an LV");
+		$lv_name = `/sbin/lvs --noheadings -o lv_name $lvm_blockdevice 2>&1`;
+		if($? == 0){
+			$lv_name =~ s/^\s+|\s+$//g;
+		}else{
+			append_log($sessionlogfile,"Source is not an LV, error: $?, $lv_name");
 			$error = 1;
 		}
 	}
@@ -79,7 +85,7 @@ sub lvm_create_snapshot {
 	
 	## Check and remove old snapshots
 	if($error == 0){
-		$result = `lvdisplay \"${lvm_blockdevice}_sbackup_${p_job}_snap\" 2>&1`;
+		$result = `/sbin/lvdisplay \"${lvm_blockdevice}_sbackup_${p_job}_snap\" 2>&1`;
 		if($? == 0){
 			## Snapshot exists
 			append_log($sessionlogfile,"Old snapshot found, attempting to remove...");
@@ -99,7 +105,7 @@ sub lvm_create_snapshot {
 			## Remove old snapshot
 			if($error == 0){
 				append_log($sessionlogfile,"Attempting to remove old snapshot...");
-  			$result = `lvremove -f \"${lvm_blockdevice}_sbackup_${p_job}_snap\" 2>&1`;
+  			$result = `/sbin/lvremove -f \"${lvm_blockdevice}_sbackup_${p_job}_snap\" 2>&1`;
   			if($? == 0){
   				append_log($sessionlogfile,"Old snapshot removed successfully");
   			}else{
@@ -113,7 +119,7 @@ sub lvm_create_snapshot {
 	## Create LVM snapshot
 	if($error == 0){
 		append_log($sessionlogfile,"Creating snapshot...");
-		$result = `lvcreate -l${lvm_size}%FREE -s -n \"${lv_name}_sbackup_${p_job}_snap\" ${lvm_blockdevice} 2>&1`;
+		$result = `/sbin/lvcreate -l${lvm_size}%FREE -s -n \"${lv_name}_sbackup_${p_job}_snap\" ${lvm_blockdevice} 2>&1`;
 		if($? == 0){
 			## Snapshot created
 			append_log($sessionlogfile,"Snapshot created successfully");
@@ -172,12 +178,15 @@ sub lvm_remove_snapshot {
 	my $result = "";
 	
 	## Get block device
-	my $lvm_blockdevice = `df --output=source \"$source_path\"|tail -1 2>&1`;
-	chomp($lvm_blockdevice);
-	if($? != 0){
-		append_log($sessionlogfile,"Could not get block device.");
-		$error = 1;
-	}
+	my $lvm_blockdevice = "";
+	if($error == 0){
+  	$lvm_blockdevice = `df --output=source \"$source_path\"|tail -1 2>&1`;
+  	chomp($lvm_blockdevice);
+  	if($? != 0){
+  		append_log($sessionlogfile,"Could not get block device.");
+  		$error = 1;
+  	}
+  }
 	
 	## Check block device
 	if($error == 0 && !-b $lvm_blockdevice){
@@ -188,9 +197,10 @@ sub lvm_remove_snapshot {
 	## Get LV name
 	my $lv_name = "";
 	if($error == 0){
-		$lv_name = `lvs --noheadings -o lv_name $lvm_blockdevice 2>&1`;
-		$lv_name =~ s/^\s+|\s+$//g;
-		if($? != 0){
+		$lv_name = `/sbin/lvs --noheadings -o lv_name $lvm_blockdevice 2>&1`;
+		if($? == 0){
+			$lv_name =~ s/^\s+|\s+$//g;
+		}else{
 			append_log($sessionlogfile,"Source is not an LV");
 			$error = 1;
 		}
@@ -208,7 +218,7 @@ sub lvm_remove_snapshot {
 	
 	## Check and remove snapshots
 	if($error == 0){
-		$result = `lvdisplay \"${lvm_blockdevice}_sbackup_${p_job}_snap\" 2>&1`;
+		$result = `/sbin/lvdisplay \"${lvm_blockdevice}_sbackup_${p_job}_snap\" 2>&1`;
 		if($? == 0){
 			## Snapshot exists
 			append_log($sessionlogfile,"Snapshot found, attempting to remove...");
@@ -236,7 +246,7 @@ sub lvm_remove_snapshot {
 			## Remove  snapshot
 			if($error == 0){
 				append_log($sessionlogfile,"Attempting to remove snapshot...");
-  			$result = `lvremove -f \"${lvm_blockdevice}_sbackup_${p_job}_snap\" 2>&1`;
+  			$result = `/sbin/lvremove -f \"${lvm_blockdevice}_sbackup_${p_job}_snap\" 2>&1`;
   			if($? == 0){
   				append_log($sessionlogfile,"Snapshot removed successfully");
   			}else{
@@ -244,6 +254,8 @@ sub lvm_remove_snapshot {
   				$error = 1;
   			}
   		}
+		}else{
+			append_log($sessionlogfile,"Snapshot not found");
 		}
 	}
 		
