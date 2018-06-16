@@ -1,0 +1,102 @@
+###########################################################################################
+#
+#                                         sbackup
+#                                      version module
+#
+###########################################################################################
+use strict;
+use warnings;
+use POSIX qw(strftime);
+our %job;
+our $p_job;
+our $p_type;
+our $sv_log;
+our $sv_all;
+our $p_version;
+
+##
+## Check parameters
+##
+f_output("ERROR","Invalid version.",1) if $p_version !~ /^(\d{4})\/(\d{2})\/(\d{2})\-(\d{2})(\d{2})(\d{2})$/;
+$p_version = mktime($6,$5,$4,$3,$2 - 1,$1 - 1900);
+my @tmp = &get_history($p_job,'status,name,start,end,size,perf,type','start=='.$p_version);
+f_output("ERROR","Invalid version.",1) if !$tmp[0];
+
+## Format Size/Perf
+my $out_size = "N/A";
+my $out_perf = "N/A";
+if($tmp[2][0]{'type'} eq "backup" || $tmp[2][0]{'type'} eq "copy"){
+	if($tmp[2][0]{'size'} ne "" && $tmp[2][0]{'size'} >= 0){
+		$out_size = $tmp[2][0]{'size'}." B";
+		$out_size = ceil($tmp[2][0]{'size'} / 1024)." KiB" if $tmp[2][0]{'size'} > (100 * 1024);
+		$out_size = ceil($tmp[2][0]{'size'} / 1024 / 1024)." MiB" if $tmp[2][0]{'size'} > (9 * 1024 * 1024);
+		$out_size = ceil($tmp[2][0]{'size'} / 1024 / 1024 / 1024)." GiB" if $tmp[2][0]{'size'} > (9 * 1024 * 1024 * 1024);
+	}
+	
+	if($tmp[2][0]{'perf'} ne "" && $tmp[2][0]{'perf'} !~ /%$/ && $tmp[2][0]{'perf'} >= 0){
+		$out_perf = $tmp[2][0]{'perf'}." B";
+		$out_perf = ceil($tmp[2][0]{'perf'} / 1024)." K/s" if $tmp[2][0]{'perf'} > (100 * 1024);
+		$out_perf = ceil($tmp[2][0]{'perf'} / 1024 / 1024)." M/s" if $tmp[2][0]{'perf'} > (9 * 1024 * 1024);
+		$out_perf = ceil($tmp[2][0]{'perf'} / 1024 / 1024 / 1024)." G/s" if $tmp[2][0]{'perf'} > (9 * 1024 * 1024 * 1024);
+	}elsif($tmp[2][0]{'perf'} =~ /%$/){
+		$out_perf = $tmp[2][0]{'perf'};
+	}
+}
+
+## Log
+my $out_log = "Not available";
+$out_log = "Available" if -f $::SESSIONLOGPATH.$tmp[2][0]{'name'}."_".$tmp[2][0]{'start'}.".log";
+
+## Version
+my $out_version;
+$out_version = strftime("%G/%m/%d-%H%M%S", localtime($tmp[2][0]{'start'})) if $tmp[2][0]{'start'} ne "";
+
+## Start/end time
+my $out_start = "N/A";
+my $out_end = "N/A";
+$out_start = strftime("%a, %d %b %G %H:%M:%S", localtime($tmp[2][0]{'start'})) if $tmp[2][0]{'start'} ne "";
+$out_end = strftime("%a, %d %b %G %H:%M:%S", localtime($tmp[2][0]{'end'})) if $tmp[2][0]{'end'} ne "";
+
+## Type
+my $out_type = "N/A";
+$out_type = "Backup" if $tmp[2][0]{'type'} eq "backup";
+$out_type = "Restore" if $tmp[2][0]{'type'} eq "restore";
+$out_type = "Purge" if $tmp[2][0]{'type'} eq "purge";
+$out_type = "Migration" if $tmp[2][0]{'type'} eq "migration";
+$out_type = "Verify" if $tmp[2][0]{'type'} eq "verify";
+
+## Parse status
+my $out_status = "N/A";
+$out_status = "Completed" if $tmp[2][0]{'status'} eq "0";
+$out_status = "Err:".$tmp[2][0]{'status'} if $tmp[2][0]{'status'} ne "0" && $tmp[2][0]{'status'} ne "running";
+$out_status = "Aborted" if $out_status eq "Err:aborted";
+$out_status = "Running" if $tmp[2][0]{'status'} eq "running";
+$out_status =~ s/^Err:/Error: /;
+
+if($out_status eq "Running" && $out_perf =~ /%$/){
+	$out_status .= " ".$out_perf;
+	$out_perf = "N/A";
+}
+
+printf "%20.20s : %s\n", "Job name", $tmp[2][0]{'name'};
+printf "%20.20s : %s\n", "Job type", $out_type;
+printf "%20.20s : %s\n", "Status",  $out_status;
+printf "%20.20s : %s\n", "Version",  $out_version;
+printf "%20.20s : %s\n", "Start time",  $out_start;
+printf "%20.20s : %s\n", "End time", $out_end;
+printf "%20.20s : %s\n", "Size", $out_size;
+printf "%20.20s : %s\n", "Performance", $out_perf;
+printf "%20.20s : %s\n", "Version log", $out_log;
+
+#	"Version",
+#	"Type",
+#	"Name",
+#	"Status",
+#	"Start time",
+#	"End time",
+#	"Size",
+#	"Perf",
+#	"Log";
+
+
+return 1;
