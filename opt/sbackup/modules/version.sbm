@@ -22,6 +22,20 @@ $p_version = mktime($6,$5,$4,$3,$2 - 1,$1 - 1900);
 my @tmp = &get_history($p_job,'status,name,start,end,size,perf,type','start=='.$p_version);
 f_output("ERROR","Invalid version.",1) if !$tmp[0];
 
+
+##
+## Get version log
+##
+if($sv_log){
+	f_output("ERROR","Missing job version.",1) if !$p_version;
+	f_output("ERROR","Job log is not available.",1) if !-f $::SESSIONLOGPATH.$p_job."_".$p_version.".log";
+	for my $tmp(&read_log($::SESSIONLOGPATH.$p_job."_".$p_version.".log")){
+		print $tmp;
+	}
+	return 1;
+}
+
+
 ## Format Size/Perf
 my $out_size = "N/A";
 my $out_perf = "N/A";

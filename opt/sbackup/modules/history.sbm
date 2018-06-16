@@ -13,7 +13,6 @@ our %job;
 my %history;
 our $p_job;
 our $p_type;
-our $sv_log;
 our $sv_all;
 our $p_version;
 
@@ -34,18 +33,6 @@ f_output("ERROR","Error: Job type \"$p_type\" is not valid.\n\nValid job types: 
 
 if($p_version){
 	require "modules/version.sbm";
-	return 1;
-}
-
-##
-## Get version log
-##
-if($sv_log){
-	f_output("ERROR","Missing job version.",1) if !$p_version;
-	f_output("ERROR","Job log is not available.",1) if !-f $main::SESSIONLOGPATH.$p_job."_".$p_version.".log";
-	for my $tmp(&read_log($main::SESSIONLOGPATH.$p_job."_".$p_version.".log")){
-		print $tmp;
-	}
 	return 1;
 }
 
