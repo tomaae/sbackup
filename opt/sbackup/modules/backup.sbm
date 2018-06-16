@@ -51,7 +51,7 @@ sub job_failed {
 	my $msg = shift;
 	$SB_TIMEEND = time();
 	print STDERR "Error: $msg\n";
-	update_history($p_job,"status=".$msg.",end=".$SB_TIMEEND,"status==running,type==backup,start==".$SB_TIMESTART);
+	update_history($p_job,"status=".$msg.",end=".$SB_TIMEEND.",perf=","status==running,type==backup,start==".$SB_TIMESTART);
 	append_log($sessionlogfile,"End time: ".$SB_TIMEEND." (".epoch2human($SB_TIMEEND).")\nStatus:Error: $msg\n");
 	rm_runfile($p_job);
 	exit 1;

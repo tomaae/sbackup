@@ -374,13 +374,13 @@ sub check_runfile{
   		}else{
   			## Close job if PID is no longer running
   			&f_output("DEBUG","Job is no longer running, possible crash or kill.");
-  			update_history($p_job,"status=killed", "status==running");
+  			update_history($p_job,"status=killed,perf=", "status==running");
   			rm_runfile($p_job);
   		}
   	}else{
   		## Close job if pidfile does not contain valid PID
   		&f_output("DEBUG","Runfile is faulty, removing.");
-  		update_history($p_job,"status=killed", "status==running");
+  		update_history($p_job,"status=killed,perf=", "status==running");
   		rm_runfile($p_job);
   	}
   }
