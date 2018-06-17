@@ -4,6 +4,11 @@
 - "mv" data migration. started with "at", change state to "migrating", creates lockfile with old source for restart in case of failure
 
 =================================================================
+==MONITOR========================================================
+[] - monitor running job
+- backup info and progress at top
+- rotating backup log at bottom
+=================================================================
 ==BACKUP=========================================================
 [GUI]
 - warning on changing backup source (same as for changing filesystem in shared folders)
