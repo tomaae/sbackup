@@ -223,11 +223,11 @@ my $copied_files     = 0;
 my $progress_percent = 0;
 my $progress_percent_old = 0;
 &f_output("DEBUG","Getting change list for backup.");
-my $cmd_param = " --stats -aEAXvi --out-format='%i|%n' --delete ".$INCR." \"".$source_path.$slash."\" \"".$target_path.$slash."data_".$SB_TIMESTART.$slash."\"";
+my $rsync_params = " --stats -aEAXvi --out-format='%i|%n' --delete ".$INCR." \"".$source_path.$slash."\" \"".$target_path.$slash."data_".$SB_TIMESTART.$slash."\"";
 if($lvm_path ne ""){
-	$cmd_param = " --stats -aEAXvi --out-format='%i|%n' --delete ".$INCR." \"".$lvm_path.$slash."\" \"".$target_path.$slash."data_".$SB_TIMESTART.$slash."\"";
+	$rsync_params = " --stats -aEAXvi --out-format='%i|%n' --delete ".$INCR." \"".$lvm_path.$slash."\" \"".$target_path.$slash."data_".$SB_TIMESTART.$slash."\"";
 }
-open(my $cmd_out,"-|","$cmd_rsync --dry-run $cmd_param 2>&1") || die "Failed: $!\n";
+open(my $cmd_out,"-|","$cmd_rsync --dry-run $rsync_params 2>&1") || die "Failed: $!\n";
 while (my $line = <$cmd_out>){
 	$total_files++ if $line =~ /^\>f\+/;
 	if($line =~ /^Total file size: ([0-9,\.]+) bytes/){
@@ -240,7 +240,7 @@ update_history($p_job,"size=".$RSSIZE.",perf=0%","status==running,type==backup,s
 $total_files = 1 if $total_files == 0; ## Never divide by 0;
 
 &f_output("DEBUG","Starting backup.");
-&f_output("DEBUG3","Execute: \"$cmd_rsync $cmd_param\"");
+&f_output("DEBUG3","Execute: \"$cmd_rsync $rsync_params\"");
 my $aborting = 0;
 my @pid_output = &get_runfile($p_job,'status,type,pid');
 $aborting = 1 if $pid_output[0] && $pid_output[2][0]{'pid'}  =~ /^\d+$/ && $pid_output[2][0]{'status'} eq 'aborting';
@@ -248,7 +248,7 @@ if(!$aborting){
 my @val;
 my $rsync_simulate = "";
 $rsync_simulate = ' --dry-run ' if $main::SIMULATEMODE;
-my $rpid = open(my $cmd_out,"-|","$cmd_rsync $rsync_simulate $cmd_param 2>&1") || die "Failed: $!\n";
+my $rpid = open(my $cmd_out,"-|","$cmd_rsync $rsync_simulate $rsync_params 2>&1") || die "Failed: $!\n";
 update_runfile($p_job,"rpid=".$rpid) if $rpid && $rpid > 0;
 while (my $line = <$cmd_out>){
 	chomp($line);
