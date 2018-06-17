@@ -21,6 +21,9 @@
 [] - improve log messages
 [] - create global error log
 
+[] - remote backup of another server
+[] - mysql backup local/remote
+
 =================================================================
 ==REPORT=========================================================
 [] - generate 24 hour/7day report
