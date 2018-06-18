@@ -395,7 +395,7 @@ sub check_runfile{
 ##
 sub append_log{
 	my ($logfile,$logentry)=@_;
-	&f_output("DEBUG","Append log $logfile, $logentry") if !$main::SIMULATEMODE && $logentry =~ /^[\+\-\*]/;
+	&f_output("DEBUG","Append log $logfile, $logentry");# if !$main::SIMULATEMODE && $logentry =~ /^[\+\-\*]/;
 	return if $main::SIMULATEMODE;
 	chomp($logentry);
 	open log_file,">>$logfile" or die "Error: Insufficient access rights\n";

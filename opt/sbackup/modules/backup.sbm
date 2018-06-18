@@ -243,6 +243,7 @@ $total_files = 1 if $total_files == 0; ## Never divide by 0;
 &f_output("DEBUG","Starting backup.");
 &f_output("DEBUG3","Execute: \"$cmd_rsync $rsync_params\"");
 my $aborting = 0;
+my $data_changed = 0;
 my $rsync_summary = "";
 my @pid_output = &get_runfile($p_job,'status,type,pid');
 $aborting = 1 if $pid_output[0] && $pid_output[2][0]{'pid'}  =~ /^\d+$/ && $pid_output[2][0]{'status'} eq 'aborting';
@@ -268,17 +269,22 @@ while (my $line = <$cmd_out>){
   		}else{
   			append_log($sessionlogfile,'*'.$val[1]);
   		}
+  		$data_changed = 1;
   		update_history($p_job,"perf=".$progress_percent."%","status==running,type==backup,start==".$SB_TIMESTART) if $progress_percent ne $progress_percent_old;
   		$progress_percent_old = $progress_percent;
   	}elsif($line =~ /^\*deleting/){ ## Deleted
   		append_log($sessionlogfile,'-'.$val[1]);
+  		$data_changed = 1;
   	}elsif($line =~ /^cd/){ ## New directory
   		append_log($sessionlogfile,'+'.$val[1]);
+  		$data_changed = 1;
   	}elsif($line =~ /^c/){ ## Change of symlink
   		append_log($sessionlogfile,'*'.$val[1]);
+  		$data_changed = 1;
   	}elsif($line =~ /^\./){ ## Change of attributes
-  		next if $val[1] !~ /^\.\/$/;
+  		next if $val[1] =~ /^\.\/\s*$/;
   		append_log($sessionlogfile,'.'.$val[1]);
+  		$data_changed = 1;
   	}else{
   		version_log('warning','rsync',$backupserver_fqdn,$line);
   	}
@@ -288,6 +294,7 @@ while (my $line = <$cmd_out>){
 		}elsif($line =~ /^Number of files: / || $rsync_summary ne ""){
 			$rsync_summary .= $line."\n";
 			if($line =~ /^total size is/){
+				append_log($sessionlogfile,"\n") if $data_changed;
 				version_log('normal','rsync',$backupserver_fqdn,"Backup job summary:\n\n$rsync_summary");
 				$rsync_summary = "";
 			}
@@ -301,10 +308,13 @@ while (my $line = <$cmd_out>){
 close($cmd_out);
 
 if($rsync_summary ne ""){
+	append_log($sessionlogfile,"\n") if $data_changed;
 	version_log('normal','rsync',$backupserver_fqdn,"Backup job summary:\n\n$rsync_summary");
 	$rsync_summary = "";
 }
+
 $SB_ECODE=$?;
+version_log('normal','rsync',$backupserver_fqdn,"Nothing backed up, no changed data found.") if $SB_ECODE eq "0" && !$data_changed;
 }
 if($SB_ECODE ne "" && $SB_ECODE != 0){
 	if(!$aborting){
