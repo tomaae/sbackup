@@ -4,9 +4,10 @@
 #                                      purge module
 #
 ###########################################################################################
-#use diagnostics;
 use strict;
 use warnings;
+use POSIX qw(strftime);
+
 our ($p_job);
 our %job;
 our $p_days;
@@ -129,6 +130,7 @@ if(!-d $target_path){
 ##
 ## Check backup history
 ##
+my $data_purged = 0;
 if(-f $VARPATH.'history_'.$p_job){
 	##Get backup status from history
 	&f_output("DEBUG","History log found, checking history.");
@@ -137,7 +139,7 @@ if(-f $VARPATH.'history_'.$p_job){
   for my $tmp(@{$output[2]}){
   	next if $$tmp{'start'} eq $SB_TIMESTART;
   	if($$tmp{'type'} eq "backup" && $$tmp{'start'} ne "" && $$tmp{'start'} > 100 && -d $target_path.$slash."data_".$$tmp{'start'}){
-  		$LAST_COMPLETED_STAMP = $$tmp{'start'} if $$tmp{'status'} =~ /^\d+$/ && $$tmp{'status'} eq "0";
+  		$LAST_COMPLETED_STAMP = $$tmp{'start'} if $$tmp{'status'} =~ /^\d+$/ && ($$tmp{'status'} eq "1" || $$tmp{'status'} eq "2" || $$tmp{'status'} eq "3");
   	}
   }
   &f_output("DEBUG","Last completed version: ".$LAST_COMPLETED_STAMP) if $LAST_COMPLETED_STAMP;
@@ -149,16 +151,16 @@ if(-f $VARPATH.'history_'.$p_job){
   my $ADMIN_PROTECTION = 3;
   $ADMIN_PROTECTION += $DATA_PROTECTION if $DATA_PROTECTION && $DATA_PROTECTION > 0;
   &f_output("DEBUG","Admin type job protection: $ADMIN_PROTECTION.");
-  version_log('normal','purge',$backupserver_fqdn,"Stating purge.\nData protection: $DATA_PROTECTION\n Admin job protection: $ADMIN_PROTECTION");
-  my $data_purged = 0;
+  version_log('normal','purge',$backupserver_fqdn,"Data protection: $DATA_PROTECTION\nAdmin job protection: $ADMIN_PROTECTION");
+  version_log('normal','purge',$backupserver_fqdn,"Starting purge...");
   for my $tmp(@{$output[2]}){
   	&f_output("DEBUG","Found $$tmp{'type'} version $$tmp{'start'} with status $$tmp{'status'}.");
   	my $obsolete = 0;
-  	if($$tmp{'start'} eq $LAST_COMPLETED_STAMP){
+  	if($LAST_COMPLETED_STAMP && $$tmp{'start'} eq $LAST_COMPLETED_STAMP){
   		&f_output("DEBUG","Last successful backup, skipping.");
   		next;
   	}
-  	if($$tmp{'start'} > $LAST_COMPLETED_STAMP){
+  	if($LAST_COMPLETED_STAMP && $$tmp{'start'} > $LAST_COMPLETED_STAMP){
   		&f_output("DEBUG","Newer then last successful backup, skipping.");
   		next;
   	}
@@ -168,12 +170,12 @@ if(-f $VARPATH.'history_'.$p_job){
   		$obsolete = 1;
   	}
   	##Failed backup versions
-  	if($$tmp{'type'} eq "backup" && $$tmp{'status'} ne "0" && ($$tmp{'start'} < ( $SB_TIMESTART - ($ADMIN_PROTECTION * 86400)))){
+  	if($$tmp{'type'} eq "backup" && ($$tmp{'status'} eq "4" || $$tmp{'status'} eq "5" || $$tmp{'status'} eq "6") && ($$tmp{'start'} < ( $SB_TIMESTART - ($ADMIN_PROTECTION * 86400)))){
   		&f_output("DEBUG","Failed backup session for removal.");
   		$obsolete = 1;
   	}
   	##Completed backup versions
-  	if($$tmp{'type'} eq "backup" && $$tmp{'status'} eq "0" && ($$tmp{'start'} < ( $SB_TIMESTART - ($DATA_PROTECTION * 86400)))){
+  	if($$tmp{'type'} eq "backup" && ($$tmp{'status'} eq "1" || $$tmp{'status'} eq "2" || $$tmp{'status'} eq "3") && ($$tmp{'start'} < ( $SB_TIMESTART - ($DATA_PROTECTION * 86400)))){
   		&f_output("DEBUG","Obsolete backup session for removal.");
   		$obsolete = 1;
   	}
@@ -190,21 +192,22 @@ if(-f $VARPATH.'history_'.$p_job){
   		append_log($sessionlogfile,"Removing version $$tmp{'start'}\n");
   		if(-d $target_path.$slash."data_".$$tmp{'start'}){
   			&f_output("DEBUG","Found data.");
-  			system("$cmd_rm \"".$target_path.$slash."data_".$$tmp{'start'}."\"");
+  			system("$cmd_rm \"".$target_path.$slash."data_".$$tmp{'start'}."\"") if !$main::SIMULATEMODE;
   		}
   		if(-d $target_path.$slash."meta_".$$tmp{'start'}){
   			&f_output("DEBUG","Found meta.");
-  			system("$cmd_rm \"".$target_path.$slash."meta_".$$tmp{'start'}."\"");
+  			system("$cmd_rm \"".$target_path.$slash."meta_".$$tmp{'start'}."\"") if !$main::SIMULATEMODE;
   		}
   		if(-f $SESSIONLOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".log"){
   			&f_output("DEBUG","Found log.");
-  			system("$cmd_rm \"".$SESSIONLOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".log\"");
+  			system("$cmd_rm \"".$SESSIONLOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".log\"") if !$main::SIMULATEMODE;
   		}
   		delete_history($p_job,"start==".$$tmp{'start'});
   		$data_purged = 1;
+  	}else{
+  		&f_output("DEBUG","Keeping version $$tmp{'start'}.");
   	}
   }
-
 }else{
 	&f_output("DEBUG","History log not found.");
 	version_log('warning','purge',$backupserver_fqdn,"Unable to start purge, job history not found.");
@@ -218,7 +221,12 @@ if($data_purged){
 }
 
 $SB_TIMEEND = time();
-version_log('normal','purge',$backupserver_fqdn,"Purge completed.");
+version_log('normal','purge',$backupserver_fqdn,"Purge job completed successfully.") if $SB_ERRORLEVEL eq "1";
+version_log('normal','purge',$backupserver_fqdn,"Purge job completed with warnings.") if $SB_ERRORLEVEL eq "2";
+version_log('normal','purge',$backupserver_fqdn,"Purge job completed with errors.") if $SB_ERRORLEVEL eq "3";
+version_log('normal','purge',$backupserver_fqdn,"Purge job completed with failures.") if $SB_ERRORLEVEL eq "4";
+version_log('normal','purge',$backupserver_fqdn,"Purge job failed.") if $SB_ERRORLEVEL eq "5";
+version_log('normal','purge',$backupserver_fqdn,"Purge job was aborted.") if $SB_ERRORLEVEL eq "6";
 update_history($p_job,"status=".$SB_ERRORLEVEL.",error=".$SB_ECODE.",end=".$SB_TIMEEND,"status==0,type==purge,start==".$SB_TIMESTART);
 rm_runfile($p_job);
 
