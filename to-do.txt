@@ -1,29 +1,19 @@
-
-=================================================================
-==Status list====================================================
-0 Running
-1 Completed
-2 Completed/Warnings
-3 Completed/Errors
-4 Completed/Failures
-5 Failed
-6 Aborted
-
 =================================================================
 ==GENERAL======================================================
 [] - disable error exit code and message when running from cron
 [] - errors to be reported post-backup in custom HTML email
+[] - define full paths for all executable in set_env
 
 =================================================================
-==MIGRATION======================================================
-[] - sbackup -migrate testbkp -type filesystem/omv4 -into test_share
-- "mv" data migration. started with "at", change state to "migrating", creates lockfile with old source for restart in case of failure
+==LOG============================================================
+[] - add filter for -log [normal|warning|minor|major|critical]
 
 =================================================================
 ==MONITOR========================================================
 [] - monitor running job
 - backup info and progress at top
 - rotating backup log at bottom
+
 =================================================================
 ==BACKUP=========================================================
 [GUI]
@@ -47,27 +37,32 @@
 
 =================================================================
 ==REPORT=========================================================
-[] - generate 24 hour/7day report
+[] - generate 24 hour/7 day report
 
 =================================================================
 ==VERIFY=========================================================
-- Check if data directories exists for all backups in history log
-- Check if there are data directories not present in history log
-- When session log is present, check if all data exists in data directory according to log, check hardlinks(?)
+[] - Check if data directories exists for all backups in history log
+[] - Check if there are data directories not present in history log
+[] - When session log is present, check if all data exists in data directory according to log, check hardlinks(?)
 
 =================================================================
 ==RESTORE========================================================
-[]- restore into different location
+[] - restore into different location
 
-[]- autoselect latest version
-[]- browse files
+[] - autoselect latest version
+[] - browse files
 
 =================================================================
-==CREATE/EDIT JOB commands========================================================
+==CREATE/EDIT JOB commands=======================================
+
+=================================================================
+==MIGRATION======================================================
+[] - sbackup -migrate testbkp -type filesystem/omv4 -into test_share
+- "mv" data migration. started with "at", change state to "migrating", creates lockfile with old source for restart in case of failure
 
 =================================================================
 ==COPY===========================================================
-[] rclone for sync to cloud
+[] - rclone for sync to cloud
 
 -fields:
 backup_uuid
@@ -76,7 +71,7 @@ retention
 post_purge
 post_job
 
-[] automatic scheduler > automatic copy, after all backups are done
+[] - automatic scheduler > automatic copy, after all backups are done
 
 =================================================================
 ==OS BACKUP======================================================
@@ -114,6 +109,22 @@ excludes?:
 
 =================================================================
 =================================================================
+
+=================================================================
+==Status list====================================================
+0 Running
+1 Completed
+2 Completed/Warnings
+3 Completed/Errors
+4 Completed/Failures
+5 Failed
+6 Aborted
+
+severity normal|warning|minor|major|critical
+
+=================================================================
+==Job specification==============================================
+
 NAME testjob
 ENABLED 1
 

@@ -130,4 +130,8 @@ for my $key(sort keys %history){
   	$out_log;
 }
 
+if(keys %history == 0){
+	print "No jobs found.\n";
+}
+
 return 1;

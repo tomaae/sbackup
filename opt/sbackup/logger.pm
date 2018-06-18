@@ -455,10 +455,12 @@ sub version_log{
 	$hostname =~ s/^(.+)$/\L$1\E/;
 	
 	## Update severity level
-	$::SB_ERRORLEVEL = 2 if $severity eq "Warning"  && $::SB_ERRORLEVEL < 2;
-	$::SB_ERRORLEVEL = 3 if $severity eq "Minor"    && $::SB_ERRORLEVEL < 3;
-	$::SB_ERRORLEVEL = 4 if $severity eq "Major"    && $::SB_ERRORLEVEL < 4;
-	$::SB_ERRORLEVEL = 5 if $severity eq "Critical" && $::SB_ERRORLEVEL < 5;
+	if(defined $::SB_ERRORLEVEL && $::SB_ERRORLEVEL ne "" && $::SB_ERRORLEVEL > 0){
+  	$::SB_ERRORLEVEL = 2 if $severity eq "Warning"  && $::SB_ERRORLEVEL < 2;
+  	$::SB_ERRORLEVEL = 3 if $severity eq "Minor"    && $::SB_ERRORLEVEL < 3;
+  	$::SB_ERRORLEVEL = 4 if $severity eq "Major"    && $::SB_ERRORLEVEL < 4;
+  	$::SB_ERRORLEVEL = 5 if $severity eq "Critical" && $::SB_ERRORLEVEL < 5;
+  }
 	
 	&f_output("DEBUG","New version log entry [$severity] From: $process\@$hostname\n$message");
 	return if $main::SIMULATEMODE;
