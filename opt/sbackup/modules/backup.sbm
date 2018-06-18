@@ -276,10 +276,11 @@ while (my $line = <$cmd_out>){
   		append_log($sessionlogfile,'+'.$val[1]);
   	}elsif($line =~ /^c/){ ## Change of symlink
   		append_log($sessionlogfile,'*'.$val[1]);
-  	}elsif($line =~ /^\./ && $val[1] !~ /^\.\/$/){ ## Change of attributes
+  	}elsif($line =~ /^\./){ ## Change of attributes
+  		next if $val[1] !~ /^\.\/$/;
   		append_log($sessionlogfile,'.'.$val[1]);
   	}else{
-  		version_log('warning','backup',$backupserver_fqdn,$line);
+  		version_log('warning','rsync',$backupserver_fqdn,$line);
   	}
 	}else{
 		if($line =~ /sending incremental file list/){
@@ -293,7 +294,7 @@ while (my $line = <$cmd_out>){
 		}elsif($line =~ /^\s*$/){
 			next;
 		}else{
-  		version_log('warning','backup',$backupserver_fqdn,$line);
+  		version_log('warning','rsync',$backupserver_fqdn,$line);
   	}
 	}
 }
