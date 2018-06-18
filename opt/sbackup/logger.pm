@@ -10,13 +10,15 @@ package logger;
 use strict;
 use warnings;
 use Fcntl ':flock';
+use POSIX qw(strftime);
 use init;
 
 use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(append_log write_log read_log
 								get_history insert_history update_history delete_history
-								get_runfile set_runfile update_runfile rm_runfile check_runfile);
+								get_runfile set_runfile update_runfile rm_runfile check_runfile
+								version_log);
 
 ##
 ## HISTORY
@@ -431,6 +433,30 @@ sub read_log{
 	flock log_file,8;
 	close log_file;
 	return @tmp;
+}
+
+##
+## VERSION LOG HANDLING
+##
+sub version_log{
+	my ($severity,$process,$hostname,$message)=@_;
+	f_output("ERROR","Code error: all parameters are required for version_log",1) if !$message;
+	f_output("ERROR","Code error: invalid severity for version_log: $severity",1) if $severity !~ /^(normal|warning|minor|major|critical)$/i;
+	chomp($message);
+	$message =~ s/^/        /g;
+	$message =~ s/\n|\\n/\n        /g;
+	$severity =~ s/^(\w)(.*)$/\u$1\L$2\E/;
+	$process =~ s/^(.+)$/\U$1\E/;
+	$hostname =~ s/^(.+)$/\L$1\E/;
+	&f_output("DEBUG","New version log entry [$severity] From: $process\@$hostname\n$message");
+	return if $main::SIMULATEMODE;
+	open log_file,">>$::sessionlogfile" or die "Error: Insufficient access rights\n";
+	flock log_file,2;
+	seek log_file,0,2;
+	print log_file "[$severity] From: $process\@$hostname Time: ".strftime("%d/%m/%G %H:%M:%S", localtime(time()))."\n";
+	print log_file "$message\n\n";
+	flock log_file,8;
+	close log_file;
 }
 
 1;
