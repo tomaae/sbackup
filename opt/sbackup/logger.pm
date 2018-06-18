@@ -1,4 +1,5 @@
 package logger;
+use Term::ANSIColor;
 
 ###########################################################################################
 #
@@ -156,7 +157,7 @@ sub update_history{
 	}
 	
 	if($p_job && $update && $where){
-		&f_output("DEBUG","History update $p_job, $update, $where");
+		&f_output("DEBUG","History update $p_job, $update, $where") if !$main::SIMULATEMODE && $update =~ /perf=\d+\%, status==running/;
 		my @where_request  = parse_where('history',$where);
   	my @entries = split(/,/,$update,-1);
   	for $tmp(@entries){
@@ -394,7 +395,7 @@ sub check_runfile{
 ##
 sub append_log{
 	my ($logfile,$logentry)=@_;
-	&f_output("DEBUG","Append log $logfile, $logentry");
+	&f_output("DEBUG","Append log $logfile, $logentry") if !$main::SIMULATEMODE && $logentry =~ /^[\+\-\*]/;
 	return if $main::SIMULATEMODE;
 	chomp($logentry);
 	open log_file,">>$logfile" or die "Error: Insufficient access rights\n";
@@ -439,7 +440,6 @@ sub read_log{
 ## VERSION LOG HANDLING
 ##
 sub version_log{
-	## version_log('normal','dummy',$backupserver_fqdn,"test msg\ntest msg2\ntest msg3");
 	my ($severity,$process,$hostname,$message)=@_;
 	f_output("ERROR","Code error: all parameters are required for version_log",1) if !$message;
 	f_output("ERROR","Code error: invalid severity for version_log: $severity",1) if $severity !~ /^(normal|warning|minor|major|critical)$/i;
@@ -450,12 +450,19 @@ sub version_log{
 	$severity =~ s/^(\w)(.*)$/\u$1\L$2\E/;
 	$process =~ s/^(.+)$/\U$1\E/;
 	$hostname =~ s/^(.+)$/\L$1\E/;
-	&f_output("DEBUG","New version log entry [$severity] From: $process\@$hostname\n$message");
+	
+	$severity = color("green").'['.$severity.']'.color("reset") if $severity eq "Normal";
+	$severity = color("yellow").'['.$severity.']'.color("reset") if $severity eq "Warning";
+	$severity = color("cyan").'['.$severity.']'.color("reset") if $severity eq "Minor";
+	$severity = color("bright_red").'['.$severity.']'.color("reset") if $severity eq "Major";
+	$severity = color("red").'['.$severity.']'.color("reset") if $severity eq "Critical";
+	
+	&f_output("DEBUG","New version log entry $severity From: $process\@$hostname\n$message");
 	return if $main::SIMULATEMODE;
 	open log_file,">>$::sessionlogfile" or die "Error: Insufficient access rights\n";
 	flock log_file,2;
 	seek log_file,0,2;
-	print log_file "[$severity] From: $process\@$hostname Time: ".strftime("%d/%m/%G %H:%M:%S", localtime(time()))."\n";
+	print log_file "$severity From: $process\@$hostname Time: ".strftime("%d/%m/%G %H:%M:%S", localtime(time()))."\n";
 	print log_file "$message\n\n";
 	flock log_file,8;
 	close log_file;

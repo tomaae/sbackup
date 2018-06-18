@@ -16,16 +16,14 @@ use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(lvm_create_snapshot lvm_remove_snapshot);
 
-
 ##
 ## lvm_create_snapshot
 ##
 sub lvm_create_snapshot {
 	my ($p_job, $SB_TIMESTART, $source_path, $lvm_size, $lvm_fallback)=@_;
-	my $sessionlogfile = $::SESSIONLOGPATH.$p_job."_".$SB_TIMESTART.".log";
 
 	&f_output("DEBUG","Attempting to create LVM snapshot for path: \"$source_path\"");
-	append_log($sessionlogfile,"Attempting to create LVM snapshot...");
+	version_log('normal','lvm',$::backupserver_fqdn,"Attempting to create LVM snapshot....");
 	update_history($p_job,"perf=(Snapshot) 0%","status==running,type==backup,start==".$SB_TIMESTART);
 	my $error = 0;
 	my $result = "";
@@ -39,7 +37,7 @@ sub lvm_create_snapshot {
   		$source_dir = $source_path;
   		$source_dir =~ s/^$tmp//;
   	}else{
-  		append_log($sessionlogfile,"Could not get source dir.");
+  		version_log('minor','lvm',$::backupserver_fqdn,"Could not get source directory.");
   		$error = 1;
   	}
 	}
@@ -50,14 +48,14 @@ sub lvm_create_snapshot {
   	$lvm_blockdevice = `df --output=source \"$source_path\"|tail -1 2>&1`;
   	chomp($lvm_blockdevice);
   	if($? != 0){
-  		append_log($sessionlogfile,"Could not get block device.");
+  		version_log('minor','lvm',$::backupserver_fqdn,"Could not get block device.");
   		$error = 1;
   	}
 	}
 	
 	## Check block device
 	if($error == 0 && !-b $lvm_blockdevice){
-		append_log($sessionlogfile,"Snapshot creation failed: $lvm_blockdevice is not a block device");
+		version_log('minor','lvm',$::backupserver_fqdn,"Failed to create snapshot: $lvm_blockdevice is not a block device.");
 		$error = 1;
 	}
 	
@@ -68,7 +66,7 @@ sub lvm_create_snapshot {
 		if($? == 0){
 			$lv_name =~ s/^\s+|\s+$//g;
 		}else{
-			append_log($sessionlogfile,"Source is not an LV, error: $?, $lv_name");
+			version_log('minor','lvm',$::backupserver_fqdn,"Source is not an LV, error: $?, $lv_name");
 			$error = 1;
 		}
 	}
@@ -76,9 +74,9 @@ sub lvm_create_snapshot {
 	## Block device found
 	if($error == 0){
 		if($lvm_blockdevice && $lv_name){
-			append_log($sessionlogfile,"Block device $lvm_blockdevice, LV $lv_name");
+			version_log('normal','lvm',$::backupserver_fqdn,"LVM Logical volume found.\nLV Block Device: $lvm_blockdevice\nLV Name: $lv_name");
 		}else{
-			append_log($sessionlogfile,"Internal error...");
+			version_log('minor','lvm',$::backupserver_fqdn,"Internal error...");
 			$error = 1;
 		}
 	}
@@ -88,28 +86,22 @@ sub lvm_create_snapshot {
 		$result = `/sbin/lvdisplay \"${lvm_blockdevice}_sbackup_${p_job}_snap\" 2>&1`;
 		if($? == 0){
 			## Snapshot exists
-			append_log($sessionlogfile,"Old snapshot found, attempting to remove...");
+			version_log('normal','lvm',$::backupserver_fqdn,"Old snapshot found, attempting to remove...");
 			## Check if snapshot is mounted
 			system('mountpoint -q "/mnt/sbackup_'.${p_job}.'_snap" 2>&1');
 			if($? == 0){
 				## umount snapshot
-				append_log($sessionlogfile,"Old snapshot is mounted, unmounting...");
 				$result = `umount \"/mnt/sbackup_${p_job}_snap\" 2>&1`;
-				if($? == 0){
-					append_log($sessionlogfile,"Old snapshot unmounted successfully");
-				}else{
-					append_log($sessionlogfile,"Unmounting failed: $result");
+				if($? != 0){
+					version_log('minor','lvm',$::backupserver_fqdn,"Failed to unmount old snapshot.\n$result");
 					$error = 1;
 				}
 			}
 			## Remove old snapshot
 			if($error == 0){
-				append_log($sessionlogfile,"Attempting to remove old snapshot...");
   			$result = `/sbin/lvremove -f \"${lvm_blockdevice}_sbackup_${p_job}_snap\" 2>&1`;
-  			if($? == 0){
-  				append_log($sessionlogfile,"Old snapshot removed successfully");
-  			}else{
-  				append_log($sessionlogfile,"Old snapshot removal failed: $result");
+  			if($? != 0){
+  				version_log('minor','lvm',$::backupserver_fqdn,"Failed to remove old snapshot.\n$result");
   				$error = 1;
   			}
   		}			
@@ -118,31 +110,28 @@ sub lvm_create_snapshot {
 	
 	## Create LVM snapshot
 	if($error == 0){
-		append_log($sessionlogfile,"Creating snapshot...");
 		$result = `/sbin/lvcreate -l${lvm_size}%FREE -s -n \"${lv_name}_sbackup_${p_job}_snap\" ${lvm_blockdevice} 2>&1`;
 		if($? == 0){
 			## Snapshot created
-			append_log($sessionlogfile,"Snapshot created successfully");
 			if(!-d "/mnt/sbackup_${p_job}_snap"){
   			system("mkdir \"/mnt/sbackup_${p_job}_snap\"");
   			if($? != 0){
-  				append_log($sessionlogfile,"Failed to create mnt directory \"/mnt/sbackup_${p_job}_snap\"");
+  				version_log('minor','lvm',$::backupserver_fqdn,"Failed to create mnt directory \"/mnt/sbackup_${p_job}_snap\"");
   				$error = 1;
   			}
   		}
 			if($error == 0){
-  			append_log($sessionlogfile,"Mounting snapshot...");
   			$result = `mount -oro \"${lvm_blockdevice}_sbackup_${p_job}_snap\" \"/mnt/sbackup_${p_job}_snap\"`;
   			if($? == 0){
-  				append_log($sessionlogfile,"Snapshot mounted successfully");
+  				version_log('normal','lvm',$::backupserver_fqdn,"Snapshot created successfully.");
   			}else{
-  				append_log($sessionlogfile,"Snapshot faield to mounted: $result");
+  				version_log('minor','lvm',$::backupserver_fqdn,"Failed to mount snapshot\n$result");
   				$error = 1;
   			}
   		}
 		}else{
 			## Failed to create snapshot
-			append_log($sessionlogfile,"Snapshot creation failed: $result");
+			version_log('minor','lvm',$::backupserver_fqdn,"Failed to create a snapshot\n$result");
 			$error = 1;
 		}
 	}	
@@ -153,10 +142,10 @@ sub lvm_create_snapshot {
 	if($error != 0){
 		## Check LVM fallback
 		if($lvm_fallback == 0){
-			append_log($sessionlogfile,"Snapshot fallback is disabled, aborting.");
+			version_log('major','lvm',$::backupserver_fqdn,"Snapshot fallback is disabled, aborting.");
 			::job_failed("Snapshot creation failed.");
 		}
-		append_log($sessionlogfile,"Falling back to regular backup.");
+		version_log('warning','lvm',$::backupserver_fqdn,"Falling back to regular backup.");
 	}
 	
 	$error = "/mnt/sbackup_${p_job}_snap".$source_dir if $error == 0;
@@ -172,7 +161,7 @@ sub lvm_remove_snapshot {
 	my $sessionlogfile = $::SESSIONLOGPATH.$p_job."_".$SB_TIMESTART.".log";
 
 	&f_output("DEBUG","Attempting to remove LVM snapshot for path: \"$source_path\"");
-	append_log($sessionlogfile,"Attempting to remove LVM snapshot...");
+	version_log('normal','lvm',$::backupserver_fqdn,"Removing LVM snapshot....");
 	update_history($p_job,"perf=(Snapshot) 100%","status==running,type==backup,start==".$SB_TIMESTART);
 	my $error = 0;
 	my $result = "";
@@ -183,14 +172,14 @@ sub lvm_remove_snapshot {
   	$lvm_blockdevice = `df --output=source \"$source_path\"|tail -1 2>&1`;
   	chomp($lvm_blockdevice);
   	if($? != 0){
-  		append_log($sessionlogfile,"Could not get block device.");
+  		version_log('minor','lvm',$::backupserver_fqdn,"Could not get source directory.");
   		$error = 1;
   	}
   }
 	
 	## Check block device
 	if($error == 0 && !-b $lvm_blockdevice){
-		append_log($sessionlogfile,"Snapshot removal failed: $lvm_blockdevice is not a block device");
+		version_log('minor','lvm',$::backupserver_fqdn,"Failed to remove snapshot: $lvm_blockdevice is not a block device.");
 		$error = 1;
 	}
 	
@@ -201,7 +190,7 @@ sub lvm_remove_snapshot {
 		if($? == 0){
 			$lv_name =~ s/^\s+|\s+$//g;
 		}else{
-			append_log($sessionlogfile,"Source is not an LV");
+			version_log('minor','lvm',$::backupserver_fqdn,"Source is not an LV, error: $?, $lv_name");
 			$error = 1;
 		}
 	}
@@ -209,9 +198,9 @@ sub lvm_remove_snapshot {
 	## Block device found
 	if($error == 0){
 		if($lvm_blockdevice && $lv_name){
-			append_log($sessionlogfile,"Block device $lvm_blockdevice, LV $lv_name");
+			#version_log('normal','lvm',$::backupserver_fqdn,"LVM Logical volume found.\nLV Block Device: $lvm_blockdevice\nLV Name: $lv_name");
 		}else{
-			append_log($sessionlogfile,"Internal error...");
+			version_log('minor','lvm',$::backupserver_fqdn,"Internal error...");
 			$error = 1;
 		}
 	}
@@ -221,41 +210,37 @@ sub lvm_remove_snapshot {
 		$result = `/sbin/lvdisplay \"${lvm_blockdevice}_sbackup_${p_job}_snap\" 2>&1`;
 		if($? == 0){
 			## Snapshot exists
-			append_log($sessionlogfile,"Snapshot found, attempting to remove...");
 			## Check if snapshot is mounted
 			system('mountpoint -q "/mnt/sbackup_'.${p_job}.'_snap" 2>&1');
 			if($? == 0){
 				## umount snapshot
-				append_log($sessionlogfile,"Unmounting snapshot...");
 				$result = `umount \"/mnt/sbackup_${p_job}_snap\" 2>&1`;
 				if($? == 0){
-					append_log($sessionlogfile,"Snapshot unmounted successfully");
 					## Delete mnt directory
       		if(-d "/mnt/sbackup_${p_job}_snap"){
       			system("rmdir \"/mnt/sbackup_${p_job}_snap\"");
       			if($? != 0){
-      				append_log($sessionlogfile,"Failed to remove mnt directory \"/mnt/sbackup_${p_job}_snap\"");
+      				version_log('minor','lvm',$::backupserver_fqdn,"Failed to remove mnt directory \"/mnt/sbackup_${p_job}_snap\"");
       				#$error = 1;
       			}
       		}
 				}else{
-					append_log($sessionlogfile,"Unmounting failed: $result");
+					version_log('minor','lvm',$::backupserver_fqdn,"Failed to unmount snapshot.\n$result");
 					$error = 1;
 				}
 			}
 			## Remove  snapshot
 			if($error == 0){
-				append_log($sessionlogfile,"Attempting to remove snapshot...");
   			$result = `/sbin/lvremove -f \"${lvm_blockdevice}_sbackup_${p_job}_snap\" 2>&1`;
   			if($? == 0){
-  				append_log($sessionlogfile,"Snapshot removed successfully");
+  				version_log('normal','lvm',$::backupserver_fqdn,"Snapshot removed successfully");
   			}else{
-  				append_log($sessionlogfile,"Snapshot removal failed: $result");
+  				version_log('minor','lvm',$::backupserver_fqdn,"Failed remove snapshot.\n$result");
   				$error = 1;
   			}
   		}
 		}else{
-			append_log($sessionlogfile,"Snapshot not found");
+			version_log('minor','lvm',$::backupserver_fqdn,"Snapshot not found.");
 		}
 	}
 		
@@ -264,7 +249,7 @@ sub lvm_remove_snapshot {
 	##
 	if($error != 0){
 		## Check LVM fallback
-		append_log($sessionlogfile,"Snapshot removal failed.");
+		version_log('minor','lvm',$::backupserver_fqdn,"Snapshot removal failed.");
 		#::job_failed("Snapshot removal failed.");
 	}
 
