@@ -158,7 +158,7 @@ sub update_history{
 	}
 	
 	if($p_job && $update && $where){
-		&f_output("DEBUG","History update $p_job, $update, $where") if !$main::SIMULATEMODE && $update =~ /perf=\d+\%, status==0/;
+		&f_output("DEBUG","History update $p_job, $update, $where");# if !$main::SIMULATEMODE && $update =~ /perf=\d+\%, status==0/;
 		my @where_request  = parse_where('history',$where);
   	my @entries = split(/,/,$update,-1);
   	for $tmp(@entries){

@@ -16,12 +16,12 @@ if($p_job || (!$p_job && $sv_all)){
 	return 1;
 }
 
-printf "%-1.1s %-20.20s %-18.18s %-10.10s %-16.16s %-22.22s %-22.22s %-14.14s %-3.3s\n",
+printf "%-1.1s %-20.20s %-18.18s %-11.11s %-16.16s %-22.22s %-22.22s %-14.14s %-3.3s\n",
 	"Enabled",
 	"Name",
 	"Schedule",
 	"Status",
-	"Last completed",
+	"Last backup",
 	"Source",
 	"Target",
 	"Retention",
@@ -85,31 +85,32 @@ for my $tmp_job(sort keys %job){
 	##
 	my $out_status = "N/A";
 	my $out_versions = 0;
-	my $out_lastcompleted = "N/A";
+	my $out_lastbackup = "N/A";
 	my $out_type = "";
 	my $out_error = "";
 	my @tmp_history = &get_history($job{$tmp_job}{'NAME'},'status,start,name,type,perf,error');
 	for my $tmp(@{$tmp_history[2]}){
 		$out_versions++ if $$tmp{'type'} eq "backup" && ($$tmp{'status'} eq "1" || $$tmp{'status'} eq "2" || $$tmp{'status'} eq "3");
-		$out_lastcompleted = strftime("%a, %d %b %G %H:%M:%S", localtime($$tmp{'start'})) if $$tmp{'type'} eq "backup" && ($$tmp{'status'} eq "1" || $$tmp{'status'} eq "2" || $$tmp{'status'} eq "3");
+		$out_lastbackup = strftime("%a, %d %b %G %H:%M:%S", localtime($$tmp{'start'})) if $$tmp{'type'} eq "backup" && ($$tmp{'status'} eq "1" || $$tmp{'status'} eq "2" || $$tmp{'status'} eq "3");
 		if($$tmp{'type'} ne "purge"){
 			$out_status = $$tmp{'status'};
 			$out_error = $$tmp{'error'};
 		}
 		$out_type = $$tmp{'type'} if $$tmp{'status'} eq "0";
-		$out_lastcompleted =  $$tmp{'perf'} if $$tmp{'status'} eq "0" && $$tmp{'perf'} =~ /%$/;
+		$out_lastbackup =  $$tmp{'perf'} if $$tmp{'status'} eq "0" && $$tmp{'perf'} =~ /%$/;
 	}
 	#$out_status = "Error:".$out_status if $out_status ne "0" && $out_status ne "N/A";
-	$out_status = "Running" if $out_status eq "0" && $out_type eq "backup";
-	$out_status = "Purging" if $out_status eq "0" && $out_type eq "purge";
-	$out_status = "Restoring" if $out_status eq "0" && $out_type eq "restore";
-	$out_status = "Migrating" if $out_status eq "0" && $out_type eq "migration";
-	$out_status = "Verifying" if $out_status eq "0" && $out_type eq "verify";
-  $out_status = "Completed" if $out_status eq "1";
+	$out_status = "Backing up" if $out_status eq "0" && $out_type eq "backup";
+	$out_status = "Purging"    if $out_status eq "0" && $out_type eq "purge";
+	$out_status = "Copying"    if $out_status eq "0" && $out_type eq "copy";
+	$out_status = "Restoring"  if $out_status eq "0" && $out_type eq "restore";
+	$out_status = "Migrating"  if $out_status eq "0" && $out_type eq "migration";
+	$out_status = "Verifying"  if $out_status eq "0" && $out_type eq "verify";
+  $out_status = "Completed"  if $out_status eq "1";
   $out_status = "Completed/Warnings" if $out_status eq "2";
-  $out_status = "Completed/Errors" if $out_status eq "3";
+  $out_status = "Completed/Errors"   if $out_status eq "3";
   $out_status = "Completed/Failures" if $out_status eq "4";
-  $out_status = "Failed" if $out_status eq "5";
+  $out_status = "Failed"  if $out_status eq "5";
   $out_status = "Aborted" if $out_status eq "6";
   
 	##
@@ -147,12 +148,12 @@ for my $tmp_job(sort keys %job){
 	##
 	## Output
 	##
-	printf "%-1.1s %-20.20s %-18.18s %-10.10s %-16.16s %-22.22s %-22.22s %-14.14s %-3.3s\n",
+	printf "%-1.1s %-20.20s %-18.18s %-11.11s %-16.16s %-22.22s %-22.22s %-14.14s %-3.3s\n",
 		$out_enabled,
 		$job{$tmp_job}{'NAME'},
 		$out_schedule,
 		$out_status,
-		$out_lastcompleted,
+		$out_lastbackup,
 		$source_integ.$source_name,
 		$target_integ.$target_name,
 		$out_retention,

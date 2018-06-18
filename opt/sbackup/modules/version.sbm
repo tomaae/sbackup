@@ -89,6 +89,7 @@ $out_end = strftime("%a, %d %b %G %H:%M:%S", localtime($tmp[2][0]{'end'})) if $t
 ## Type
 my $out_type = "N/A";
 $out_type = "Backup" if $tmp[2][0]{'type'} eq "backup";
+$out_type = "Copy" if $tmp[2][0]{'type'} eq "copy";
 $out_type = "Restore" if $tmp[2][0]{'type'} eq "restore";
 $out_type = "Purge" if $tmp[2][0]{'type'} eq "purge";
 $out_type = "Migration" if $tmp[2][0]{'type'} eq "migration";

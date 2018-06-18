@@ -7,7 +7,7 @@
 #use diagnostics;
 use strict;
 use warnings;
-use POSIX qw(strftime);
+use POSIX qw(strftime ceil);
 
 our ($p_job);
 our %job;
@@ -222,27 +222,54 @@ system("$cmd_sleep 1") if !$main::SIMULATEMODE;
 my $SB_ECODE = "";
 my $RSSIZE = "";
 my $RSPERF = "";
-my $total_files      = 0;
-my $copied_files     = 0;
-my $progress_percent = 0;
+my $total_size           = 0;
+my $copied_size          = 0;
+my $copied_last_size     = 0;
+my $progress_percent     = 0;
 my $progress_percent_old = 0;
+my $line_flags    = "";
+my $line_entry    = "";
+my $line_size     = "";
+my $line_modified = "";
+
 &f_output("DEBUG","Getting change list for backup.");
 version_log('normal','rsync',$backupserver_fqdn,"Traversing source filesystem...");
-my $rsync_params = " --stats -aEAXvi --out-format='%i|%n' --delete ".$INCR." \"".$source_path.$slash."\" \"".$target_path.$slash."data_".$SB_TIMESTART.$slash."\"";
+my $rsync_params = " --stats -aEAXvii --out-format='%i|%n|%l|%M' --delete ".$INCR." \"".$source_path.$slash."\" \"".$target_path.$slash."data_".$SB_TIMESTART.$slash."\"";
 if($lvm_path ne ""){
-	$rsync_params = " --stats -aEAXvi --out-format='%i|%n' --delete ".$INCR." \"".$lvm_path.$slash."\" \"".$target_path.$slash."data_".$SB_TIMESTART.$slash."\"";
+	$rsync_params = " --stats -aEAXvii --out-format='%i|%n|%l|%M' --delete ".$INCR." \"".$lvm_path.$slash."\" \"".$target_path.$slash."data_".$SB_TIMESTART.$slash."\"";
 }
 open(my $cmd_out,"-|","$cmd_rsync --dry-run $rsync_params 2>&1") || die "Failed: $!\n";
+my @val;
 while (my $line = <$cmd_out>){
-	$total_files++ if $line =~ /^\>f/;
-	if($line =~ /^Total file size: ([0-9,\.]+) bytes/){
-		$RSSIZE = $1;
-		$RSSIZE =~ s/,//g;
+	chomp($line);
+	if($line =~ /\|/){
+		@val = split(/\|/,$line);
+		$line_flags    = $val[0];
+		$line_size     = $val[2];
+		$line_modified = $val[3];
+		
+		next if $line_entry eq './'; ## Skip root directory
+		
+		if($line_flags =~ /^\>f/){
+			$total_size += $line_size if $line_size > 0;
+		}
+	}else{
+		if($line =~ /^Total file size: ([0-9,\.]+) bytes/){
+			$RSSIZE = $1;
+			$RSSIZE =~ s/,//g;
+		}
 	}
 }
 close($cmd_out);
 update_history($p_job,"size=".$RSSIZE.",perf=0%","status==0,type==backup,start==".$SB_TIMESTART);
-$total_files = 1 if $total_files == 0; ## Never divide by 0;
+
+my $total_size_human = $total_size." B";
+$total_size_human = ceil($total_size / 1024)." KiB" if $total_size > (100 * 1024);
+$total_size_human = ceil($total_size / 1024 / 1024)." MiB" if $total_size > (9 * 1024 * 1024);
+$total_size_human = ceil($total_size / 1024 / 1024 / 1024)." GiB" if $total_size > (9 * 1024 * 1024 * 1024);
+version_log('normal','rsync',$backupserver_fqdn,"Data to transfer: $total_size_human");
+
+$total_size = 1 if $total_size == 0; ## Never divide by 0;
 
 &f_output("DEBUG","Starting backup.");
 &f_output("DEBUG3","Execute: \"$cmd_rsync $rsync_params\"");
@@ -252,43 +279,57 @@ my $rsync_summary = "";
 my @pid_output = &get_runfile($p_job,'status,type,pid');
 $aborting = 1 if $pid_output[0] && $pid_output[2][0]{'pid'}  =~ /^\d+$/ && $pid_output[2][0]{'status'} eq '6';
 if(!$aborting){
-  my @val;
   my $rsync_simulate = "";
   $rsync_simulate = ' --dry-run ' if $main::SIMULATEMODE;
   my $rpid = open(my $cmd_out,"-|","$cmd_rsync $rsync_simulate $rsync_params 2>&1") || die "Failed: $!\n";
   update_runfile($p_job,"rpid=".$rpid) if $rpid && $rpid > 0;
   while (my $line = <$cmd_out>){
+  	if($copied_last_size > 0){
+  		$copied_size += $copied_last_size;
+  		$copied_size = $total_size if $copied_size > $total_size;
+  		
+  		$progress_percent = ($copied_size/$total_size)*100;
+  		$progress_percent =~ /(\d+)\.?\d?\d?/;
+  		$progress_percent = $1;
+  		
+  		update_history($p_job,"perf=".$progress_percent."%","status==0,type==backup,start==".$SB_TIMESTART) if $progress_percent ne $progress_percent_old;
+    	$progress_percent_old = $progress_percent;
+    	$copied_last_size = 0;
+  	}
   	chomp($line);
   	if($line =~ /\|/){
   		@val = split(/\|/,$line);
+  		$line_flags    = $val[0];
+  		$line_entry    = $val[1];
+  		$line_size     = $val[2];
+  		$line_modified = $val[3];
   		
-  		if($line =~ /^\>f/){ ## New file
-    		$copied_files++;
-    		$copied_files = $total_files - 1 if $copied_files >= $total_files; ## Should not display 100%
-    		$progress_percent = ($copied_files/$total_files)*100;
-    		$progress_percent =~ /(\d+)\.?\d?\d?/;
-    		$progress_percent = $1;
-    		if($line =~ /^\>f\+/){
-    			append_log($sessionlogfile,'+'.$val[1]);
+  		next if $line_entry eq './'; ## Skip root directory
+  		
+  		if($line_flags =~ /^\>f/){ ## New file
+  			
+  			$copied_last_size = $line_size if $line_size > 0;
+    		if($line_flags =~ /^\>f\+/){
+    			append_log($sessionlogfile,'+'.$line_entry);
     		}else{
-    			append_log($sessionlogfile,'*'.$val[1]);
+    			append_log($sessionlogfile,'*'.$line_entry);
     		}
     		$data_changed = 1;
-    		update_history($p_job,"perf=".$progress_percent."%","status==0,type==backup,start==".$SB_TIMESTART) if $progress_percent ne $progress_percent_old;
-    		$progress_percent_old = $progress_percent;
-    	}elsif($line =~ /^\*deleting/){ ## Deleted
-    		append_log($sessionlogfile,'-'.$val[1]);
+    	}elsif($line_flags =~ /^\*deleting/){ ## Deleted
+    		append_log($sessionlogfile,'-'.$line_entry);
     		$data_changed = 1;
-    	}elsif($line =~ /^cd/){ ## New directory
-    		append_log($sessionlogfile,'+'.$val[1]);
+    	}elsif($line_flags =~ /^cd\+/){ ## New directory
+    		append_log($sessionlogfile,'+'.$line_entry);
     		$data_changed = 1;
-    	}elsif($line =~ /^c/){ ## Change of symlink
-    		append_log($sessionlogfile,'*'.$val[1]);
+    	}elsif($line_flags =~ /\+/){ ## New other
+    		append_log($sessionlogfile,'+'.$line_entry);
     		$data_changed = 1;
-    	}elsif($line =~ /^\./){ ## Change of attributes
-    		next if $val[1] =~ /^\.\/\s*$/;
-    		append_log($sessionlogfile,'.'.$val[1]);
-    		$data_changed = 1;
+    	}elsif($line_flags =~ /^c/){ ## Local change other
+    		next;
+    	}elsif($line_flags =~ /^h/){ ## Hardlink
+    		next;
+    	}elsif($line_flags =~ /^\./){ ## Not modified
+    		next;    		
     	}else{
     		version_log('warning','rsync',$backupserver_fqdn,$line);
     	}
@@ -345,7 +386,7 @@ if($job{$p_job}{'SOURCE'}{'-snapshot'}{'-enabled'} eq 1 && $job{$p_job}{'SOURCE'
 	lvm_remove_snapshot($p_job, $SB_TIMESTART, $source_path, $job{$p_job}{'SOURCE'}{'-snapshot'}{'-size'}, $job{$p_job}{'SOURCE'}{'-snapshot'}{'-fallback'});
 }
 
-##Check backup status
+## Update backup size and performance
 if($SB_ECODE eq "0"){
   for(read_log($sessionlogfile)){
   	chomp;
@@ -403,8 +444,8 @@ if($SB_ECODE eq "0"){
 if($job{$p_job}{'TARGET'}{'-host'} eq "" && ($job{$p_job}{'TARGET'}{'-type'} eq "filesystem" || $job{$p_job}{'TARGET'}{'-type'} eq "omv4")){
 	update_history($p_job,"perf=(Flushing) 100%","status==0,type==backup,start==".$SB_TIMESTART);
 	version_log('normal','sync',$backupserver_fqdn,"Flushing write cache...");
-  system("sync -f \"$target_path\"");
-  if($? == 0){
+  system("sync -f \"$target_path\"") if !$main::SIMULATEMODE;
+  if($? == 0 || $main::SIMULATEMODE){
   	version_log('normal','sync',$backupserver_fqdn,"Write cache successfully flushed.");
   }else{
   	version_log('minor','backup',$backupserver_fqdn,"Failed to flush write cache.");
