@@ -9,6 +9,11 @@
 [] - add filter for -log [normal|warning|minor|major|critical]
 
 =================================================================
+==HISTORY========================================================
+[] - remove end time
+[] - add duration as HH:MM
+
+=================================================================
 ==AUTOCOMPLETE===================================================
 [] - work with shortened variables (-job XXX -ver XXX -log)
 [] - disable type if ver is already specified
@@ -32,6 +37,7 @@
 [] - create global error log
 [] - create an database of all directories/files to be used for restore browsing
 [] - move rsync to separate module
+[] - rsync: improve and simplify backup statistics
 
 [] - remote backup of another server
 [] - mysql backup local/remote
