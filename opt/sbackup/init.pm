@@ -9,6 +9,7 @@ package init;
 
 use strict;
 use warnings;
+use Net::Domain qw(hostfqdn);
 
 use Exporter qw(import);
 our @ISA = qw(Exporter);
@@ -16,6 +17,7 @@ our @EXPORT = qw(
 									f_output get_env f_arguments epoch2human
 									$slash $BINPATH $MODULESPATH $ETCPATH $JOBCONFIGPATH $VARPATH $SESSIONLOGPATH $RUNFILEPATH
 									$cmd_ls $cmd_ln $cmd_rm $cmd_ps $cmd_sleep $cmd_cp $cmd_mv $cmd_mkdir $cmd_chmod $cmd_rsync $cmd_kill $cmd_pkill
+									$backupserver_fqdn
 							  );
 
 ##
@@ -107,6 +109,7 @@ sub get_env{
 	our $cmd_kill       = "kill";
 	our $cmd_pkill      = "pkill";
 	
+	our $backupserver_fqdn = hostfqdn;
 	
 	if(!-d $JOBCONFIGPATH){
 		system("$cmd_mkdir $JOBCONFIGPATH");

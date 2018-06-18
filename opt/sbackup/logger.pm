@@ -439,9 +439,11 @@ sub read_log{
 ## VERSION LOG HANDLING
 ##
 sub version_log{
+	## version_log('normal','dummy',$backupserver_fqdn,"test msg\ntest msg2\ntest msg3");
 	my ($severity,$process,$hostname,$message)=@_;
 	f_output("ERROR","Code error: all parameters are required for version_log",1) if !$message;
 	f_output("ERROR","Code error: invalid severity for version_log: $severity",1) if $severity !~ /^(normal|warning|minor|major|critical)$/i;
+	f_output("ERROR","Code error: empty parameter passed to version_log",1) if !$severity || !$process || !$hostname;
 	chomp($message);
 	$message =~ s/^/        /g;
 	$message =~ s/\n|\\n/\n        /g;
