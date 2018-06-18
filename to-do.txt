@@ -36,12 +36,13 @@
 [] - pre/postexec (export shell variables JOB_NAME, JOB_TYPE, STATUS, START_TIME)
 [] - create global error log
 [] - create an database of all directories/files to be used for restore browsing
+[] - move rsync to separate module
 
 [] - remote backup of another server
 [] - mysql backup local/remote
 
 =================================================================
-==ABORT=========================================================
+==ABORT==========================================================
 [] - add "backup aborted by used XYZ" to session log on sending abort request
 
 =================================================================
