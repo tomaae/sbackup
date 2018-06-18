@@ -9,6 +9,11 @@
 [] - add filter for -log [normal|warning|minor|major|critical]
 
 =================================================================
+==AUTOCOMPLETE===================================================
+[] - work with shortened variables (-job XXX -ver XXX -log)
+[] - disable type if ver is already specified
+
+=================================================================
 ==MONITOR========================================================
 [] - monitor running job
 - backup info and progress at top
