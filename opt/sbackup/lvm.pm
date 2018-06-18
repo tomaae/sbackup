@@ -24,7 +24,7 @@ sub lvm_create_snapshot {
 
 	&f_output("DEBUG","Attempting to create LVM snapshot for path: \"$source_path\"");
 	version_log('normal','lvm',$::backupserver_fqdn,"Attempting to create LVM snapshot....");
-	update_history($p_job,"perf=(Snapshot) 0%","status==running,type==backup,start==".$SB_TIMESTART);
+	update_history($p_job,"perf=(Snapshot) 0%","status==0,type==backup,start==".$SB_TIMESTART);
 	my $error = 0;
 	my $result = "";
 	my $source_dir = "";
@@ -162,7 +162,7 @@ sub lvm_remove_snapshot {
 
 	&f_output("DEBUG","Attempting to remove LVM snapshot for path: \"$source_path\"");
 	version_log('normal','lvm',$::backupserver_fqdn,"Removing LVM snapshot....");
-	update_history($p_job,"perf=(Snapshot) 100%","status==running,type==backup,start==".$SB_TIMESTART);
+	update_history($p_job,"perf=(Snapshot) 100%","status==0,type==backup,start==".$SB_TIMESTART);
 	my $error = 0;
 	my $result = "";
 	

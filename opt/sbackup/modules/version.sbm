@@ -19,7 +19,7 @@ our $p_version;
 ##
 f_output("ERROR","Invalid version.",1) if $p_version !~ /^(\d{4})\/(\d{2})\/(\d{2})\-(\d{2})(\d{2})(\d{2})$/;
 $p_version = mktime($6,$5,$4,$3,$2 - 1,$1 - 1900);
-my @tmp = &get_history($p_job,'status,name,start,end,size,perf,type','start=='.$p_version);
+my @tmp = &get_history($p_job,'status,name,start,end,error,size,perf,type','start=='.$p_version);
 f_output("ERROR","Invalid version.",1) if !$tmp[0];
 
 
@@ -27,9 +27,24 @@ f_output("ERROR","Invalid version.",1) if !$tmp[0];
 ## Get version log
 ##
 if($sv_log){
+	require Term::ANSIColor;
+  import Term::ANSIColor;
 	f_output("ERROR","Missing job version.",1) if !$p_version;
 	f_output("ERROR","Job log is not available.",1) if !-f $::SESSIONLOGPATH.$p_job."_".$p_version.".log";
+	my $highlight = "";
+	my $severity = "";
 	for my $tmp(&read_log($::SESSIONLOGPATH.$p_job."_".$p_version.".log")){
+		## Severity colors
+		if($tmp =~ /^\[(\w+)\] /){
+			$severity = $1;
+			$highlight = "green";
+			$highlight = "yellow" if $severity eq "Warning";
+			$highlight = "cyan" if $severity eq "Minor";
+			$highlight = "bright_red" if $severity eq "Major";
+			$highlight = "red" if $severity eq "Critical";
+			$tmp =~ s/^\[$severity\]//;
+			$tmp = color($highlight)."[$severity]".color("reset").$tmp;
+		}
 		print $tmp;
 	}
 	return 1;
@@ -81,36 +96,33 @@ $out_type = "Verify" if $tmp[2][0]{'type'} eq "verify";
 
 ## Parse status
 my $out_status = "N/A";
-$out_status = "Completed" if $tmp[2][0]{'status'} eq "0";
-$out_status = "Err:".$tmp[2][0]{'status'} if $tmp[2][0]{'status'} ne "0" && $tmp[2][0]{'status'} ne "running";
-$out_status = "Aborted" if $out_status eq "Err:aborted";
-$out_status = "Running" if $tmp[2][0]{'status'} eq "running";
-$out_status =~ s/^Err:/Error: /;
+$out_status = "Running" if $tmp[2][0]{'status'} eq "0";
+$out_status = "Completed" if $tmp[2][0]{'status'} eq "1";
+$out_status = "Completed/Warnings" if $tmp[2][0]{'status'} eq "2";
+$out_status = "Completed/Errors" if $tmp[2][0]{'status'} eq "3";
+$out_status = "Completed/Failures" if $tmp[2][0]{'status'} eq "4";
+$out_status = "Failed" if $tmp[2][0]{'status'} eq "5";
+$out_status = "Aborted" if $tmp[2][0]{'status'} eq "6";
 
 if($out_status eq "Running" && $out_perf =~ /%$/){
 	$out_status .= " ".$out_perf;
 	$out_perf = "N/A";
 }
 
+## Parse status
+my $out_error = "";
+$out_error = $tmp[2][0]{'error'} if $tmp[2][0]{'error'};
+
+
 printf "%20.20s : %s\n", "Job name", $tmp[2][0]{'name'};
 printf "%20.20s : %s\n", "Job type", $out_type;
 printf "%20.20s : %s\n", "Status",  $out_status;
+printf "%20.20s : %s\n", "Error",  $out_error if $out_error;
 printf "%20.20s : %s\n", "Version",  $out_version;
 printf "%20.20s : %s\n", "Start time",  $out_start;
 printf "%20.20s : %s\n", "End time", $out_end;
 printf "%20.20s : %s\n", "Size", $out_size;
 printf "%20.20s : %s\n", "Performance", $out_perf;
 printf "%20.20s : %s\n", "Version log", $out_log;
-
-#	"Version",
-#	"Type",
-#	"Name",
-#	"Status",
-#	"Start time",
-#	"End time",
-#	"Size",
-#	"Perf",
-#	"Log";
-
 
 return 1;

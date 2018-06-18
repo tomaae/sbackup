@@ -43,6 +43,7 @@ if(!$sv_background && !$::DEBUGMODE){
 ##
 my $SB_TIMESTART = time();
 my $SB_TIMEEND;
+our $SB_ERRORLEVEL = 1;
 our $sessionlogfile = $SESSIONLOGPATH.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".log";
 
 ##
@@ -52,7 +53,7 @@ sub job_failed {
 	my $msg = shift;
 	$SB_TIMEEND = time();
 	print STDERR "Error: $msg\n";
-	update_history($p_job,"status=".$msg.",end=".$SB_TIMEEND.",perf=","status==running,type==backup,start==".$SB_TIMESTART);
+	update_history($p_job,"status=5,end=".$SB_TIMEEND.",error=".$msg.",perf=","status==0,type==backup,start==".$SB_TIMESTART);
 	version_log('critical','backup',$backupserver_fqdn,"Backup job failed with error $msg\nEnd time: ".strftime("%d/%m/%G %H:%M:%S", localtime(time())));
 	rm_runfile($p_job);
 	exit 1;
@@ -65,8 +66,8 @@ sub job_failed {
 my $result = check_runfile($p_job,$RUNFILEPATH."sbackup_".$job{$p_job}{'NAME'});
 f_output("ERROR",$result,1) if $result;
 
-set_runfile($p_job,"type=backup,status=running,pid=".$$);
-insert_history($p_job,"type=backup,status=running,name=".$job{$p_job}{'NAME'}.",start=".$SB_TIMESTART.",perf=(Starting) 0%");
+set_runfile($p_job,"type=backup,status=0,epoch=".$SB_TIMESTART.",pid=".$$);
+insert_history($p_job,"type=backup,status=0,name=".$job{$p_job}{'NAME'}.",start=".$SB_TIMESTART.",perf=(Starting) 0%");
 version_log('normal','backup',$backupserver_fqdn,"Starting backup job \"$job{$p_job}{'NAME'}\"\nJob version: ".strftime("%G/%m/%d-%H%M%S", localtime($SB_TIMESTART)));
 
 ##
@@ -84,7 +85,10 @@ sub get_integ_path{
   	import omv4;
   	$returncodes[2]{'integ'} = "OMV ";
   	$returncodes[2]{'path'} = omv_prepare_sharedfolder($path);
-  	if($returncodes[2]{'path'} =~ /^Error:(.*)$/){job_failed("$1");}
+  	if($returncodes[2]{'path'} =~ /^Error:(.*)$/){
+  		version_log('critical','omv4',$backupserver_fqdn,"OMV4 reported error:\n$1");
+  		job_failed("$1");
+  	}
   	$returncodes[0] = 1;
   	version_log('normal','omv4',$backupserver_fqdn,"OMV4 volume found.\nShared folder location: $returncodes[2]{'path'}");
   }
@@ -168,7 +172,7 @@ if(-f $VARPATH.'history_'.$p_job){
   		next;
   	}
   	if($$tmp{'start'} ne "" && $$tmp{'start'} > 100 && -d $target_path.$slash."data_".$$tmp{'start'}){
-  		if($$tmp{'status'} =~ /^\d+$/ && $$tmp{'status'} == "0"){
+  		if($$tmp{'status'} =~ /^\d+$/ && ($$tmp{'status'} eq "1" || $$tmp{'status'} eq "2" || $$tmp{'status'} eq "3")){
   			$LAST_COMPLETED_STAMP = $$tmp{'start'};
   		}else{
   			$LAST_FAILED_STAMP = $$tmp{'start'};
@@ -237,7 +241,7 @@ while (my $line = <$cmd_out>){
 	}
 }
 close($cmd_out);
-update_history($p_job,"size=".$RSSIZE.",perf=0%","status==running,type==backup,start==".$SB_TIMESTART);
+update_history($p_job,"size=".$RSSIZE.",perf=0%","status==0,type==backup,start==".$SB_TIMESTART);
 $total_files = 1 if $total_files == 0; ## Never divide by 0;
 
 &f_output("DEBUG","Starting backup.");
@@ -246,83 +250,87 @@ my $aborting = 0;
 my $data_changed = 0;
 my $rsync_summary = "";
 my @pid_output = &get_runfile($p_job,'status,type,pid');
-$aborting = 1 if $pid_output[0] && $pid_output[2][0]{'pid'}  =~ /^\d+$/ && $pid_output[2][0]{'status'} eq 'aborting';
+$aborting = 1 if $pid_output[0] && $pid_output[2][0]{'pid'}  =~ /^\d+$/ && $pid_output[2][0]{'status'} eq '6';
 if(!$aborting){
-my @val;
-my $rsync_simulate = "";
-$rsync_simulate = ' --dry-run ' if $main::SIMULATEMODE;
-my $rpid = open(my $cmd_out,"-|","$cmd_rsync $rsync_simulate $rsync_params 2>&1") || die "Failed: $!\n";
-update_runfile($p_job,"rpid=".$rpid) if $rpid && $rpid > 0;
-while (my $line = <$cmd_out>){
-	chomp($line);
-	if($line =~ /\|/){
-		@val = split(/\|/,$line);
-		
-		if($line =~ /^\>f/){ ## New file
-  		$copied_files++;
-  		$copied_files = $total_files - 1 if $copied_files >= $total_files; ## Should not display 100%
-  		$progress_percent = ($copied_files/$total_files)*100;
-  		$progress_percent =~ /(\d+)\.?\d?\d?/;
-  		$progress_percent = $1;
-  		if($line =~ /^\>f\+/){
-  			append_log($sessionlogfile,'+'.$val[1]);
-  		}else{
-  			append_log($sessionlogfile,'*'.$val[1]);
-  		}
-  		$data_changed = 1;
-  		update_history($p_job,"perf=".$progress_percent."%","status==running,type==backup,start==".$SB_TIMESTART) if $progress_percent ne $progress_percent_old;
-  		$progress_percent_old = $progress_percent;
-  	}elsif($line =~ /^\*deleting/){ ## Deleted
-  		append_log($sessionlogfile,'-'.$val[1]);
-  		$data_changed = 1;
-  	}elsif($line =~ /^cd/){ ## New directory
-  		append_log($sessionlogfile,'+'.$val[1]);
-  		$data_changed = 1;
-  	}elsif($line =~ /^c/){ ## Change of symlink
-  		append_log($sessionlogfile,'*'.$val[1]);
-  		$data_changed = 1;
-  	}elsif($line =~ /^\./){ ## Change of attributes
-  		next if $val[1] =~ /^\.\/\s*$/;
-  		append_log($sessionlogfile,'.'.$val[1]);
-  		$data_changed = 1;
+  my @val;
+  my $rsync_simulate = "";
+  $rsync_simulate = ' --dry-run ' if $main::SIMULATEMODE;
+  my $rpid = open(my $cmd_out,"-|","$cmd_rsync $rsync_simulate $rsync_params 2>&1") || die "Failed: $!\n";
+  update_runfile($p_job,"rpid=".$rpid) if $rpid && $rpid > 0;
+  while (my $line = <$cmd_out>){
+  	chomp($line);
+  	if($line =~ /\|/){
+  		@val = split(/\|/,$line);
+  		
+  		if($line =~ /^\>f/){ ## New file
+    		$copied_files++;
+    		$copied_files = $total_files - 1 if $copied_files >= $total_files; ## Should not display 100%
+    		$progress_percent = ($copied_files/$total_files)*100;
+    		$progress_percent =~ /(\d+)\.?\d?\d?/;
+    		$progress_percent = $1;
+    		if($line =~ /^\>f\+/){
+    			append_log($sessionlogfile,'+'.$val[1]);
+    		}else{
+    			append_log($sessionlogfile,'*'.$val[1]);
+    		}
+    		$data_changed = 1;
+    		update_history($p_job,"perf=".$progress_percent."%","status==0,type==backup,start==".$SB_TIMESTART) if $progress_percent ne $progress_percent_old;
+    		$progress_percent_old = $progress_percent;
+    	}elsif($line =~ /^\*deleting/){ ## Deleted
+    		append_log($sessionlogfile,'-'.$val[1]);
+    		$data_changed = 1;
+    	}elsif($line =~ /^cd/){ ## New directory
+    		append_log($sessionlogfile,'+'.$val[1]);
+    		$data_changed = 1;
+    	}elsif($line =~ /^c/){ ## Change of symlink
+    		append_log($sessionlogfile,'*'.$val[1]);
+    		$data_changed = 1;
+    	}elsif($line =~ /^\./){ ## Change of attributes
+    		next if $val[1] =~ /^\.\/\s*$/;
+    		append_log($sessionlogfile,'.'.$val[1]);
+    		$data_changed = 1;
+    	}else{
+    		version_log('warning','rsync',$backupserver_fqdn,$line);
+    	}
   	}else{
-  		version_log('warning','rsync',$backupserver_fqdn,$line);
+  		if($line =~ /sending incremental file list/){
+  			version_log('normal','rsync',$backupserver_fqdn,"Starting data transfer...");
+  		}elsif($line =~ /^Number of files: / || $rsync_summary ne ""){
+  			$rsync_summary .= $line."\n";
+  			if($line =~ /^total size is/){
+  				append_log($sessionlogfile,"\n") if $data_changed;
+  				version_log('normal','rsync',$backupserver_fqdn,"Backup job summary:\n\n$rsync_summary");
+  				$rsync_summary = "";
+  			}
+  		}elsif($line =~ /^\s*$/){
+  			next;
+  		}else{
+  			my $severity = "warning";
+  			$severity = "major" if $line =~ /^rsync.*error/;
+    		version_log($severity,'rsync',$backupserver_fqdn,$line);
+    	}
   	}
-	}else{
-		if($line =~ /sending incremental file list/){
-			version_log('normal','rsync',$backupserver_fqdn,"Starting data transfer");
-		}elsif($line =~ /^Number of files: / || $rsync_summary ne ""){
-			$rsync_summary .= $line."\n";
-			if($line =~ /^total size is/){
-				append_log($sessionlogfile,"\n") if $data_changed;
-				version_log('normal','rsync',$backupserver_fqdn,"Backup job summary:\n\n$rsync_summary");
-				$rsync_summary = "";
-			}
-		}elsif($line =~ /^\s*$/){
-			next;
-		}else{
-  		version_log('warning','rsync',$backupserver_fqdn,$line);
-  	}
-	}
-}
-close($cmd_out);
+  }
+  close($cmd_out);
 
-if($rsync_summary ne ""){
-	append_log($sessionlogfile,"\n") if $data_changed;
-	version_log('normal','rsync',$backupserver_fqdn,"Backup job summary:\n\n$rsync_summary");
-	$rsync_summary = "";
+  if($rsync_summary ne ""){
+  	append_log($sessionlogfile,"\n") if $data_changed;
+  	version_log('normal','rsync',$backupserver_fqdn,"Backup job summary:\n\n$rsync_summary");
+  	$rsync_summary = "";
+  }
+
+  $SB_ECODE=$?;
+  version_log('normal','rsync',$backupserver_fqdn,"Nothing backed up, no changed data found.") if $SB_ECODE eq "0" && !$data_changed;
 }
 
-$SB_ECODE=$?;
-version_log('normal','rsync',$backupserver_fqdn,"Nothing backed up, no changed data found.") if $SB_ECODE eq "0" && !$data_changed;
-}
+## Check abort status
 if($SB_ECODE ne "" && $SB_ECODE != 0){
 	if(!$aborting){
 		my @pid_output = &get_runfile($p_job,'status,type,pid');
-		$aborting = 1 if $pid_output[0] && $pid_output[2][0]{'pid'}  =~ /^\d+$/ && $pid_output[2][0]{'status'} eq 'aborting';
+		$aborting = 1 if $pid_output[0] && $pid_output[2][0]{'pid'}  =~ /^\d+$/ && $pid_output[2][0]{'status'} eq '6';
 	}
 	if($aborting){
-		$SB_ECODE = "aborted";
+		$SB_ERRORLEVEL = "6";
 		version_log('minor','rsync',$backupserver_fqdn,"Job aborted by user.");
 	}
 }
@@ -357,7 +365,7 @@ $SB_ECODE = "-1" if $SB_ECODE eq "";
 
 if($SB_ECODE eq "0"){
 	#version_log('normal','rsync',$backupserver_fqdn,"Writing meta data...");
-	update_history($p_job,"perf=(Meta) 100%","status==running,type==backup,start==".$SB_TIMESTART);
+	update_history($p_job,"perf=(Meta) 100%","status==0,type==backup,start==".$SB_TIMESTART);
 	my $meta_ecode = 0;
 	
 	if(!$main::SIMULATEMODE){
@@ -388,27 +396,30 @@ if($SB_ECODE eq "0"){
   if($meta_ecode eq "0"){
   	version_log('normal','backup',$backupserver_fqdn,"Meta data saved successfully.");
   }else{
-  	job_failed("Failed to save meta data.");
+  	version_log('minor','backup',$backupserver_fqdn,"Failed to save meta data.");
   }
 }
 
 if($job{$p_job}{'TARGET'}{'-host'} eq "" && ($job{$p_job}{'TARGET'}{'-type'} eq "filesystem" || $job{$p_job}{'TARGET'}{'-type'} eq "omv4")){
-	update_history($p_job,"perf=(Flushing) 100%","status==running,type==backup,start==".$SB_TIMESTART);
+	update_history($p_job,"perf=(Flushing) 100%","status==0,type==backup,start==".$SB_TIMESTART);
 	version_log('normal','sync',$backupserver_fqdn,"Flushing write cache...");
   system("sync -f \"$target_path\"");
   if($? == 0){
   	version_log('normal','sync',$backupserver_fqdn,"Write cache successfully flushed.");
   }else{
-  	job_failed("Failed to flush write cache.");
+  	version_log('minor','backup',$backupserver_fqdn,"Failed to flush write cache.");
   }
 }
+
+$SB_ERRORLEVEL = 5 if $SB_ECODE ne "0" && $SB_ERRORLEVEL < 5;
 
 if($SB_ECODE eq "0"){
 	version_log('normal','backup',$backupserver_fqdn,"Backup job completed successfully.\nEnd time: ".strftime("%d/%m/%G %H:%M:%S", localtime($SB_TIMEEND)));
 }else{
 	version_log('normal','backup',$backupserver_fqdn,"Backup job completed with error $SB_ECODE\nEnd time: ".strftime("%d/%m/%G %H:%M:%S", localtime($SB_TIMEEND)));
 }
-update_history($p_job,"status=".$SB_ECODE.",end=".$SB_TIMEEND.",size=".$RSSIZE.",perf=".$RSPERF,"status==running,type==backup,start==".$SB_TIMESTART);
+update_history($p_job,"status=".$SB_ERRORLEVEL.",end=".$SB_TIMEEND.",size=".$RSSIZE.",perf=".$RSPERF,"status==0,type==backup,start==".$SB_TIMESTART);
+#update_history($p_job,"status=5,end=".$SB_TIMEEND.",error=".$SB_ECODE.",perf=","status==0,type==backup,start==".$SB_TIMESTART);
 rm_runfile($p_job);
 
 if($SB_ECODE eq "0"){

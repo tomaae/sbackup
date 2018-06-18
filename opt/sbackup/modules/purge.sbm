@@ -43,7 +43,7 @@ if(!$sv_background && !$::DEBUGMODE){
 ##
 my $SB_TIMESTART = time();
 my $SB_TIMEEND;
-my $SB_ECODE = 0;
+my $SB_ECODE = "";
 
 my $sessionlogfile = $SESSIONLOGPATH.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".log";
 
@@ -54,7 +54,7 @@ sub backup_fail {
 	my $msg = shift;
 	$SB_TIMEEND = time();
 	print "Error: $msg\n";
-	update_history($p_job,"status=".$msg.",end=".$SB_TIMEEND,"status==running,type==purge,start==".$SB_TIMESTART);
+	update_history($p_job,"status=5,error=".$msg.",end=".$SB_TIMEEND,"status==0,type==purge,start==".$SB_TIMESTART);
 	append_log($sessionlogfile,"End time: ".$SB_TIMEEND." (".epoch2human($SB_TIMEEND).")\nStatus:Error: $msg\n");
 	rm_runfile($p_job);
 	exit 1;
@@ -67,8 +67,8 @@ sub backup_fail {
 my $result = check_runfile($p_job,$RUNFILEPATH."sbackup_".$job{$p_job}{'NAME'});
 f_output("ERROR",$result,1) if $result;
 
-set_runfile($p_job,"type=purge,status=running,pid=".$$);
-insert_history($p_job,"type=purge,status=running,name=".$job{$p_job}{'NAME'}.",start=".$SB_TIMESTART);
+set_runfile($p_job,"type=purge,status=0,epoch=".$SB_TIMESTART.",pid=".$$);
+insert_history($p_job,"type=purge,status=0,name=".$job{$p_job}{'NAME'}.",start=".$SB_TIMESTART);
 append_log($sessionlogfile,"Purge name: ".$job{$p_job}{'NAME'});
 append_log($sessionlogfile,"Start time: ".$SB_TIMESTART." (".epoch2human($SB_TIMESTART).")\n");
 
@@ -112,7 +112,7 @@ if(-f $VARPATH.'history_'.$p_job){
   for my $tmp(@{$output[2]}){
   	next if $$tmp{'start'} eq $SB_TIMESTART;
   	if($$tmp{'type'} eq "backup" && $$tmp{'start'} ne "" && $$tmp{'start'} > 100 && -d $target_path.$slash."data_".$$tmp{'start'}){
-  		$LAST_COMPLETED_STAMP = $$tmp{'start'} if $$tmp{'status'} =~ /^\d+$/ && $$tmp{'status'} == "0";
+  		$LAST_COMPLETED_STAMP = $$tmp{'start'} if $$tmp{'status'} =~ /^\d+$/ && $$tmp{'status'} eq "0";
   	}
   }
   &f_output("DEBUG","Last completed version: ".$LAST_COMPLETED_STAMP) if $LAST_COMPLETED_STAMP;
@@ -184,7 +184,7 @@ if(-f $VARPATH.'history_'.$p_job){
 }
 
 $SB_TIMEEND = time();
-update_history($p_job,"status=".$SB_ECODE.",end=".$SB_TIMEEND,"status==running,type==purge,start==".$SB_TIMESTART);
+update_history($p_job,"status=1,error=".$SB_ECODE.",end=".$SB_TIMEEND,"status==0,type==purge,start==".$SB_TIMESTART);
 append_log($sessionlogfile,"End time: ".$SB_TIMEEND." (".epoch2human($SB_TIMEEND).")\nStatus:".$SB_ECODE."\n");
 append_log($sessionlogfile,"Purge completed successfully.") if $SB_ECODE eq "0";
 

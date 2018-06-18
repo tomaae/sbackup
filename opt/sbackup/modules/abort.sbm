@@ -44,8 +44,8 @@ if($param_ok == 0){
 my @pid_output = &get_runfile($p_job,'status,type,rpid');
 if($pid_output[0] && $pid_output[2][0]{'rpid'} && $pid_output[2][0]{'rpid'}  =~ /^\d+$/){
 	f_output("ERROR","Abort is available only for backup jobs.",1) if $pid_output[2][0]{'type'} ne 'backup';
-	f_output("ERROR","Job is already aborting.",1) if $pid_output[2][0]{'status'} eq 'aborting';
-	f_output("ERROR","Unable to abort, job may still be starting or finishing.",1) if $pid_output[2][0]{'status'} ne 'running';
+	f_output("ERROR","Job is already aborting.",1) if $pid_output[2][0]{'status'} eq '6';
+	f_output("ERROR","Unable to abort, job may still be starting or finishing.",1) if $pid_output[2][0]{'status'} ne '0';
 	
 	## Verify rpid, it must belong to rsync
 	system("$cmd_ps $pid_output[2][0]{'rpid'}|grep rsync >/dev/null 2>&1");
@@ -56,7 +56,7 @@ if($pid_output[0] && $pid_output[2][0]{'rpid'} && $pid_output[2][0]{'rpid'}  =~ 
 	system("$cmd_pkill -P $pid_output[2][0]{'rpid'} >/dev/null 2>&1");
 	if($? == 0){
 		print "Abort request sent successfully.\n";
-		update_runfile($p_job,"status=aborting");
+		update_runfile($p_job,"status=6");
 		exit 0;
 	}else{
 		## Verify pkill binary

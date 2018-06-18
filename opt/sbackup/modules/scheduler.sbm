@@ -87,14 +87,14 @@ for my $tmp_job(sort keys %job){
   	&f_output("DEBUG","History log found, checking history.");
     my @output = &get_history($tmp_job,'status,start','type==backup');
     for my $tmp(@{$output[2]}){
-  		if($$tmp{'status'} =~ /^\d+$/ && $$tmp{'status'} == "0"){
+  		if($$tmp{'status'} =~ /^\d+$/ && ($$tmp{'status'} eq "1" || $$tmp{'status'} eq "2" || $$tmp{'status'} eq "3")){
   			## Successful backup
   			$LAST_COMPLETED_STAMP = $$tmp{'start'};
   			$LAST_FAILURES_NO = 0;
   		}else{
   			## Failed backup
   			$LAST_FAILED_STAMP = $$tmp{'start'};
-  			$LAST_FAILURES_NO++ if $$tmp{'status'} ne "running";
+  			$LAST_FAILURES_NO++ if $$tmp{'status'} ne "0";
   		}
     }
   }else{

@@ -1,3 +1,19 @@
+
+=================================================================
+==Status list====================================================
+0 Running
+1 Completed
+2 Completed/Warnings
+3 Completed/Errors
+4 Completed/Failures
+5 Failed
+6 Aborted
+
+=================================================================
+==GENERAL======================================================
+[] - disable error exit code and message when running from cron
+[] - errors to be reported post-backup in custom HTML email
+
 =================================================================
 ==MIGRATION======================================================
 [] - sbackup -migrate testbkp -type filesystem/omv4 -into test_share

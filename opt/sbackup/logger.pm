@@ -1,5 +1,4 @@
 package logger;
-use Term::ANSIColor;
 
 ###########################################################################################
 #
@@ -34,14 +33,16 @@ our %table;
     "end"=>3,
     "size"=>4,
     "perf"=>5,
-    "type"=>6
+    "type"=>6,
+    "error"=>7
   );
   
 %{$table{"runfile"}} = (
     "type"=>0,
     "pid"=>1,
     "status"=>2,
-    "rpid"=>3
+    "epoch"=>3,
+    "rpid"=>4
   );
 
 sub parse_select{
@@ -157,7 +158,7 @@ sub update_history{
 	}
 	
 	if($p_job && $update && $where){
-		&f_output("DEBUG","History update $p_job, $update, $where") if !$main::SIMULATEMODE && $update =~ /perf=\d+\%, status==running/;
+		&f_output("DEBUG","History update $p_job, $update, $where") if !$main::SIMULATEMODE && $update =~ /perf=\d+\%, status==0/;
 		my @where_request  = parse_where('history',$where);
   	my @entries = split(/,/,$update,-1);
   	for $tmp(@entries){
@@ -366,7 +367,7 @@ sub check_runfile{
   if(-f $runfile){
   	&f_output("DEBUG","Runfile found.");
   	## Get runfile data
-  	my @output = &get_runfile($p_job,'status,type,pid');
+  	my @output = &get_runfile($p_job,'status,type,epoch,pid');
   	if($output[0] && $output[2][0]{'pid'} =~ /^\d+$/){
   		## Runfile data contain PID
   		&f_output("DEBUG","Runfile pid ".$output[2][0]{'pid'});
@@ -377,13 +378,15 @@ sub check_runfile{
   		}else{
   			## Close job if PID is no longer running
   			&f_output("DEBUG","Job is no longer running, possible crash or kill.");
-  			update_history($p_job,"status=killed,perf=", "status==running");
+  			update_history($p_job,"status=5,error=killed,perf=", "status==0");
+  			#version_log('critical','unknown',$::backupserver_fqdn,"Post-purge failed to start.");
   			rm_runfile($p_job);
   		}
   	}else{
   		## Close job if pidfile does not contain valid PID
   		&f_output("DEBUG","Runfile is faulty, removing.");
-  		update_history($p_job,"status=killed,perf=", "status==running");
+  		update_history($p_job,"status=5,error=killed,perf=", "status==0");
+  		#version_log('critical','unknown',$::backupserver_fqdn,"Post-purge failed to start.");
   		rm_runfile($p_job);
   	}
   }
@@ -451,18 +454,18 @@ sub version_log{
 	$process =~ s/^(.+)$/\U$1\E/;
 	$hostname =~ s/^(.+)$/\L$1\E/;
 	
-	$severity = color("green").'['.$severity.']'.color("reset") if $severity eq "Normal";
-	$severity = color("yellow").'['.$severity.']'.color("reset") if $severity eq "Warning";
-	$severity = color("cyan").'['.$severity.']'.color("reset") if $severity eq "Minor";
-	$severity = color("bright_red").'['.$severity.']'.color("reset") if $severity eq "Major";
-	$severity = color("red").'['.$severity.']'.color("reset") if $severity eq "Critical";
+	## Update severity level
+	$::SB_ERRORLEVEL = 2 if $severity eq "Warning"  && $::SB_ERRORLEVEL < 2;
+	$::SB_ERRORLEVEL = 3 if $severity eq "Minor"    && $::SB_ERRORLEVEL < 3;
+	$::SB_ERRORLEVEL = 4 if $severity eq "Major"    && $::SB_ERRORLEVEL < 4;
+	$::SB_ERRORLEVEL = 5 if $severity eq "Critical" && $::SB_ERRORLEVEL < 5;
 	
-	&f_output("DEBUG","New version log entry $severity From: $process\@$hostname\n$message");
+	&f_output("DEBUG","New version log entry [$severity] From: $process\@$hostname\n$message");
 	return if $main::SIMULATEMODE;
 	open log_file,">>$::sessionlogfile" or die "Error: Insufficient access rights\n";
 	flock log_file,2;
 	seek log_file,0,2;
-	print log_file "$severity From: $process\@$hostname Time: ".strftime("%d/%m/%G %H:%M:%S", localtime(time()))."\n";
+	print log_file "[$severity] From: $process\@$hostname Time: ".strftime("%d/%m/%G %H:%M:%S", localtime(time()))."\n";
 	print log_file "$message\n\n";
 	flock log_file,8;
 	close log_file;

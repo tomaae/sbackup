@@ -41,7 +41,7 @@ if($? == 0){
 	my @output = &get_history($p_job,'status,start,type,perf');
   for my $tmp(@{$output[2]}){
   	delete_history($p_job,"start==".$$tmp{'start'}) if $$tmp{'type'} eq "backup" && !-d $p_path."data_".$$tmp{'start'}."/";
-  	update_history($p_job,"status=0,perf=","type==backup,start==".$$tmp{'start'}) if $$tmp{'type'} eq "backup" && $$tmp{'perf'} eq "(Meta) 100%";
+  	update_history($p_job,"status=1,perf=","type==backup,start==".$$tmp{'start'}) if $$tmp{'type'} eq "backup" && $$tmp{'perf'} eq "(Meta) 100%";
   }
   print "done\n";
 }else{
