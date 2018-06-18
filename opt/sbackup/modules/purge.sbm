@@ -41,21 +41,21 @@ if(!$sv_background && !$::DEBUGMODE){
 ##
 ## Set variables
 ##
-my $SB_TIMESTART = time();
+our $SB_TIMESTART = time();
 my $SB_TIMEEND;
 my $SB_ECODE = "";
-
-my $sessionlogfile = $SESSIONLOGPATH.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".log";
+our $SB_ERRORLEVEL = 1;
+our $sessionlogfile = $SESSIONLOGPATH.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".log";
 
 ##
-## backup_fail
+## job_failed
 ##
-sub backup_fail {
+sub job_failed {
 	my $msg = shift;
 	$SB_TIMEEND = time();
-	print "Error: $msg\n";
-	update_history($p_job,"status=5,error=".$msg.",end=".$SB_TIMEEND,"status==0,type==purge,start==".$SB_TIMESTART);
-	append_log($sessionlogfile,"End time: ".$SB_TIMEEND." (".epoch2human($SB_TIMEEND).")\nStatus:Error: $msg\n");
+	print STDERR "Error: $msg\n";
+	update_history($p_job,"status=5,end=".$SB_TIMEEND.",error=".$msg.",perf=","status==0,type==purge,start==".$SB_TIMESTART);
+	version_log('critical','purge',$backupserver_fqdn,"Purge job failed with error:\n$msg");
 	rm_runfile($p_job);
 	exit 1;
 }
@@ -69,35 +69,60 @@ f_output("ERROR",$result,1) if $result;
 
 set_runfile($p_job,"type=purge,status=0,epoch=".$SB_TIMESTART.",pid=".$$);
 insert_history($p_job,"type=purge,status=0,name=".$job{$p_job}{'NAME'}.",start=".$SB_TIMESTART);
-append_log($sessionlogfile,"Purge name: ".$job{$p_job}{'NAME'});
-append_log($sessionlogfile,"Start time: ".$SB_TIMESTART." (".epoch2human($SB_TIMESTART).")\n");
+version_log('normal','purge',$backupserver_fqdn,"Starting purge job \"$job{$p_job}{'NAME'}\"\nJob version: ".strftime("%G/%m/%d-%H%M%S", localtime($SB_TIMESTART)));
+
+##
+## Get integ target
+##
+sub get_integ_path{
+	my ($type,$path)=@_;
+	my @returncodes;
+	$returncodes[0] = 0;
+	
+	## OMV4
+  if($type eq "omv4"){
+  	&f_output("DEBUG","Integration: OMV4");
+  	require omv4;
+  	import omv4;
+  	$returncodes[2]{'integ'} = "OMV ";
+  	$returncodes[2]{'path'} = omv_prepare_sharedfolder($path);
+  	if($returncodes[2]{'path'} =~ /^Error:(.*)$/){
+  		version_log('critical','omv4',$backupserver_fqdn,"OMV4 reported error:\n$1");
+  		job_failed("$1");
+  	}
+  	$returncodes[0] = 1;
+  	version_log('normal','omv4',$backupserver_fqdn,"OMV4 volume found.\nShared folder location: $returncodes[2]{'path'}");
+  }
+  
+  ## Filesystem
+  if($type eq "filesystem"){
+  	&f_output("DEBUG","Integration: filesystem");
+  	$returncodes[2]{'path'} = $path;
+  	if($returncodes[2]{'path'} !~  /^\//){job_failed("$1");}
+  	job_failed("Backup path not found.") if !-d $returncodes[2]{'path'};
+  	$returncodes[0] = 1;
+  }
+
+	return @returncodes;
+}
 
 ##
 ## Get target
 ##
 my $target_integ = "";
 my $target_path = "";
-if($job{$p_job}{'TARGET'}{'-type'} eq "omv4"){
-	&f_output("DEBUG","Target integration: OMV4");
-	require omv4;
-	import omv4;
-	$target_integ = "OMV ";
-	$target_path = omv_prepare_sharedfolder($job{$p_job}{'TARGET'}{'-path'});
-	if($target_path =~ /^Error:(.*)$/){backup_fail("Target $1")}
-}
 
-if($job{$p_job}{'TARGET'}{'-type'} eq "filesystem"){
-	&f_output("DEBUG","Target integration: filesystem");
-	$target_path = $job{$p_job}{'TARGET'}{'-path'};
-	if($target_path !~  /^\//){backup_fail("Target $1");}
-	backup_fail("Backup target path not found.") if !-d $target_path;
+my @target_result = get_integ_path($job{$p_job}{'TARGET'}{'-type'}, $job{$p_job}{'TARGET'}{'-path'});
+if($target_result[0]){
+	$target_integ = $target_result[2]{'integ'};
+	$target_path = $target_result[2]{'path'};
 }
 
 ## Create job repository on in target path
 $target_path .= $slash."sbackup_".$p_job;
 if(!-d $target_path){
 	system($cmd_mkdir.' '.$target_path.' 2>&1');
-	backup_fail("Backup target path creation failed.") if $? != 0;
+	job_failed("Backup target path creation failed.") if $? != 0;
 }
 &f_output("DEBUG","Target path: \"$target_path\"");
 
@@ -124,7 +149,8 @@ if(-f $VARPATH.'history_'.$p_job){
   my $ADMIN_PROTECTION = 3;
   $ADMIN_PROTECTION += $DATA_PROTECTION if $DATA_PROTECTION && $DATA_PROTECTION > 0;
   &f_output("DEBUG","Admin type job protection: $ADMIN_PROTECTION.");
-  
+  version_log('normal','purge',$backupserver_fqdn,"Stating purge.\nData protection: $DATA_PROTECTION\n Admin job protection: $ADMIN_PROTECTION");
+  my $data_purged = 0;
   for my $tmp(@{$output[2]}){
   	&f_output("DEBUG","Found $$tmp{'type'} version $$tmp{'start'} with status $$tmp{'status'}.");
   	my $obsolete = 0;
@@ -175,19 +201,25 @@ if(-f $VARPATH.'history_'.$p_job){
   			system("$cmd_rm \"".$SESSIONLOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".log\"");
   		}
   		delete_history($p_job,"start==".$$tmp{'start'});
+  		$data_purged = 1;
   	}
   }
 
 }else{
 	&f_output("DEBUG","History log not found.");
+	version_log('warning','purge',$backupserver_fqdn,"Unable to start purge, job history not found.");
 	$SB_ECODE = 'No history';
 }
 
-$SB_TIMEEND = time();
-update_history($p_job,"status=1,error=".$SB_ECODE.",end=".$SB_TIMEEND,"status==0,type==purge,start==".$SB_TIMESTART);
-append_log($sessionlogfile,"End time: ".$SB_TIMEEND." (".epoch2human($SB_TIMEEND).")\nStatus:".$SB_ECODE."\n");
-append_log($sessionlogfile,"Purge completed successfully.") if $SB_ECODE eq "0";
+if($data_purged){
+	append_log($sessionlogfile,"\n");
+}else{
+	version_log('normal','purge',$backupserver_fqdn,"Nothing purged, no expired data found.");
+}
 
+$SB_TIMEEND = time();
+version_log('normal','purge',$backupserver_fqdn,"Purge completed.");
+update_history($p_job,"status=".$SB_ERRORLEVEL.",error=".$SB_ECODE.",end=".$SB_TIMEEND,"status==0,type==purge,start==".$SB_TIMESTART);
 rm_runfile($p_job);
 
 return 1;

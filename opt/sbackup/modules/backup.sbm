@@ -41,7 +41,7 @@ if(!$sv_background && !$::DEBUGMODE){
 ##
 ## Set variables
 ##
-my $SB_TIMESTART = time();
+our $SB_TIMESTART = time();
 my $SB_TIMEEND;
 our $SB_ERRORLEVEL = 1;
 our $sessionlogfile = $SESSIONLOGPATH.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".log";
@@ -54,7 +54,7 @@ sub job_failed {
 	$SB_TIMEEND = time();
 	print STDERR "Error: $msg\n";
 	update_history($p_job,"status=5,end=".$SB_TIMEEND.",error=".$msg.",perf=","status==0,type==backup,start==".$SB_TIMESTART);
-	version_log('critical','backup',$backupserver_fqdn,"Backup job failed with error $msg\nEnd time: ".strftime("%d/%m/%G %H:%M:%S", localtime(time())));
+	version_log('critical','backup',$backupserver_fqdn,"Backup job failed with error:\n$msg");
 	rm_runfile($p_job);
 	exit 1;
 }
@@ -412,14 +412,13 @@ if($job{$p_job}{'TARGET'}{'-host'} eq "" && ($job{$p_job}{'TARGET'}{'-type'} eq 
 }
 
 $SB_ERRORLEVEL = 5 if $SB_ECODE ne "0" && $SB_ERRORLEVEL < 5;
-
-if($SB_ECODE eq "0"){
-	version_log('normal','backup',$backupserver_fqdn,"Backup job completed successfully.\nEnd time: ".strftime("%d/%m/%G %H:%M:%S", localtime($SB_TIMEEND)));
-}else{
-	version_log('normal','backup',$backupserver_fqdn,"Backup job completed with error $SB_ECODE\nEnd time: ".strftime("%d/%m/%G %H:%M:%S", localtime($SB_TIMEEND)));
-}
+version_log('normal','backup',$backupserver_fqdn,"Backup job completed successfully.") if $SB_ERRORLEVEL eq "1";
+version_log('normal','backup',$backupserver_fqdn,"Backup job completed with warnings.") if $SB_ERRORLEVEL eq "2";
+version_log('normal','backup',$backupserver_fqdn,"Backup job completed with errors.") if $SB_ERRORLEVEL eq "3";
+version_log('normal','backup',$backupserver_fqdn,"Backup job completed with failures.") if $SB_ERRORLEVEL eq "4";
+version_log('normal','backup',$backupserver_fqdn,"Backup job failed.") if $SB_ERRORLEVEL eq "5";
+version_log('normal','backup',$backupserver_fqdn,"Backup job was aborted.") if $SB_ERRORLEVEL eq "6";
 update_history($p_job,"status=".$SB_ERRORLEVEL.",end=".$SB_TIMEEND.",size=".$RSSIZE.",perf=".$RSPERF,"status==0,type==backup,start==".$SB_TIMESTART);
-#update_history($p_job,"status=5,end=".$SB_TIMEEND.",error=".$SB_ECODE.",perf=","status==0,type==backup,start==".$SB_TIMESTART);
 rm_runfile($p_job);
 
 if($SB_ECODE eq "0"){
