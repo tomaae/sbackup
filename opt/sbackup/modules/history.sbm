@@ -7,7 +7,7 @@
 
 use strict;
 use warnings;
-use POSIX qw(strftime mktime ceil);
+use POSIX qw(strftime ceil);
 our %job;
 
 my %history;

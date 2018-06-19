@@ -38,40 +38,6 @@
 [] - target/copy option -compress
 [] - target/copy option -bwlimit
 
-[] - size and last modify date (create an database of all directories/files to be used for restore browsing | for verify)
-
-              o      %l the length of the file in bytes
-              o      %M the last-modified time of the file
-
-# rsync --dry-run --stats -aEAXvii --out-format='%i|%n|%l|%M' --delete /srv/dev-disk-by-label-backup/backup/ /srv/dev-disk-by-label-backup2/backup2/sbackup_winbackup/data_1529354554/
-sending incremental file list
-*deleting  |.System_full_b16_s1_v1.tib.jzmhPJ|0|1970/01/01-01:00:00
-.d..t......|./|12288|2018/06/18-18:04:27
->f+++++++++|System_full_b16_s1_v1.tib|23148268544|2018/06/02-16:05:45
->f+++++++++|System_full_b17_s1_v1.tib|23328294400|2018/06/09-16:06:01
->f+++++++++|System_full_b18_s1_v1.tib|23790490112|2018/06/16-16:06:12
-.f         |hbc wiki_inc_b5_s5_v1.tib|180736|2018/05/29-18:36:52
-
-
-####(>f Entry is shown before transfering, ^. means not being modified)
-
-#stat /srv/dev-disk-by-label-backup/backup/System_full_b16_s1_v1.tib
-  File: /srv/dev-disk-by-label-backup/backup/System_full_b16_s1_v1.tib
-  Size: 23148268544     Blocks: 45211472   IO Block: 4096   regular file
-Device: fe03h/65027d    Inode: 46          Links: 1
-Access: (0674/-rw-rwxr--)  Uid: ( 1000/    shii)   Gid: (  100/   users)
-Access: 2018-06-18 23:22:20.497870729 +0200
-Modify: 2018-06-02 16:05:45.763894364 +0200
-Change: 2018-06-02 16:05:45.760004185 +0200
- Birth: -
-
-@cat_dirs[0][0][0/1] (0=child's dir id / 1=dir name)
-          ^  ^
-     dir id  |
-list of childs
-
-parent|id|name
-
 =================================================================
 ==ABORT==========================================================
 [] - add "backup aborted by used XYZ" to session log on sending abort request
@@ -85,6 +51,17 @@ parent|id|name
 [] - Check if data directories exists for all backups in history log
 [] - Check if there are data directories not present in history log
 [] - When session log is present, check if all data exists in data directory according to log, check hardlinks(?)
+[] - walk catalog and verify against file stat
+
+#stat /srv/dev-disk-by-label-backup/backup/System_full_b16_s1_v1.tib
+  File: /srv/dev-disk-by-label-backup/backup/System_full_b16_s1_v1.tib
+  Size: 23148268544     Blocks: 45211472   IO Block: 4096   regular file
+Device: fe03h/65027d    Inode: 46          Links: 1
+Access: (0674/-rw-rwxr--)  Uid: ( 1000/    shii)   Gid: (  100/   users)
+Access: 2018-06-18 23:22:20.497870729 +0200
+Modify: 2018-06-02 16:05:45.763894364 +0200
+Change: 2018-06-02 16:05:45.760004185 +0200
+ Birth: -
 
 =================================================================
 ==RESTORE========================================================

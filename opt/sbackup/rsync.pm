@@ -11,7 +11,7 @@ use strict;
 use warnings;
 use init;
 use logger;
-use POSIX qw(strftime ceil);
+use POSIX qw(strftime mktime ceil);
 
 use Exporter qw(import);
 our @ISA = qw(Exporter);
@@ -140,6 +140,12 @@ sub rsync_backup {
   	my @cat_dirs = ();
   	@{$cat_dirs[0]} = ();
   	
+  	if(!$main::SIMULATEMODE){
+  		open cat_file,">>$catalogfile_files" or ::job_failed("Insufficient access rights.");
+  		flock cat_file,2;
+  		truncate cat_file,0;
+  	}
+  	
     my $rsync_simulate = "";
     $rsync_simulate = ' --dry-run ' if $main::SIMULATEMODE;
     my $rpid = open(my $cmd_out,"-|","$::cmd_rsync $rsync_simulate $rsync_params 2>&1") || ::job_failed("Failed to start rsync.");
@@ -164,6 +170,9 @@ sub rsync_backup {
     		$line_entry    = $val[1];
     		$line_size     = $val[2];
     		$line_modified = $val[3];
+    		version_log('warning','rsync',$::backupserver_fqdn,"Cannot parse to catalog:\n\"$cat_entry\"") if $line_modified !~ /^(\d{4})\/(\d{2})\/(\d{2})\-(\d{2}):(\d{2}):(\d{2})$/;
+				$line_modified = mktime($6,$5,$4,$3,$2 - 1,$1 - 1900);
+    		
     		
     		next if $line_entry eq './'; ## Skip root directory
     		
@@ -190,6 +199,7 @@ sub rsync_backup {
     							next if not defined $cat_dirs[$cat_dirid][$i];
     							if($cat_dirs[$cat_dirid][$i][1] eq $cat_tmp){
     								$cat_cid = $cat_dirs[$cat_dirid][$i][0];
+    								last;
     							}
     						}
     						## Not present
@@ -204,7 +214,26 @@ sub rsync_backup {
     				}
     			}else{
     				## Parse files
-    				
+    				version_log('warning','rsync',$::backupserver_fqdn,"Cannot parse to catalog:\n\"$cat_entry\"") if $cat_entry !~ s/\/([^\/]+)$//;
+    				my $cat_file = $1;
+    				## Find parent dirid
+    				$cat_dirid = 0;
+    				my @cat_split = split(/\//,$cat_entry);
+    				for my $cat_tmp(@cat_split){
+    					if(defined $cat_dirs[$cat_dirid]){
+    						## Check if present under current dirid
+    						my $i = -1;
+    						for(@{$cat_dirs[$cat_dirid]}){
+    							$i++;
+    							next if ! defined $cat_dirs[$cat_dirid][$i];
+    							if($cat_dirs[$cat_dirid][$i][1] eq $cat_tmp){
+    								$cat_dirid = $cat_dirs[$cat_dirid][$i][0];
+    								last;
+    							}
+    						}
+    					}
+    				}
+    				print cat_file "$cat_dirid|$cat_file|$line_size|$line_modified\n" if !$main::SIMULATEMODE;
     			}
     		}
     		
@@ -258,6 +287,11 @@ sub rsync_backup {
     	}
     }
     close($cmd_out);
+    
+    if(!$main::SIMULATEMODE){
+			flock cat_file,8;
+			close cat_file;
+    }
     
     if($rsync_summary ne ""){
     	append_log($::sessionlogfile,"\n") if $data_changed;

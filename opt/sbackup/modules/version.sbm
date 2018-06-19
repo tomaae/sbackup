@@ -6,7 +6,7 @@
 ###########################################################################################
 use strict;
 use warnings;
-use POSIX qw(strftime);
+use POSIX qw(strftime mktime ceil);
 our %job;
 our $p_job;
 our $p_type;
