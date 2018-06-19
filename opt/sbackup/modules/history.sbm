@@ -74,6 +74,8 @@ for my $key(sort keys %history){
   $out_status = "Completed/Failures" if $tmp{'status'} eq "4";
   $out_status = "Failed" if $tmp{'status'} eq "5";
   $out_status = "Aborted" if $tmp{'status'} eq "6";
+  
+  $out_status .= " ".$1."%" if $tmp{'status'} eq "0" && $tmp{'perf'} =~ / (\d+) ?%$/;
 	
 	##Format job type
 	my $out_type = "N/A";
