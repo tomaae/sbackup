@@ -14,8 +14,8 @@ use Net::Domain qw(hostfqdn);
 use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
-									f_output get_env f_arguments epoch2human
-									$slash $BINPATH $MODULESPATH $ETCPATH $JOBCONFIGPATH $VARPATH $SESSIONLOGPATH $RUNFILEPATH
+									f_output get_env f_arguments epoch2human min2time
+									$slash $BINPATH $MODULESPATH $ETCPATH $JOBCONFIGPATH $VARPATH $SESSIONLOGPATH $CATALOGPATH $RUNFILEPATH
 									$cmd_ls $cmd_ln $cmd_rm $cmd_ps $cmd_sleep $cmd_cp $cmd_mv $cmd_mkdir $cmd_chmod $cmd_rsync $cmd_kill $cmd_pkill
 									$backupserver_fqdn
 							  );
@@ -23,7 +23,7 @@ our @EXPORT = qw(
 ##
 ##OUTPUT HANDLER
 ##
-sub f_output { 
+sub f_output {
 	my ($msg_type,$err_msg,$additionalcode)=@_;
 	$err_msg =~ s/\n$//;
 	my ($sec,$min,$hour,$mday,$mon,$year, $wday,$yday,$isdst) = localtime;
@@ -93,6 +93,7 @@ sub get_env{
 	our $JOBCONFIGPATH  = "/etc/opt/sbackup/jobs".$slash;
 	our $VARPATH        = "/var/opt/sbackup".$slash;
 	our $SESSIONLOGPATH = "/var/opt/sbackup/sessionlogs".$slash;
+	our $CATALOGPATH    = "/var/opt/sbackup/catalog".$slash;
 	our $RUNFILEPATH    = "/var/run/sbackup".$slash;
 	my $CRONFILE        = "/etc/cron.d/sbackup";
 	
@@ -127,6 +128,14 @@ sub get_env{
 		}
 	}
 	
+	if(!-d $CATALOGPATH){
+		system("$cmd_mkdir $CATALOGPATH");
+		if($? != 0){
+			print "Failed to create $CATALOGPATH with exit code $?.\n";
+			exit 1;
+		}
+	}
+	
 	if(!-d $RUNFILEPATH){
 		system("$cmd_mkdir $RUNFILEPATH");
 		if($? != 0){
@@ -146,7 +155,6 @@ sub get_env{
     	close log_file;
   	}
   }
-
 }
 
 ##
@@ -160,6 +168,15 @@ sub epoch2human {
 	$analyze_min = "0".$analyze_min if length($analyze_min)==1;
 	$analyze_sec = "0".$analyze_sec if length($analyze_sec)==1;
 	return substr(($analyze_mday + 100),1,2)."/".substr(($analyze_mon + 101),1,2)."/".substr(($analyze_year),1,2)." $analyze_hour:$analyze_min:$analyze_sec";
+}
+
+sub min2time {
+	my ($timestr)=@_;
+	my $hours = int($timestr/60);
+	my $minutes = $timestr - ($hours * 60);
+	if(length($hours) == 1){$hours = "0".$hours;}
+	if(length($minutes) == 1){$minutes = "0".$minutes;}
+	return "$hours\:$minutes";
 }
 
 ##

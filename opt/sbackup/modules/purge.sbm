@@ -202,6 +202,15 @@ if(-f $VARPATH.'history_'.$p_job){
   			&f_output("DEBUG","Found log.");
   			system("$cmd_rm \"".$SESSIONLOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".log\"") if !$main::SIMULATEMODE;
   		}
+  		if(-f $CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".dirs"){
+  			&f_output("DEBUG","Found dir catalog.");
+  			system("$cmd_rm \"".$CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".dirs\"") if !$main::SIMULATEMODE;
+  		}
+  		if(-f $CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".files"){
+  			&f_output("DEBUG","Found file catalog.");
+  			system("$cmd_rm \"".$CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".files\"") if !$main::SIMULATEMODE;
+  		}
+  		
   		delete_history($p_job,"start==".$$tmp{'start'});
   		$data_purged = 1;
   	}else{

@@ -91,7 +91,7 @@ for my $tmp_job(sort keys %job){
 	my @tmp_history = &get_history($job{$tmp_job}{'NAME'},'status,start,name,type,perf,error');
 	for my $tmp(@{$tmp_history[2]}){
 		$out_versions++ if $$tmp{'type'} eq "backup" && ($$tmp{'status'} eq "1" || $$tmp{'status'} eq "2" || $$tmp{'status'} eq "3");
-		$out_lastbackup = strftime("%a, %d %b %G %H:%M:%S", localtime($$tmp{'start'})) if $$tmp{'type'} eq "backup" && ($$tmp{'status'} eq "1" || $$tmp{'status'} eq "2" || $$tmp{'status'} eq "3");
+		$out_lastbackup = strftime("%a, %d/%m/%G %H:%M", localtime($$tmp{'start'})) if $$tmp{'type'} eq "backup" && ($$tmp{'status'} eq "1" || $$tmp{'status'} eq "2" || $$tmp{'status'} eq "3");
 		if($$tmp{'type'} ne "purge"){
 			$out_status = $$tmp{'status'};
 			$out_error = $$tmp{'error'};

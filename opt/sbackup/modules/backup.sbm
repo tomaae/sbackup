@@ -7,7 +7,7 @@
 #use diagnostics;
 use strict;
 use warnings;
-use POSIX qw(strftime ceil);
+use POSIX qw(strftime);
 
 our ($p_job);
 our %job;
@@ -217,6 +217,17 @@ if($SB_ERRORLEVEL <= 3){
     $meta_ecode = $? if $? ne "0";
     system("$cmd_cp \"".$JOBCONFIGPATH.$slash.$p_job."\" \"".$target_path.$slash."meta_".$SB_TIMESTART.$slash."\"");
     $meta_ecode = $? if $? ne "0";
+    
+    if($source_integ eq "" || $source_integ eq "OMV "){
+    	if(-f $CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".files"){
+    		system("$cmd_cp \"".$CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".files\" \"".$target_path.$slash."meta_".$SB_TIMESTART.$slash."\"");
+    		$meta_ecode = $? if $? ne "0";
+    	}
+    	if(-f $CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".dirs"){
+    		system("$cmd_cp \"".$CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".dirs\"  \"".$target_path.$slash."meta_".$SB_TIMESTART.$slash."\"");
+    		$meta_ecode = $? if $? ne "0";
+    	}
+  	}
     
   	##Link latest backup
     system("$cmd_rm \"".$target_path.$slash."data_latest\"") if -l $target_path.$slash."data_latest" || -f $target_path.$slash."data_latest";

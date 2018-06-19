@@ -11,6 +11,7 @@ use strict;
 use warnings;
 use init;
 use logger;
+use POSIX qw(strftime ceil);
 
 use Exporter qw(import);
 our @ISA = qw(Exporter);
@@ -89,7 +90,7 @@ sub rsync_backup {
   &f_output("DEBUG","Getting change list for backup.");
   version_log('normal','rsync',$::backupserver_fqdn,"Traversing source filesystem...");
   my $rsync_params = " --stats -aEAXvii --out-format='%i|%n|%l|%M' --delete ".$INCR." \"".$source_path.$::slash."\" \"".$target_path.$::slash."data_".$SB_TIMESTART.$::slash."\"";
-  open(my $cmd_out,"-|","$::cmd_rsync --dry-run $rsync_params 2>&1") || die "Failed: $!\n";
+  open(my $cmd_out,"-|","$::cmd_rsync --dry-run $rsync_params 2>&1") || ::job_failed("Failed to start rsync.");
   my @val;
   while (my $line = <$cmd_out>){
   	chomp($line);
@@ -127,6 +128,9 @@ sub rsync_backup {
   my $aborting = 0;
   my $data_changed = 0;
   my $rsync_summary = "";
+  my $catalogfile_dirs = $CATALOGPATH.$p_job."_".$SB_TIMESTART.".dirs";
+  my $catalogfile_files = $CATALOGPATH.$p_job."_".$SB_TIMESTART.".files";
+  
   my @pid_output = &get_runfile($p_job,'status,type,pid');
   $aborting = 1 if $pid_output[0] && $pid_output[2][0]{'pid'}  =~ /^\d+$/ && $pid_output[2][0]{'status'} eq '6';
   if(!$aborting){
@@ -138,7 +142,7 @@ sub rsync_backup {
   	
     my $rsync_simulate = "";
     $rsync_simulate = ' --dry-run ' if $main::SIMULATEMODE;
-    my $rpid = open(my $cmd_out,"-|","$::cmd_rsync $rsync_simulate $rsync_params 2>&1") || die "Failed: $!\n";
+    my $rpid = open(my $cmd_out,"-|","$::cmd_rsync $rsync_simulate $rsync_params 2>&1") || ::job_failed("Failed to start rsync.");
     update_runfile($p_job,"rpid=".$rpid) if $rpid && $rpid > 0;
     while (my $line = <$cmd_out>){
     	if($copied_last_size > 0){
@@ -166,54 +170,43 @@ sub rsync_backup {
     		##
     		## Parsing for catalog
     		##
-#    		if($line_flags =~ /^[^*](f|d|L|D|S)/){#f for a file, a d for a directory, an L for a symlink, a D for a device, and a S for a special file
-#    			$cat_type = $1;
-#    			$cat_entry = $line_entry;
-#    			
-#    			if($cat_type eq "d"){
-#    				print "!!!!!!!!!!!!!!!!!!!!Catalog $cat_type:$line_entry\n";
-#    				
-#    				version_log('warning','rsync',$::backupserver_fqdn,"Cannot parse to catalog:\n\"$cat_entry\"") if $cat_entry !~ s/\/?([^\/]+)\/$//;
-#    				my $cat_current = $1;
-#    				my @cat_split = split(/\//,$cat_entry);
-#    				
-#    				## Find parent dirid
-#    				$cat_dirid = 0;
-#    				for my $cat_tmp(@cat_split){
-#    					print "$cat_tmp\n";
-#    					if(defined $cat_dirs[$cat_dirid]){
-#    						## Check if present under current dirid
-#    						my $cat_currentid = 0;
-#    						my $i = -1;
-#    						for my $cat_tmp2(@{$cat_dirs[$cat_dirid]}){
-#    							$i++;
-#    							next if not defined $cat_dirs[$cat_dirid][$i];
-##    							if($$cat_tmp2[1] eq $cat_tmp){
-##    								$cat_currentid = $$cat_tmp2[0];
-##    							}
-#    							if($cat_dirs[$cat_dirid][$i][1] eq $cat_tmp){
-#    								$cat_currentid = $cat_dirs[$cat_dirid][$i][0];
-#    							}
-#    						}
-#    						
-#    						## Not present
-#    						if($cat_currentid == 0){
-#    							$cat_currentid = scalar(@cat_dirs);
-#    							my @cat_dirs_tmp = ($cat_currentid, $cat_tmp);
-#    							push @{$cat_dirs[$cat_dirid]},\@cat_dirs_tmp;
-#    							@{$cat_dirs[$cat_currentid]} = ();
-#    							print "!!!New:$cat_currentid, $cat_tmp\n";
-#    						}
-#    						
-#    						$cat_dirid = $cat_currentid;
-#    					}
-#    					
-#    				}
-#
-#    			}else{
-#
-#    			}
-#    		}
+    		if($line_flags =~ /^[^*](f|d|L|D|S)/){#f for a file, a d for a directory, an L for a symlink, a D for a device, and a S for a special file
+    			$cat_type = $1;
+    			$cat_entry = $line_entry;
+    			## Parse directories
+    			if($cat_type eq "d"){
+    				version_log('warning','rsync',$::backupserver_fqdn,"Cannot parse to catalog:\n\"$cat_entry\"") if $cat_entry !~ s/\/$//;
+    				
+    				## Find parent dirid
+    				$cat_dirid = 0;
+    				my @cat_split = split(/\//,$cat_entry);
+    				for my $cat_tmp(@cat_split){
+    					if(defined $cat_dirs[$cat_dirid]){
+    						## Check if present under current dirid
+    						my $cat_cid = 0;
+    						my $i = -1;
+    						for(@{$cat_dirs[$cat_dirid]}){
+    							$i++;
+    							next if not defined $cat_dirs[$cat_dirid][$i];
+    							if($cat_dirs[$cat_dirid][$i][1] eq $cat_tmp){
+    								$cat_cid = $cat_dirs[$cat_dirid][$i][0];
+    							}
+    						}
+    						## Not present
+    						if($cat_cid == 0){
+    							$cat_cid = scalar(@cat_dirs);
+    							my @cat_dirs_tmp = ($cat_cid, $cat_tmp);
+    							push @{$cat_dirs[$cat_dirid]},\@cat_dirs_tmp;
+    							@{$cat_dirs[$cat_cid]} = ();
+    						}
+    						$cat_dirid = $cat_cid;
+    					}
+    				}
+    			}else{
+    				## Parse files
+    				
+    			}
+    		}
     		
     		##
     		## Parsing for version log
@@ -272,15 +265,29 @@ sub rsync_backup {
     	$rsync_summary = "";
     }
     
-
+    ##
     ## Save dir catalog
-#   	use Data::Dumper;
-#    my $i = -1;
-#    for (@cat_dirs){
-#    	$i++;
-#    	next if scalar @{$cat_dirs[$i]} == 0;
-#    	print "!!!!!!!!!!!!!!!!$i:".Dumper(\@{$cat_dirs[$i]})."\n";
-#    }
+    ##
+    if(!$main::SIMULATEMODE){
+  		open log_file,">>$catalogfile_dirs" or ::job_failed("Insufficient access rights.");
+  		flock log_file,2;
+  		truncate log_file,0;
+  	}
+    my $i = -1;
+    for(@cat_dirs){
+    	$i++;
+    	next if scalar @{$cat_dirs[$i]} == 0;
+    	my $e = -1;
+    	for(@{$cat_dirs[$i]}){
+    		$e++;
+    		print log_file "$i|$cat_dirs[$i][$e][0]|$cat_dirs[$i][$e][1]\n" if !$main::SIMULATEMODE;
+    	}
+    }
+    if(!$main::SIMULATEMODE){
+			flock log_file,8;
+			close log_file;
+    }
+    
     
     $SB_ECODE = $?;
     version_log('normal','rsync',$::backupserver_fqdn,"Nothing backed up, no changed data found.") if $SB_ECODE eq "0" && !$data_changed;

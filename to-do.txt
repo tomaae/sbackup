@@ -9,11 +9,6 @@
 [] - add filter for -log [normal|warning|minor|major|critical]
 
 =================================================================
-==HISTORY========================================================
-[] - remove end time
-[] - add duration as HH:MM
-
-=================================================================
 ==AUTOCOMPLETE===================================================
 [] - work with shortened variables (-job XXX -ver XXX -log)
 [] - disable type if ver is already specified
@@ -35,7 +30,6 @@
 
 [] - pre/postexec (export shell variables JOB_NAME, JOB_TYPE, STATUS, START_TIME)
 [] - create global error log
-[] - move rsync to separate module
 [] - rsync: improve and simplify backup statistics
 
 [] - remote backup of another server
@@ -76,6 +70,7 @@ Change: 2018-06-02 16:05:45.760004185 +0200
      dir id  |
 list of childs
 
+parent|id|name
 
 =================================================================
 ==ABORT==========================================================

@@ -48,17 +48,17 @@ for my $tmp_job(sort keys %job){
 	}
 }
 
-printf "%-17.17s %-9.9s %-18.18s %-14.14s %-25.25s %-25.25s %-8.8s %-8.8s %-3.3s\n",
+printf "%-17.17s %-9.9s %-20.20s %-14.14s %-22.22s %-6.6s %-9.9s %-8.8s %-3.3s\n",
 	"Version",
 	"Type",
 	"Name",
 	"Status",
 	"Start time",
-	"End time",
+	"Time",
 	"Size",
 	"Perf",
 	"Log";
-print "=======================================================================================================================================\n";
+print "====================================================================================================================\n";
 ##
 ## Display history
 ##
@@ -86,9 +86,9 @@ for my $key(sort keys %history){
 	
 	##Format start/end datetime
 	my $out_start = "N/A";
-	my $out_end = "N/A";
-	$out_start = strftime("%a, %d %b %G %H:%M:%S", localtime($tmp{'start'})) if $tmp{'start'} ne "";
-	$out_end = strftime("%a, %d %b %G %H:%M:%S", localtime($tmp{'end'})) if $tmp{'end'} ne "";
+	my $out_time = "N/A";
+	$out_start = strftime("%a, %d/%m/%G %H:%M", localtime($tmp{'start'})) if $tmp{'start'} ne "";
+	$out_time = min2time(ceil(($tmp{'end'} - $tmp{'start'})/60)) if $tmp{'end'} ne "";
 	
 	##Format version
 	my $out_version = "N/A";
@@ -119,13 +119,13 @@ for my $key(sort keys %history){
 	my $out_log = "N";
 	$out_log = "Y" if -f $main::SESSIONLOGPATH.$tmp{'name'}."_".$tmp{'start'}.".log";
 
-	printf "%-17.17s %-9.9s %-18.18s %-14.14s %-25.25s %-25.25s %-8.8s %-8.8s %-3.3s\n",
+	printf "%-17.17s %-9.9s %-20.20s %-14.14s %-22.22s %-6.6s %-9.9s %-8.8s %-3.3s\n",
   	$out_version,
   	$out_type,
   	$tmp{'name'},
   	$out_status,
   	$out_start,
-  	$out_end,
+  	$out_time,
   	$out_size,
   	$out_perf,
   	$out_log;
