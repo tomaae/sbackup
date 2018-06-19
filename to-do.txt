@@ -71,9 +71,9 @@ Modify: 2018-06-02 16:05:45.763894364 +0200
 Change: 2018-06-02 16:05:45.760004185 +0200
  Birth: -
 
-@dirs[0][0][0/1] (0=child's dir id / 1=dir name)
-      ^  ^
-dir id|  |
+@cat_dirs[0][0][0/1] (0=child's dir id / 1=dir name)
+          ^  ^
+     dir id  |
 list of childs
 
 
