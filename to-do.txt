@@ -39,6 +39,7 @@
 [] - target/copy option -compress
 [] - target/copy option -bwlimit
 
+[] - job_failed > check if lvm isenabled and active, remove snapshot
 =================================================================
 ==ABORT==========================================================
 [] - add "backup aborted by used XYZ" to session log on sending abort request
