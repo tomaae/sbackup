@@ -1,12 +1,27 @@
 =================================================================
-==GENERAL======================================================
+==JOB VER CATALOG================================================
+[] - path - list files and directories in specific directory
+[] - catalog - list all files and directories
+
+=================================================================
+==GENERAL========================================================
 [] - disable error exit code and message when running from cron
 [] - errors to be reported post-backup in custom HTML email
 [] - define full paths for all executable in set_env
+[] - replace all "die" commands with job_failed where possible
+[] - arguments:
+ - move and rename list jobs
+ - change description for job into multiple lines, one per report type
+[?] - catalog files could be compressed after session completes, stream gunzip?
+[?] - session log could be compressed after session completes
 
 =================================================================
 ==LOG============================================================
 [] - add filter for -log [normal|warning|minor|major|critical]
+
+=================================================================
+==JOB VER================================================
+[] - show minor and higher messages
 
 =================================================================
 ==AUTOCOMPLETE===================================================
@@ -148,7 +163,7 @@ SCHEDULE {
 SOURCE {
         -host hostname.domain.com
         -type omv4
-        -tree download
+        -path download
         -snapshot {
                 -enabled 1
                 -type lvm
@@ -161,7 +176,7 @@ SOURCE {
 TARGET {
         -host hostname.domain.com
         -type omv4
-        -tree backuptest
+        -path backuptest
 }
 
 POST {
