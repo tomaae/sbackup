@@ -227,6 +227,15 @@ if($SB_ERRORLEVEL <= 3){
     		system("$cmd_cp \"".$CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".dirs\"  \"".$target_path.$slash."meta_".$SB_TIMESTART.$slash."\"");
     		$meta_ecode = $? if $? ne "0";
     	}
+    	
+    	if(-f $CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".owners"){
+    		system("$cmd_cp \"".$CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".owners\"  \"".$target_path.$slash."meta_".$SB_TIMESTART.$slash."\"");
+    		$meta_ecode = $? if $? ne "0";
+    	}
+    	if(-f $CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".groups"){
+    		system("$cmd_cp \"".$CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".groups\"  \"".$target_path.$slash."meta_".$SB_TIMESTART.$slash."\"");
+    		$meta_ecode = $? if $? ne "0";
+    	}    	
   	}
     
   	##Link latest backup

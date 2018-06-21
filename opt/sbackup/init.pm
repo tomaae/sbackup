@@ -16,6 +16,7 @@ our @ISA = qw(Exporter);
 our @EXPORT = qw(
 									f_output get_env f_arguments epoch2human min2time
 									$slash $BINPATH $MODULESPATH $ETCPATH $JOBCONFIGPATH $VARPATH $SESSIONLOGPATH $CATALOGPATH $RUNFILEPATH
+									$OS_USERS $OS_GROUPS
 									$cmd_ls $cmd_ln $cmd_rm $cmd_ps $cmd_sleep $cmd_cp $cmd_mv $cmd_mkdir $cmd_chmod $cmd_rsync $cmd_kill $cmd_pkill
 									$backupserver_fqdn
 							  );
@@ -96,6 +97,9 @@ sub get_env{
 	our $CATALOGPATH    = "/var/opt/sbackup/catalog".$slash;
 	our $RUNFILEPATH    = "/var/run/sbackup".$slash;
 	my $CRONFILE        = "/etc/cron.d/sbackup";
+	
+	our $OS_USERS       = "/etc/passwd";
+	our $OS_GROUPS      = "/etc/group";
 	
 	our $cmd_ls         = "ls";
 	our $cmd_ln         = "ln -s";
