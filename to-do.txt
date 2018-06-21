@@ -3,6 +3,30 @@
 [] - path - list files and directories in specific directory
 [] - catalog - list all files and directories
 
+Protection   Owner     Group                Size [B] Time                    Path
+========================================================================================
+----------   N/A       N/A                         0 -                       /Program Files/HP OpenView/nonOV/perl/a/lib/5.8.8/MSWin32-AMD64-multi-thread/auto/Storable/thaw.al
+d---------   N/A       N/A                         0 -                       /Program Files/HP OpenView/nonOV/perl/a/lib/site_perl/5.8.8/MSWin32-AMD64-multi-thread/XML/Parser
+----------   N/A       N/A                         0 -                       /Program Files/HP OpenView/nonOV/perl/a/lib/site_perl/5.8.8/MSWin32-AMD64-multi-thread/XML/Parser.pm
+----------   N/A       N/A                         0 -                       /Program Files/HP OpenView/nonOV/perl/a/lib/5.8.8/MSWin32-AMD64-multi-thread/auto/SDBM_File/SDBM_File.bs
+----------   N/A       N/A                         0 -                       /Program Files/HP OpenView/nonOV/perl/a/lib/5.8.8/MSWin32-AMD64-multi-thread/auto/SDBM_File/SDBM_File.dll
+----------   N/A       N/A                         0 -                       /Program Files/HP OpenView/nonOV/perl/a/lib/5.8.8/MSWin32-AMD64-multi-thread/auto/SDBM_File/SDBM_File.lib
+d---------   N/A       N/A                         0 -                       /Program Files/HP OpenView/nonOV/perl/a/lib/site_perl/5.8.8/MSWin32-AMD64-multi-thread/auto/Win32
+d---------   N/A       N/A                         0 -                       /Program Files/HP OpenView/nonOV/perl/a/lib/site_perl/5.8.8/MSWin32-AMD64-multi-thread/auto/XML
+----------   N/A       N/A                         0 -                       /Program Files/HP OpenView/nonOV/perl/a/lib/5.8.8/MSWin32-AMD64-multi-thread/auto/ByteLoader/ByteLoader.bs
+
+
+# -listdir /osit
+Type Filename
+===============================================================================
+Dir  bin
+Dir  log
+Dir  etc
+File version_current.txt
+Dir  tmp
+Dir  newconfig
+
+
 =================================================================
 ==GENERAL========================================================
 [] - disable error exit code and message when running from cron
