@@ -21,6 +21,10 @@ Dir  newconfig
 [] - replace all "die" commands with job_failed where possible
 [?] - catalog files could be compressed after session completes, stream gunzip?
 [?] - session log could be compressed after session completes
+[] - few functions
+ - size2human
+ - epoch2human $date = strftime("%d/%m/%G %H:%M", localtime($epoch));
+ - bit2oct, oct2bit
 
 =================================================================
 ==LOG============================================================
