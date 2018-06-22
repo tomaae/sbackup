@@ -1,0 +1,221 @@
+###########################################################################################
+#
+#                                         sbackup
+#                                      catalog module
+#
+###########################################################################################
+use strict;
+use warnings;
+use POSIX qw(strftime ceil);
+
+our ($p_job);
+our %job;
+our $p_version;
+
+##
+## Check parameters
+##
+my $catalogfile_dirs   = $::CATALOGPATH.$p_job."_".$::p_version.".dirs";
+my $catalogfile_files  = $::CATALOGPATH.$p_job."_".$::p_version.".files";
+my $catalogfile_owners = $::CATALOGPATH.$p_job."_".$::p_version.".owners";
+my $catalogfile_groups = $::CATALOGPATH.$p_job."_".$::p_version.".groups";
+
+my @cat_dirs = ();
+@{$cat_dirs[0]} = ();
+
+for my $line(read_log($catalogfile_dirs)){
+	chomp($line);
+	my @val = split(/\|/,$line);
+	@{$cat_dirs[$val[0]]} = () if not defined $cat_dirs[$val[0]];
+  my @tmp = ($val[1], $val[2], $val[3], $val[4], $val[5]);
+  push @{$cat_dirs[$val[0]]},\@tmp;
+}
+
+my @cat_files = ();
+for my $line(read_log($catalogfile_files)){
+	chomp($line);
+	my @val = split(/\|/,$line);
+	@{$cat_files[$val[0]]} = () if not defined $cat_files[$val[0]];
+  my @tmp = ($val[1], $val[2], $val[3], $val[4], $val[5], $val[6]);
+  push @{$cat_files[$val[0]]},\@tmp;
+}
+
+my @os_ownerlist = ();
+for my $line(read_log($catalogfile_owners)){
+	chomp($line);
+	my @val = split(/\|/,$line);
+	$os_ownerlist[$val[0]] = $val[1];
+}
+
+my @os_grouplist = ();
+for my $line(read_log($catalogfile_groups)){
+	chomp($line);
+	my @val = split(/\|/,$line);
+	$os_grouplist[$val[0]] = $val[1];
+}
+
+printf "%-10.10s  %-9.9s  %-9.9s  %10.10s  %16.16s  %s\n",
+	"Permission",
+	"Owner",
+	"Group",
+	"Size",
+	"Time",
+	"Path";
+print "====================================================================================================================\n";
+
+
+my $out_perm  = "";
+my $out_owner = "";
+my $out_group = "";
+my $out_size  = "";
+my $out_time  = "";
+my $out_path  = "";
+
+sub traverse_cat {
+	my ($cat_dirid, $append_path) = @_;
+	
+  ## Get files in this directory
+  my $i = -1;
+  if(defined $cat_files[$cat_dirid]){
+   	for(@{$cat_files[$cat_dirid]}){
+    	$i++;
+    	next if not defined $cat_files[$cat_dirid][$i];
+    	$out_time = strftime("%d/%m/%G %H:%M", localtime($cat_files[$cat_dirid][$i][2]));
+      $out_perm = $cat_files[$cat_dirid][$i][3];
+    	$out_owner = $cat_files[$cat_dirid][$i][4];
+    	$out_group = $cat_files[$cat_dirid][$i][5];
+    	$out_path = $append_path."/".$cat_files[$cat_dirid][$i][0];
+    	
+    	if($cat_files[$cat_dirid][$i][1] ne "" && $cat_files[$cat_dirid][$i][1] >= 0){
+    		$out_size = $cat_files[$cat_dirid][$i][1]." B";
+    		$out_size = ceil($cat_files[$cat_dirid][$i][1] / 1024)." K" if $cat_files[$cat_dirid][$i][1] > (100 * 1024);
+    		$out_size = ceil($cat_files[$cat_dirid][$i][1] / 1024 / 1024)." M" if $cat_files[$cat_dirid][$i][1] > (9 * 1024 * 1024);
+    		$out_size = ceil($cat_files[$cat_dirid][$i][1] / 1024 / 1024 / 1024)." G" if $cat_files[$cat_dirid][$i][1] > (9 * 1024 * 1024 * 1024);
+    	}
+    	
+    	if($out_perm =~ /^(\d)(\d)(\d)$/){
+    		$out_perm = "-";
+    		$out_perm .= "---" if $1 == 0;
+    		$out_perm .= "--x" if $1 == 1;
+    		$out_perm .= "-w-" if $1 == 2;
+    		$out_perm .= "-wx" if $1 == 3;
+    		$out_perm .= "r--" if $1 == 4;
+    		$out_perm .= "r-x" if $1 == 5;
+    		$out_perm .= "rw-" if $1 == 6;
+    		$out_perm .= "rwx" if $1 == 7;
+
+    		$out_perm .= "---" if $2 == 0;
+    		$out_perm .= "--x" if $2 == 1;
+    		$out_perm .= "-w-" if $2 == 2;
+    		$out_perm .= "-wx" if $2 == 3;
+    		$out_perm .= "r--" if $2 == 4;
+    		$out_perm .= "r-x" if $2 == 5;
+    		$out_perm .= "rw-" if $2 == 6;
+    		$out_perm .= "rwx" if $2 == 7;
+    		
+    		$out_perm .= "---" if $3 == 0;
+    		$out_perm .= "--x" if $3 == 1;
+    		$out_perm .= "-w-" if $3 == 2;
+    		$out_perm .= "-wx" if $3 == 3;
+    		$out_perm .= "r--" if $3 == 4;
+    		$out_perm .= "r-x" if $3 == 5;
+    		$out_perm .= "rw-" if $3 == 6;
+    		$out_perm .= "rwx" if $3 == 7;
+    	}else{
+    		$out_perm = "----------";
+    	}
+    	
+    	if($out_owner =~ /^(\d+)$/ && defined $os_ownerlist[$1]){
+    		$out_owner = $os_ownerlist[$1];
+    	}else{
+    		$out_owner = "N/A";
+    	}
+    	
+    	if($out_group =~ /^(\d+)$/ && defined $os_grouplist[$1]){
+    		$out_group = $os_grouplist[$1];
+    	}else{
+    		$out_group = "N/A";
+    	}
+    	printf "%-10.10s  %-9.9s  %-9.9s  %10.10s  %16.16s  %s\n",
+      	$out_perm, 
+      	$out_owner,
+      	$out_group,
+      	$out_size,
+      	$out_time,
+     		$out_path;
+  	}
+	}
+	
+	$i = -1;
+	for(@{$cat_dirs[$cat_dirid]}){
+		$i++;
+		
+  	$out_perm = $cat_dirs[$cat_dirid][$i][2];
+  	$out_owner = $cat_dirs[$cat_dirid][$i][3];
+  	$out_group = $cat_dirs[$cat_dirid][$i][4];
+  	$out_size = "N/A";
+  	$out_time = "N/A";
+  	$out_path = $append_path."/".$cat_dirs[$cat_dirid][$i][1]."/";
+		
+  	if($out_perm =~ /^(\d)(\d)(\d)$/){
+  		$out_perm = "d";
+  		$out_perm .= "---" if $1 == 0;
+  		$out_perm .= "--x" if $1 == 1;
+  		$out_perm .= "-w-" if $1 == 2;
+  		$out_perm .= "-wx" if $1 == 3;
+  		$out_perm .= "r--" if $1 == 4;
+  		$out_perm .= "r-x" if $1 == 5;
+  		$out_perm .= "rw-" if $1 == 6;
+  		$out_perm .= "rwx" if $1 == 7;
+
+  		$out_perm .= "---" if $2 == 0;
+  		$out_perm .= "--x" if $2 == 1;
+  		$out_perm .= "-w-" if $2 == 2;
+  		$out_perm .= "-wx" if $2 == 3;
+  		$out_perm .= "r--" if $2 == 4;
+  		$out_perm .= "r-x" if $2 == 5;
+  		$out_perm .= "rw-" if $2 == 6;
+  		$out_perm .= "rwx" if $2 == 7;
+  		
+  		$out_perm .= "---" if $3 == 0;
+  		$out_perm .= "--x" if $3 == 1;
+  		$out_perm .= "-w-" if $3 == 2;
+  		$out_perm .= "-wx" if $3 == 3;
+  		$out_perm .= "r--" if $3 == 4;
+  		$out_perm .= "r-x" if $3 == 5;
+  		$out_perm .= "rw-" if $3 == 6;
+  		$out_perm .= "rwx" if $3 == 7;
+  	}else{
+  		$out_perm = "d---------";
+  	}
+  	
+  	if($out_owner =~ /^(\d+)$/ && defined $os_ownerlist[$1]){
+  		$out_owner = $os_ownerlist[$1];
+  	}else{
+  		$out_owner = "N/A";
+  	}
+  	
+  	if($out_group =~ /^(\d+)$/ && defined $os_grouplist[$1]){
+  		$out_group = $os_grouplist[$1];
+  	}else{
+  		$out_group = "N/A";
+  	}
+		
+  	printf "%-10.10s  %-9.9s  %-9.9s  %10.10s  %16.16s  %s\n",
+    	$out_perm, 
+    	$out_owner,
+    	$out_group,
+    	$out_size,
+    	$out_time,
+    	$out_path;
+    	
+    ## Go into a subdirectory
+    traverse_cat($cat_dirs[$cat_dirid][$i][0],$append_path."/".$cat_dirs[$cat_dirid][$i][1]);
+	}
+
+	return;
+}
+
+traverse_cat(0,"");
+
+return 1;

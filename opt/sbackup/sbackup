@@ -23,7 +23,7 @@ our %job = load_jobs_config;
 ##
 ## Parameters
 ##
-our ($DEBUGMODE, $sv_history, $sv_job, $sv_log, $sv_backup, $sv_purge, $sv_verify, $sv_restore, $sv_copy, $sv_abort, $sv_export, $sv_import, $sv_version, $sv_days, $sv_type, $sv_path, $sv_into, $sv_background, $sv_scheduler, $sv_api, $sv_all);
+our ($DEBUGMODE, $sv_history, $sv_job, $sv_catalog, $sv_log, $sv_backup, $sv_purge, $sv_verify, $sv_restore, $sv_copy, $sv_abort, $sv_export, $sv_import, $sv_version, $sv_days, $sv_type, $sv_path, $sv_into, $sv_background, $sv_scheduler, $sv_api, $sv_all);
 our ($p_debug, $p_job, $p_version, $p_days, $p_type, $p_path, $p_into, $p_api);
 $p_debug = 1;
 my %arguments;
@@ -43,14 +43,28 @@ my %arguments;
 	"help_display" => 0,
 );
 
+%{$arguments{"job"}} = (
+	"var" => \$sv_job,
+	"primary" => 1,
+	"val1" => \$p_job,
+	"vals_mandatory" => 0,
+	"help_header" => "Jobs informations:",
+	"help_args" => "Status of all jobs:\n\t\t-job
+\tJob history:\n\t\t-job <job name>  [-type (backup|purge|verify)]
+\tVersion detail:\n\t\t-job <job name> -version <version>
+\tVersion log:\n\t\t-job <job name> -version <version> -log
+\tVersion catalog:\n\t\t-job <job name> -version <version> -catalog",
+	"help_display" => 1,
+);
+
 %{$arguments{"backup"}} = (
 	"var" => \$sv_backup,
 	"val1" => \$p_job,
-	"vals_mandatory" => 1,
+	"vals_mandatory" => 2,
 	"primary" => 1,
 	"help_header" => "Start backup job:",
 	"help_args" => "-backup <job name>",
-	"help_display" => 1,
+	"help_display" => 11,
 );
 %{$arguments{"purge"}} = (
 	"var" => \$sv_purge,
@@ -59,7 +73,7 @@ my %arguments;
 	"primary" => 1,
 	"help_header" => "Start purge job:",
 	"help_args" => "-purge <job name> [-days <n>]",# [-version <versionid>]",
-	"help_display" => 2,
+	"help_display" => 12,
 );
 #%{$arguments{"verify"}} = (
 #	"var" => \$sv_verify,
@@ -95,19 +109,8 @@ my %arguments;
 	"primary" => 1,
 	"help_header" => "Abort job:",
 	"help_args" => "-abort <job name>",
-	"help_display" => 9,
+	"help_display" => 19,
 );
-
-%{$arguments{"job"}} = (
-	"var" => \$sv_job,
-	"primary" => 1,
-	"val1" => \$p_job,
-	"vals_mandatory" => 0,
-	"help_header" => "List jobs:",
-	"help_args" => "-job [ <job name> [-type (backup|purge|verify)] [-version <version> [-log]] ]",
-	"help_display" => 10,
-);
-
 
 %{$arguments{"export"}} = (
 	"var" => \$sv_export,
@@ -135,6 +138,15 @@ my %arguments;
 	"dependency" => "job",
 	"help_header" => "Job log:",
 	"help_args" => "-job <job name> -version <version> -log",
+	"help_display" => 0,
+);
+
+%{$arguments{"catalog"}} = (
+	"var" => \$sv_catalog,
+	"vals_mandatory" => 0,
+	"dependency" => "job",
+	"help_header" => "Version catalog:",
+	"help_args" => "-job <job name> -version <version> -catalog",
 	"help_display" => 0,
 );
 

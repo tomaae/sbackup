@@ -60,6 +60,18 @@ for my $tmp(`$cmd_ls ${p_path}meta_latest/`){
 }
 print "not found\n" if !$success;
 
+## Import job version catalog
+print "Importing job version logs...";
+my $success = 0;
+for my $tmp(`$cmd_ls ${p_path}meta_latest/`){
+	chomp($tmp);
+	next if $tmp !~ /^${p_job}_(\d+)\.(dirs|files|owners|groups)+$/;
+	system("$cmd_cp ${p_path}meta_latest/${p_job}_${1}.$2 ${CATALOGPATH}");
+	print $? == 0 ? "done\n" : "failed\n";
+	$success = 1;
+}
+print "not found\n" if !$success;
+
 ## Import job configuration
 print "Importing job configuration...";
 system("$cmd_cp ${p_path}meta_latest/${p_job} ${JOBCONFIGPATH}$p_job");

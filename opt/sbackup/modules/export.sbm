@@ -36,6 +36,14 @@ if(-f $VARPATH.'history_'.$p_job){
 	print "not found\n";
 }
 
+print "Exporting job version catalog...";
+for my $tmp(`$cmd_ls $CATALOGPATH`){
+	chomp($tmp);
+	next if $tmp !~ /^$job{$p_job}{'NAME'}_\d+\.(dirs|files|owners|groups)+$/;
+	system("$cmd_rm $CATALOGPATH$tmp");
+}
+print "done\n";
+
 print "Exporting job version logs...";
 for my $tmp(`$cmd_ls $SESSIONLOGPATH`){
 	chomp($tmp);

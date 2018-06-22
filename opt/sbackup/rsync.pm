@@ -192,7 +192,7 @@ sub rsync_backup {
     		if($line_modified =~ /^(\d{4})\/(\d{2})\/(\d{2})\-(\d{2}):(\d{2}):(\d{2})$/){
     			$line_modified = mktime($6,$5,$4,$3,$2 - 1,$1 - 1900);
     		}else{
-    			version_log('warning','rsync',$::backupserver_fqdn,"Cannot parse to catalog:\n\"$cat_entry\"");
+    			version_log('warning','rsync',$::backupserver_fqdn,"Cannot parse to catalog:\nTime: \"$cat_entry\"");
     		}
     		
     		##
@@ -218,7 +218,7 @@ sub rsync_backup {
     			
     			## Parse directories
     			if($cat_type eq "d"){
-    				version_log('warning','rsync',$::backupserver_fqdn,"Cannot parse to catalog:\n\"$cat_entry\"") if $cat_entry !~ s/\/$//;
+    				version_log('warning','rsync',$::backupserver_fqdn,"Cannot parse to catalog:\nNot a directory \"$cat_entry\"") if $cat_entry !~ s/\/$//;
     				
     				## Find parent dirid
     				$cat_dirid = 0;
@@ -248,7 +248,7 @@ sub rsync_backup {
     				}
     			}else{
     				## Parse files
-    				version_log('warning','rsync',$::backupserver_fqdn,"Cannot parse to catalog:\n\"$cat_entry\"") if $cat_entry !~ s/\/([^\/]+)$//;
+    				version_log('warning','rsync',$::backupserver_fqdn,"Cannot parse to catalog:\nNot a file: \"$cat_entry\"") if $cat_entry !~ s/\/([^\/]+)$// && $cat_entry !~ s/^([^\/]+)$//;
     				my $cat_file = $1;
     				## Find parent dirid
     				$cat_dirid = 0;

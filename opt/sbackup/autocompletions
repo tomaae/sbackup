@@ -76,7 +76,7 @@ _sbackup_job()
 	
 	for e in ${!words[@]}; do
 		if [[ "${words[e]}" == -ver* ]]; then
-			commands+=' -log'
+			commands+=' -log -catalog'
 			p_job=${words[e + 1]}
 		fi
 	done

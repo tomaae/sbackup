@@ -1,20 +1,6 @@
 =================================================================
 ==JOB VER CATALOG================================================
 [] - path - list files and directories in specific directory
-[] - catalog - list all files and directories
-
-Protection   Owner     Group                Size [B] Time                    Path
-========================================================================================
-----------   N/A       N/A                         0 -                       /Program Files/HP OpenView/nonOV/perl/a/lib/5.8.8/MSWin32-AMD64-multi-thread/auto/Storable/thaw.al
-d---------   N/A       N/A                         0 -                       /Program Files/HP OpenView/nonOV/perl/a/lib/site_perl/5.8.8/MSWin32-AMD64-multi-thread/XML/Parser
-----------   N/A       N/A                         0 -                       /Program Files/HP OpenView/nonOV/perl/a/lib/site_perl/5.8.8/MSWin32-AMD64-multi-thread/XML/Parser.pm
-----------   N/A       N/A                         0 -                       /Program Files/HP OpenView/nonOV/perl/a/lib/5.8.8/MSWin32-AMD64-multi-thread/auto/SDBM_File/SDBM_File.bs
-----------   N/A       N/A                         0 -                       /Program Files/HP OpenView/nonOV/perl/a/lib/5.8.8/MSWin32-AMD64-multi-thread/auto/SDBM_File/SDBM_File.dll
-----------   N/A       N/A                         0 -                       /Program Files/HP OpenView/nonOV/perl/a/lib/5.8.8/MSWin32-AMD64-multi-thread/auto/SDBM_File/SDBM_File.lib
-d---------   N/A       N/A                         0 -                       /Program Files/HP OpenView/nonOV/perl/a/lib/site_perl/5.8.8/MSWin32-AMD64-multi-thread/auto/Win32
-d---------   N/A       N/A                         0 -                       /Program Files/HP OpenView/nonOV/perl/a/lib/site_perl/5.8.8/MSWin32-AMD64-multi-thread/auto/XML
-----------   N/A       N/A                         0 -                       /Program Files/HP OpenView/nonOV/perl/a/lib/5.8.8/MSWin32-AMD64-multi-thread/auto/ByteLoader/ByteLoader.bs
-
 
 # -listdir /osit
 Type Filename
@@ -33,9 +19,6 @@ Dir  newconfig
 [] - errors to be reported post-backup in custom HTML email
 [] - define full paths for all executable in set_env
 [] - replace all "die" commands with job_failed where possible
-[] - arguments:
- - move and rename list jobs
- - change description for job into multiple lines, one per report type
 [?] - catalog files could be compressed after session completes, stream gunzip?
 [?] - session log could be compressed after session completes
 
@@ -78,7 +61,7 @@ Dir  newconfig
 [] - target/copy option -compress
 [] - target/copy option -bwlimit
 
-[] - job_failed > check if lvm isenabled and active, remove snapshot
+[] - job_failed > check if lvm is enabled and active, remove snapshot
 =================================================================
 ==ABORT==========================================================
 [] - add "backup aborted by used XYZ" to session log on sending abort request
@@ -103,6 +86,8 @@ Access: 2018-06-18 23:22:20.497870729 +0200
 Modify: 2018-06-02 16:05:45.763894364 +0200
 Change: 2018-06-02 16:05:45.760004185 +0200
  Birth: -
+
+my $file_mode = ( stat( $file ) )[2];
 
 =================================================================
 ==RESTORE========================================================

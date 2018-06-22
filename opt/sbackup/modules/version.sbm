@@ -12,6 +12,7 @@ our $p_job;
 our $p_type;
 our $sv_log;
 our $sv_all;
+our $sv_catalog;
 our $p_version;
 
 ##
@@ -22,6 +23,14 @@ $p_version = mktime($6,$5,$4,$3,$2 - 1,$1 - 1900);
 my @tmp = &get_history($p_job,'status,name,start,end,error,size,perf,type','start=='.$p_version);
 f_output("ERROR","Invalid version.",1) if !$tmp[0];
 
+
+##
+## Get catalog
+##
+if($sv_catalog){
+	require "modules/catalog.sbm";
+	return 1;
+}
 
 ##
 ## Get version log
@@ -83,8 +92,8 @@ $out_version = strftime("%G/%m/%d-%H%M%S", localtime($tmp[2][0]{'start'})) if $t
 ## Start/end time
 my $out_start = "N/A";
 my $out_end = "N/A";
-$out_start = strftime("%a, %d %b %G %H:%M:%S", localtime($tmp[2][0]{'start'})) if $tmp[2][0]{'start'} ne "";
-$out_end = strftime("%a, %d %b %G %H:%M:%S", localtime($tmp[2][0]{'end'})) if $tmp[2][0]{'end'} ne "";
+$out_start = strftime("%a, %d/%m/%G %H:%M:%S", localtime($tmp[2][0]{'start'})) if $tmp[2][0]{'start'} ne "";
+$out_end = strftime("%a, %d/%m/%G %H:%M:%S", localtime($tmp[2][0]{'end'})) if $tmp[2][0]{'end'} ne "";
 
 ## Type
 my $out_type = "N/A";
