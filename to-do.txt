@@ -1,19 +1,4 @@
 =================================================================
-==JOB VER CATALOG================================================
-[] - path - list files and directories in specific directory
-
-# -listdir /osit
-Type Filename
-===============================================================================
-Dir  bin
-Dir  log
-Dir  etc
-File version_current.txt
-Dir  tmp
-Dir  newconfig
-
-
-=================================================================
 ==GENERAL========================================================
 [] - disable error exit code and message when running from cron
 [] - errors to be reported post-backup in custom HTML email
@@ -38,6 +23,7 @@ Dir  newconfig
 ==AUTOCOMPLETE===================================================
 [] - work with shortened variables (-job XXX -ver XXX -log)
 [] - disable type if ver is already specified
+[] - path catalog (job and version must be filled and valid)
 
 =================================================================
 ==MONITOR========================================================

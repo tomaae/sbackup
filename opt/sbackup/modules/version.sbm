@@ -12,7 +12,7 @@ our $p_job;
 our $p_type;
 our $sv_log;
 our $sv_all;
-our $sv_catalog;
+our $sv_path;
 our $p_version;
 
 ##
@@ -27,7 +27,7 @@ f_output("ERROR","Invalid version.",1) if !$tmp[0];
 ##
 ## Get catalog
 ##
-if($sv_catalog){
+if($sv_path){
 	require "modules/catalog.sbm";
 	return 1;
 }

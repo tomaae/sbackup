@@ -23,7 +23,7 @@ our %job = load_jobs_config;
 ##
 ## Parameters
 ##
-our ($DEBUGMODE, $sv_history, $sv_job, $sv_catalog, $sv_log, $sv_backup, $sv_purge, $sv_verify, $sv_restore, $sv_copy, $sv_abort, $sv_export, $sv_import, $sv_version, $sv_days, $sv_type, $sv_path, $sv_into, $sv_background, $sv_scheduler, $sv_api, $sv_all);
+our ($DEBUGMODE, $sv_history, $sv_job, $sv_log, $sv_backup, $sv_purge, $sv_verify, $sv_restore, $sv_copy, $sv_abort, $sv_export, $sv_import, $sv_version, $sv_days, $sv_type, $sv_path, $sv_into, $sv_background, $sv_scheduler, $sv_api, $sv_all);
 our ($p_debug, $p_job, $p_version, $p_days, $p_type, $p_path, $p_into, $p_api);
 $p_debug = 1;
 my %arguments;
@@ -53,7 +53,7 @@ my %arguments;
 \tJob history:\n\t\t-job <job name>  [-type (backup|purge|verify)]
 \tVersion detail:\n\t\t-job <job name> -version <version>
 \tVersion log:\n\t\t-job <job name> -version <version> -log
-\tVersion catalog:\n\t\t-job <job name> -version <version> -catalog",
+\tVersion catalog:\n\t\t-job <job name> -version <version> -path [<directory>]",
 	"help_display" => 1,
 );
 
@@ -141,15 +141,6 @@ my %arguments;
 	"help_display" => 0,
 );
 
-%{$arguments{"catalog"}} = (
-	"var" => \$sv_catalog,
-	"vals_mandatory" => 0,
-	"dependency" => "job",
-	"help_header" => "Version catalog:",
-	"help_args" => "-job <job name> -version <version> -catalog",
-	"help_display" => 0,
-);
-
 %{$arguments{"type"}} = (
 	"var" => \$sv_type,
 	"val1" => \$p_type,
@@ -168,15 +159,15 @@ my %arguments;
 	"help_args" => "-version <version>",
 	"help_display" => 0,
 );
-#%{$arguments{"path"}} = (
-#	"var" => \$sv_path,
-#	"val1" => \$p_path,
-#	"vals_mandatory" => 1,
-#	"dependency" => "restore",
-#	"help_header" => "Directory path:",
-#	"help_args" => "-path <directory>",
-#	"help_display" => 0,
-#);
+%{$arguments{"path"}} = (
+	"var" => \$sv_path,
+	"val1" => \$p_path,
+	"vals_mandatory" => 0,
+	"dependency" => "version",
+	"help_header" => "Catalog path:",
+	"help_args" => "-path <directory>",
+	"help_display" => 0,
+);
 #%{$arguments{"into"}} = (
 #	"var" => \$sv_into,
 #	"val1" => \$p_into,
