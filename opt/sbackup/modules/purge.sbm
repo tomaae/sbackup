@@ -55,8 +55,10 @@ sub job_failed {
 	my $msg = shift;
 	$SB_TIMEEND = time();
 	print STDERR "Error: $msg\n";
-	update_history($p_job,"status=5,end=".$SB_TIMEEND.",error=".$msg.",perf=","status==0,type==purge,start==".$SB_TIMESTART);
 	version_log('critical','purge',$backupserver_fqdn,"Purge job failed with error:\n$msg");
+	$msg =~ s/^([^\n]+)//;
+	$msg = $1;
+	update_history($p_job,"status=5,end=".$SB_TIMEEND.",error=".$msg.",perf=","status==0,type==purge,start==".$SB_TIMESTART);
 	rm_runfile($p_job);
 	exit 1;
 }
@@ -85,10 +87,12 @@ if($job{$p_job}{'POST'}{'-preexec'}){
     	append_log($sessionlogfile, $line);
     }
     close($fh);
-    my $msg = "";
-    $msg = "\nFile is not executable." if ($? / 256) == 126;
-    $msg = "\nFile not found." if ($? / 256) eq 127;
-    ::job_failed("Preexec failed with exit code ".($? / 256).".".$msg) if $? ne "0";
+    if($? != 0){
+      my $msg = "";
+      $msg = "\nFile is not executable." if ($? / 256) == 126;
+      $msg = "\nFile not found." if ($? / 256) eq 127;
+      ::job_failed("Preexec failed with exit code ".($? / 256).".".$msg);
+  	}
   }else{
   	::job_failed("Preexec failed to start.");
   }
@@ -275,10 +279,12 @@ if($job{$p_job}{'POST'}{'-postexec'}){
     	append_log($sessionlogfile, $line);
     }
     close($fh);
-    my $msg = "";
-    $msg = "\nFile is not executable." if ($? / 256) == 126;
-    $msg = "\nFile not found." if ($? / 256) eq 127;
-    ::job_failed("Postexec failed with exit code ".($? / 256).".".$msg) if $? ne "0";
+    if($? != 0){
+      my $msg = "";
+      $msg = "\nFile is not executable." if ($? / 256) == 126;
+      $msg = "\nFile not found." if ($? / 256) eq 127;
+      ::job_failed("Postexec failed with exit code ".($? / 256).".".$msg);
+  	}
   }else{
   	::job_failed("Postexec failed to start.");
   }

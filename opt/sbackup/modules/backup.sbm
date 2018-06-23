@@ -94,10 +94,12 @@ if($job{$p_job}{'POST'}{'-preexec'}){
     	append_log($sessionlogfile, $line);
     }
     close($fh);
-    my $msg = "";
-    $msg = "\nFile is not executable." if ($? / 256) == 126;
-    $msg = "\nFile not found." if ($? / 256) eq 127;
-    ::job_failed("Preexec failed with exit code ".($? / 256).".".$msg) if $? ne "0";
+    if($? != 0){
+      my $msg = "";
+      $msg = "\nFile is not executable." if ($? / 256) == 126;
+      $msg = "\nFile not found." if ($? / 256) eq 127;
+      ::job_failed("Preexec failed with exit code ".($? / 256).".".$msg);
+  	}
   }else{
   	::job_failed("Preexec failed to start.");
   }
@@ -313,10 +315,12 @@ if($job{$p_job}{'POST'}{'-postexec'}){
     	append_log($sessionlogfile, $line);
     }
     close($fh);
-    my $msg = "";
-    $msg = "\nFile is not executable." if ($? / 256) == 126;
-    $msg = "\nFile not found." if ($? / 256) eq 127;
-    ::job_failed("Postexec failed with exit code ".($? / 256).".".$msg) if $? ne "0";
+    if($? != 0){
+      my $msg = "";
+      $msg = "\nFile is not executable." if ($? / 256) == 126;
+      $msg = "\nFile not found." if ($? / 256) eq 127;
+      ::job_failed("Postexec failed with exit code ".($? / 256).".".$msg);
+  	}
   }else{
   	::job_failed("Postexec failed to start.");
   }
