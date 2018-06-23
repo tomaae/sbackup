@@ -11,12 +11,7 @@
 
 =================================================================
 ==BACKUP=========================================================
-[?] - multiple paths in source
-[?] - target concurrency
-[] - excludes?: --exclude=PATTERN       exclude files matching PATTERN
-
 [] - pre/postexec (export shell variables JOB_NAME, JOB_TYPE, STATUS, START_TIME)
-[] - create global error log
 
 [] - remote backup of another server
 [] - mysql backup local/remote

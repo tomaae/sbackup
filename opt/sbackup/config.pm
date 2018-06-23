@@ -28,6 +28,7 @@ my %job_definition = ( ##Default value, Mandatory, Type, Range of type
   	'-type' => ["",1,"list","filesystem|omv4"],
   	'-host' => ["",0,"",""],
   	'-path' => ["",1,"",""],
+  	'-exclude' => ["",0,"",""],
   	'-protect' => ["0",1,"number",""],
   	'-snapshot' => {
   		'-enabled' => ["0",1,"bool",""],

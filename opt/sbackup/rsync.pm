@@ -22,7 +22,7 @@ our %job;
 ## rsync_backup
 ##
 sub rsync_backup {
-	my ($p_job, $SB_TIMESTART, $source_path, $target_path, $bwlimit, $bwcompress)=@_;
+	my ($p_job, $SB_TIMESTART, $source_path, $target_path, $bwlimit, $bwcompress, $excludes)=@_;
 	my @returncodes;
 	
   ##
@@ -108,6 +108,12 @@ sub rsync_backup {
   my $rsync_params = "";
   $rsync_params .= " --bwlimit=".$bwlimit if $bwlimit > 0;
   $rsync_params .= " -z" if $bwcompress;
+  if($excludes ne ""){
+  	my @val = split(/\,/,$excludes);
+  	for my $exclude(@val){
+  		$rsync_params .= ' --exclude "'.$exclude.'"';
+  	}
+  }
   $rsync_params .= " --stats -aEAXvii --out-format='%i|%n|%l|%M|%B|%U|%G' --delete ".$INCR." \"".$source_path.$::slash."\" \"".$target_path.$::slash."data_".$SB_TIMESTART.$::slash."\"";
   if(open(my $fh, "-|", "$::cmd_rsync --dry-run $rsync_params 2>&1")){
     while (my $line = <$fh>){
