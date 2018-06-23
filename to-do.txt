@@ -8,9 +8,7 @@
 
 =================================================================
 ==AUTOCOMPLETE===================================================
-[] - work with shortened variables (-job XXX -ver XXX -log)
-[] - disable type if ver is already specified
-[] - path catalog (job and version must be filled and valid)
+[] - improve path catalog
 
 =================================================================
 ==BACKUP=========================================================

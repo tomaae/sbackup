@@ -6,7 +6,7 @@
 ###########################################################################################
 use strict;
 use warnings;
-use POSIX qw(strftime floor);
+use POSIX qw(strftime mktime floor);
 
 our $p_api;
 our %job;
@@ -61,5 +61,124 @@ if($p_api eq "ac_available_versions"){
 	exit 0;
 }
 
+if($p_api eq "ac_catalog_path"){
+	our $p_job;
+	our $p_version;
+	our $p_path;
+	exit 1 if !$p_job;
+	exit 1 if !job_exists($p_job);
+	
+  ##
+  ## Check parameters
+  ##
+  f_output("ERROR","Invalid version.",1) if $p_version !~ /^(\d{4})\/(\d{2})\/(\d{2})\-(\d{2})(\d{2})(\d{2})$/;
+  $p_version = mktime($6,$5,$4,$3,$2 - 1,$1 - 1900);
+  my @tmp = &get_history($p_job,'status,name,start,end,error,size,perf,type','start=='.$p_version);
+  f_output("ERROR","Invalid version.",1) if !$tmp[0];
+  
+  my $catalogfile_dirs   = $::CATALOGPATH.$p_job."_".$::p_version.".dirs";
+  my $catalogfile_files  = $::CATALOGPATH.$p_job."_".$::p_version.".files";
+
+  my @cat_dirs = ();
+  @{$cat_dirs[0]} = ();
+
+  for my $line(read_log($catalogfile_dirs)){
+  	chomp($line);
+  	my @val = split(/\|/,$line);
+  	@{$cat_dirs[$val[0]]} = () if not defined $cat_dirs[$val[0]];
+    my @tmp = ($val[1], $val[2], $val[3], $val[4], $val[5]);
+    push @{$cat_dirs[$val[0]]},\@tmp;
+  }
+
+  my @cat_files = ();
+  for my $line(read_log($catalogfile_files)){
+  	chomp($line);
+  	my @val = split(/\|/,$line);
+  	@{$cat_files[$val[0]]} = () if not defined $cat_files[$val[0]];
+    my @tmp = ($val[1], $val[2], $val[3], $val[4], $val[5], $val[6]);
+    push @{$cat_files[$val[0]]},\@tmp;
+  }
+
+  sub traverse_cat {
+  	my ($cat_dirid, $append_path,$last_file) = @_;
+    ## Get files in this directory
+    my $i = -1;
+    if(defined $cat_files[$cat_dirid]){
+     	for(@{$cat_files[$cat_dirid]}){
+      	$i++;
+      	next if not defined $cat_files[$cat_dirid][$i];
+      	next if $last_file ne "" && $last_file ne $cat_files[$cat_dirid][$i][0];
+      	print $append_path."/".$cat_files[$cat_dirid][$i][0]."\n";
+    	}
+  	}
+  	
+  	$i = -1;
+  	if(defined $cat_dirs[$cat_dirid]){
+    	for(@{$cat_dirs[$cat_dirid]}){
+    		$i++;
+    		print $append_path."/".$cat_dirs[$cat_dirid][$i][1]."/\n";
+        #traverse_cat($cat_dirs[$cat_dirid][$i][0],$append_path."/".$cat_dirs[$cat_dirid][$i][1],$last_file);
+    	}
+    }
+  	return;
+  }
+
+
+  my $cat_start_dirid = 0;
+  my $cat_start_dirpath = "";
+  my $tmp_name = "";
+  my $last_file = "";
+
+  if($p_path){
+  	$p_path =~ s/\/+/\//;
+  	$p_path =~ s/\/$//;
+  }
+
+  if($p_path){
+  	$cat_start_dirpath = "/";
+  	## Find parent dirid
+  	my @cat_split = split(/\//,$p_path);
+  	for my $cat_tmp(@cat_split){
+  		$last_file = $cat_tmp;
+  		if(defined $cat_dirs[$cat_start_dirid]){
+  			## Check if present under current dirid
+  			my $i = -1;
+  			for(@{$cat_dirs[$cat_start_dirid]}){
+  				$i++;
+  				next if ! defined $cat_dirs[$cat_start_dirid][$i];
+  				if($cat_dirs[$cat_start_dirid][$i][1] eq $cat_tmp){
+  					$cat_start_dirpath .= $cat_dirs[$cat_start_dirid][$i][1]."/";
+  					$cat_start_dirid = $cat_dirs[$cat_start_dirid][$i][0];
+  					last;
+  				}
+  			}
+  		}
+  	}
+  	$cat_start_dirpath =~ s/\/$//;
+  	
+  	my $found = 0;
+  	if($p_path ne $cat_start_dirpath && defined $cat_files[$cat_start_dirid]){
+  		for my $tmp(@{$cat_files[$cat_start_dirid]}){
+  			if($$tmp[0] eq $last_file){
+  				$found = 1;
+  				#$cat_start_dirpath .= "/".$$tmp[0];
+  				last;
+  			}
+  		}
+    }else{
+    	$last_file = "" if !$found;
+    }
+    
+    if($p_path ne $cat_start_dirpath && !$found){
+    	
+  		#print "/uac3/";
+  		exit 0;
+  	}
+  }
+
+  traverse_cat($cat_start_dirid,$cat_start_dirpath,$last_file);	
+	
+	exit 0;
+}
 
 return 1;

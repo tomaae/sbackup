@@ -12,6 +12,12 @@ _sbackup_running_jobs()
       sed -n -e 's|^\(.*\)$|\1|p' )" -- "$cur" ) )
 }
 
+_sbackup_catalog_path()
+{
+  COMPREPLY=( $(compgen -W "$( /opt/sbackup/sbackup -api ac_catalog_path -job $1 -ver $2 -path $3 2>/dev/null | \
+      sed -n -e 's|^\(.*\)$|\1|p' )" -- "$cur" ) )
+}
+
 _sbackup_purgeable_days()
 {
 	if [[ "$1" == -* ]]; then
@@ -59,7 +65,7 @@ _sbackup_job()
 			;;
 		-ver*)
     	for e in ${!words[@]}; do
-    		if [[ "${words[e]}" == -pur* ]]; then
+    		if [[ "${words[e]}" == -job* ]]; then
     			p_job=${words[e + 1]}
     		fi
     	done
@@ -68,6 +74,20 @@ _sbackup_job()
 			;;
 		-typ*)
 			COMPREPLY=( $( compgen -W "backup purge verify" -- "$cur" ) )
+			return 0
+			;;
+		-pat*)
+    	for e in ${!words[@]}; do
+    		if [[ "${words[e]}" == -job* ]]; then
+    			p_job=${words[e + 1]}
+    		fi
+    	done
+    	for e in ${!words[@]}; do
+    		if [[ "${words[e]}" == -ver* ]]; then
+    			p_ver=${words[e + 1]}
+    		fi
+    	done
+			_sbackup_catalog_path $p_job $p_ver $cur
 			return 0
 			;;
 	esac
@@ -79,19 +99,23 @@ _sbackup_job()
 		fi
 	fi
 	
-	commands='-type -version'
+	commands='-version'
 	
 	for e in ${!words[@]}; do
 		if [[ "${words[e]}" == -ver* ]]; then
-			commands+=' -log -catalog'
-			p_job=${words[e + 1]}
+			commands+=' -log -path'
 		fi
 	done
-
+	
+	if [[ "$commands" != *"catalog"* ]]; then
+		commands+=' -type'
+	fi
+	
+	unset 'words[${#words[@]}-1]'
 	COMPREPLY=( $( compgen -W "$commands" -- "$cur" ) )
 	for i in ${!COMPREPLY[@]}; do
 		for e in ${!words[@]}; do
-			if [[ "${words[e]}" == "${COMPREPLY[i]}" ]]; then
+			if [[ "${COMPREPLY[i]}" == "${words[e]}"* ]]; then
 				unset COMPREPLY[i]
 			fi
 		done
@@ -135,10 +159,11 @@ _sbackup_purge()
 			;;
 	esac
 	
-	COMPREPLY=( $( compgen -W '-days' -- "$cur" ) )
+	unset 'words[${#words[@]}-1]'
+	COMPREPLY=( $( compgen -W "$commands" -- "$cur" ) )
 	for i in ${!COMPREPLY[@]}; do
 		for e in ${!words[@]}; do
-			if [[ "${words[e]}" == "${COMPREPLY[i]}" ]]; then
+			if [[ "${COMPREPLY[i]}" == "${words[e]}"* ]]; then
 				unset COMPREPLY[i]
 			fi
 		done

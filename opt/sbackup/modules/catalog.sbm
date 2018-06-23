@@ -9,7 +9,6 @@ use warnings;
 use POSIX qw(strftime);
 
 our ($p_job);
-our %job;
 our $p_version;
 our $p_path;
 
