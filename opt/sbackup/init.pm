@@ -16,7 +16,7 @@ use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
 									f_output get_env f_arguments 
-									epoch2human size2human perf2human min2time severity2id bit2oct oct2bit
+									size2human perf2human min2time severity2id bit2oct oct2bit
 									$slash $BINPATH $MODULESPATH $ETCPATH $JOBCONFIGPATH $VARPATH $SESSIONLOGPATH $CATALOGPATH $RUNFILEPATH
 									$OS_USERS $OS_GROUPS
 									$cmd_ls $cmd_ln $cmd_rm $cmd_ps $cmd_sleep $cmd_cp $cmd_mv $cmd_mkdir $cmd_chmod $cmd_rsync $cmd_kill $cmd_pkill
@@ -161,19 +161,6 @@ sub get_env{
     	close log_file;
   	}
   }
-}
-
-##
-##Time convert
-##
-sub epoch2human {
-	my ($epoch)=@_;
-	return "Unknown" if !$epoch;
-	my ($analyze_sec,$analyze_min,$analyze_hour,$analyze_mday,$analyze_mon,$analyze_year,$dummy,$dummy2,$dummy3) = localtime($epoch);
-	$analyze_hour = "0".$analyze_hour if length($analyze_hour)==1;
-	$analyze_min = "0".$analyze_min if length($analyze_min)==1;
-	$analyze_sec = "0".$analyze_sec if length($analyze_sec)==1;
-	return substr(($analyze_mday + 100),1,2)."/".substr(($analyze_mon + 101),1,2)."/".substr(($analyze_year),1,2)." $analyze_hour:$analyze_min:$analyze_sec";
 }
 
 sub min2time {
