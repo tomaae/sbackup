@@ -19,7 +19,8 @@ our @EXPORT = qw(
 									size2human perf2human min2time severity2id bit2oct oct2bit
 									$slash $BINPATH $MODULESPATH $ETCPATH $JOBCONFIGPATH $VARPATH $SESSIONLOGPATH $CATALOGPATH $RUNFILEPATH
 									$OS_USERS $OS_GROUPS
-									$cmd_ls $cmd_ln $cmd_rm $cmd_ps $cmd_sleep $cmd_cp $cmd_mv $cmd_mkdir $cmd_chmod $cmd_rsync $cmd_kill $cmd_pkill
+									$cmd_ls $cmd_ln $cmd_rm $cmd_ps $cmd_sleep $cmd_cp $cmd_mv $cmd_mkdir $cmd_chmod $cmd_rsync $cmd_kill $cmd_pkill $cmd_df $cmd_which $cmd_sync
+									$cmd_lvs $cmd_lvdisplay $cmd_lvcreate $cmd_lvremove $cmd_mount $cmd_umount
 									$backupserver_fqdn
 							  );
 
@@ -110,11 +111,25 @@ sub get_env{
 	our $cmd_sleep      = "sleep";
 	our $cmd_cp         = "cp";
 	our $cmd_mv         = "mv";
+	our $cmd_df         = "df";
+	our $cmd_which      = "which";
 	our $cmd_mkdir      = "mkdir -p";
 	our $cmd_chmod      = "chmod";
 	our $cmd_rsync      = "rsync";
 	our $cmd_kill       = "kill";
 	our $cmd_pkill      = "pkill";
+	our $cmd_sync       = "sync";
+	
+	
+	our $cmd_lvs        = "/sbin/lvs";
+	our $cmd_lvdisplay  = "/sbin/lvdisplay";
+	
+	our $cmd_lvcreate   = "/sbin/lvcreate";
+	our $cmd_lvremove   = "/sbin/lvremove";
+	
+	our $cmd_mount      = "/bin/mount";
+	our $cmd_umount     = "/bin/umount";
+	
 	
 	our $backupserver_fqdn = hostfqdn;
 	

@@ -60,7 +60,7 @@ if($pid_output[0] && $pid_output[2][0]{'rpid'} && $pid_output[2][0]{'rpid'}  =~ 
 		exit 0;
 	}else{
 		## Verify pkill binary
-		system("which $cmd_pkill >/dev/null 2>&1");
+		system("$cmd_which $cmd_pkill >/dev/null 2>&1");
 		f_output("ERROR","pkill binary is missing, install pkill.") if $? != 0;
 		f_output("ERROR","Failed to send abort request.",1);
 	}	

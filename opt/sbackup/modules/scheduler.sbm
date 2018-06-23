@@ -131,7 +131,7 @@ for my $tmp_job(sort keys %job){
   
   ## Check other running jobs
   if($start_backup == 1){
-		for my $ps_line(`ps -ef|grep sbackup|grep background`){
+		for my $ps_line(`$cmd_ps -ef|grep sbackup|grep background`){
 			chomp($ps_line);
 			next if $ps_line !~ /sbackup -(\w+) (.+) -background/i;
 			

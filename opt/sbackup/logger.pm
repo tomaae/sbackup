@@ -316,7 +316,7 @@ sub rm_runfile{
 	my @returncodes;
 	if($p_job && -e $main::RUNFILEPATH.'sbackup_'.$p_job){
 		&f_output("DEBUG","Removing runfile for $p_job");
-  	system("$main::cmd_rm ".$main::RUNFILEPATH.'sbackup_'.$p_job) if !$main::SIMULATEMODE;
+  	system("$::cmd_rm ".$main::RUNFILEPATH.'sbackup_'.$p_job) if !$main::SIMULATEMODE;
   	$returncodes[0] = 0;
   	$returncodes[0] = 1 if($? != 0);
 	}
@@ -372,7 +372,7 @@ sub check_runfile{
   		## Runfile data contain PID
   		&f_output("DEBUG","Runfile pid ".$output[2][0]{'pid'});
   		## Check if PID is still running
-  		system('ps '.$output[2][0]{'pid'}.' >/dev/null 2>&1');
+  		system('$::cmd_ps '.$output[2][0]{'pid'}.' >/dev/null 2>&1');
   		if($? == 0){
   			return "Job (".$output[2][0]{'type'}.") is already running.";
   		}else{

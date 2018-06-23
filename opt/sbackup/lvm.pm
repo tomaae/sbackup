@@ -31,7 +31,7 @@ sub lvm_create_snapshot {
 	
 	## Get dir on source
 	if($error == 0){
-  	my $tmp = `df --output=target \"$source_path\"|tail -1 2>&1`;
+  	my $tmp = `$::cmd_df --output=target \"$source_path\"|tail -1 2>&1`;
   	chomp($tmp);
   	if($? == 0){
   		$source_dir = $source_path;
@@ -45,7 +45,7 @@ sub lvm_create_snapshot {
 	## Get block device
 	my $lvm_blockdevice = "";
 	if($error == 0){
-  	$lvm_blockdevice = `df --output=source \"$source_path\"|tail -1 2>&1`;
+  	$lvm_blockdevice = `$::cmd_df --output=source \"$source_path\"|tail -1 2>&1`;
   	chomp($lvm_blockdevice);
   	if($? != 0){
   		version_log('minor','lvm',$::backupserver_fqdn,"Could not get block device.");
@@ -62,7 +62,7 @@ sub lvm_create_snapshot {
 	## Get LV name
 	my $lv_name = "";
 	if($error == 0){
-		$lv_name = `/sbin/lvs --noheadings -o lv_name $lvm_blockdevice 2>&1`;
+		$lv_name = `$::cmd_lvs --noheadings -o lv_name $lvm_blockdevice 2>&1`;
 		if($? == 0){
 			$lv_name =~ s/^\s+|\s+$//g;
 		}else{
@@ -83,7 +83,7 @@ sub lvm_create_snapshot {
 	
 	## Check and remove old snapshots
 	if($error == 0){
-		$result = `/sbin/lvdisplay \"${lvm_blockdevice}_sbackup_${p_job}_snap\" 2>&1`;
+		$result = `$::cmd_lvdisplay \"${lvm_blockdevice}_sbackup_${p_job}_snap\" 2>&1`;
 		if($? == 0){
 			## Snapshot exists
 			version_log('normal','lvm',$::backupserver_fqdn,"Old snapshot found, attempting to remove...");
@@ -91,7 +91,7 @@ sub lvm_create_snapshot {
 			system('mountpoint -q "/mnt/sbackup_'.${p_job}.'_snap" 2>&1');
 			if($? == 0){
 				## umount snapshot
-				$result = `umount \"/mnt/sbackup_${p_job}_snap\" 2>&1`;
+				$result = `$::cmd_umount \"/mnt/sbackup_${p_job}_snap\" 2>&1`;
 				if($? != 0){
 					version_log('minor','lvm',$::backupserver_fqdn,"Failed to unmount old snapshot.\n$result");
 					$error = 1;
@@ -99,7 +99,7 @@ sub lvm_create_snapshot {
 			}
 			## Remove old snapshot
 			if($error == 0){
-  			$result = `/sbin/lvremove -f \"${lvm_blockdevice}_sbackup_${p_job}_snap\" 2>&1`;
+  			$result = `$::cmd_lvremove -f \"${lvm_blockdevice}_sbackup_${p_job}_snap\" 2>&1`;
   			if($? != 0){
   				version_log('minor','lvm',$::backupserver_fqdn,"Failed to remove old snapshot.\n$result");
   				$error = 1;
@@ -110,7 +110,7 @@ sub lvm_create_snapshot {
 	
 	## Create LVM snapshot
 	if($error == 0){
-		$result = `/sbin/lvcreate -l${lvm_size}%FREE -s -n \"${lv_name}_sbackup_${p_job}_snap\" ${lvm_blockdevice} 2>&1`;
+		$result = `$::cmd_lvcreate -l${lvm_size}%FREE -s -n \"${lv_name}_sbackup_${p_job}_snap\" ${lvm_blockdevice} 2>&1`;
 		if($? == 0){
 			## Snapshot created
 			if(!-d "/mnt/sbackup_${p_job}_snap"){
@@ -121,7 +121,7 @@ sub lvm_create_snapshot {
   			}
   		}
 			if($error == 0){
-  			$result = `mount -oro \"${lvm_blockdevice}_sbackup_${p_job}_snap\" \"/mnt/sbackup_${p_job}_snap\"`;
+  			$result = `$::cmd_mount -oro \"${lvm_blockdevice}_sbackup_${p_job}_snap\" \"/mnt/sbackup_${p_job}_snap\"`;
   			if($? == 0){
   				version_log('normal','lvm',$::backupserver_fqdn,"Snapshot created successfully.");
   			}else{
@@ -169,7 +169,7 @@ sub lvm_remove_snapshot {
 	## Get block device
 	my $lvm_blockdevice = "";
 	if($error == 0){
-  	$lvm_blockdevice = `df --output=source \"$source_path\"|tail -1 2>&1`;
+  	$lvm_blockdevice = `$::cmd_df --output=source \"$source_path\"|tail -1 2>&1`;
   	chomp($lvm_blockdevice);
   	if($? != 0){
   		version_log('minor','lvm',$::backupserver_fqdn,"Could not get source directory.");
@@ -186,7 +186,7 @@ sub lvm_remove_snapshot {
 	## Get LV name
 	my $lv_name = "";
 	if($error == 0){
-		$lv_name = `/sbin/lvs --noheadings -o lv_name $lvm_blockdevice 2>&1`;
+		$lv_name = `$::cmd_lvs --noheadings -o lv_name $lvm_blockdevice 2>&1`;
 		if($? == 0){
 			$lv_name =~ s/^\s+|\s+$//g;
 		}else{
@@ -207,14 +207,14 @@ sub lvm_remove_snapshot {
 	
 	## Check and remove snapshots
 	if($error == 0){
-		$result = `/sbin/lvdisplay \"${lvm_blockdevice}_sbackup_${p_job}_snap\" 2>&1`;
+		$result = `$::cmd_lvdisplay \"${lvm_blockdevice}_sbackup_${p_job}_snap\" 2>&1`;
 		if($? == 0){
 			## Snapshot exists
 			## Check if snapshot is mounted
 			system('mountpoint -q "/mnt/sbackup_'.${p_job}.'_snap" 2>&1');
 			if($? == 0){
 				## umount snapshot
-				$result = `umount \"/mnt/sbackup_${p_job}_snap\" 2>&1`;
+				$result = `$::cmd_umount \"/mnt/sbackup_${p_job}_snap\" 2>&1`;
 				if($? == 0){
 					## Delete mnt directory
       		if(-d "/mnt/sbackup_${p_job}_snap"){
@@ -231,7 +231,7 @@ sub lvm_remove_snapshot {
 			}
 			## Remove  snapshot
 			if($error == 0){
-  			$result = `/sbin/lvremove -f \"${lvm_blockdevice}_sbackup_${p_job}_snap\" 2>&1`;
+  			$result = `$::cmd_lvremove -f \"${lvm_blockdevice}_sbackup_${p_job}_snap\" 2>&1`;
   			if($? == 0){
   				version_log('normal','lvm',$::backupserver_fqdn,"Snapshot removed successfully");
   			}else{

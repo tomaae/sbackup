@@ -2,7 +2,6 @@
 ==GENERAL========================================================
 [] - disable error exit code and message when running jobs from cron
 [] - errors to be reported post-backup in custom HTML email
-[] - define full paths for all executable in set_env
 [] - replace all "die" commands with job_failed where possible
 [?] - catalog files could be compressed after session completes, stream gunzip?
 [?] - session log could be compressed after session completes

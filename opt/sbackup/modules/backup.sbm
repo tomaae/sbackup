@@ -258,7 +258,7 @@ if($SB_ERRORLEVEL <= 3){
 if($job{$p_job}{'TARGET'}{'-host'} eq "" && ($job{$p_job}{'TARGET'}{'-type'} eq "filesystem" || $job{$p_job}{'TARGET'}{'-type'} eq "omv4")){
 	update_history($p_job,"perf=(Flushing) 100%","status==0,type==backup,start==".$SB_TIMESTART);
 	version_log('normal','sync',$backupserver_fqdn,"Flushing write cache...");
-  system("sync -f \"$target_path\"") if !$main::SIMULATEMODE;
+  system("$cmd_sync -f \"$target_path\"") if !$main::SIMULATEMODE;
   if($? == 0 || $main::SIMULATEMODE){
   	version_log('normal','sync',$backupserver_fqdn,"Write cache successfully flushed.");
   }else{
