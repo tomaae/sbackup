@@ -42,7 +42,7 @@ sub f_output {
     	exit $additionalcode;
     }
   }
-  if($main::DEBUGMODE){
+  if($::DEBUGMODE){
     if($msg_type eq "DEBUG"){
     	$debug_type = "MSG";
 			$debug_show = 1;
@@ -51,29 +51,29 @@ sub f_output {
   		$debug_type = "ERR";
   		$debug_show = 1;
     }
-    if($msg_type eq "DEBUG2" && $main::p_debug >= 2){
+    if($msg_type eq "DEBUG2" && $::p_debug >= 2){
     	$debug_type = "DET";
     	$debug_show = 1;
     }
-    if($msg_type eq "DEBUG3" && $main::p_debug >= 3){
+    if($msg_type eq "DEBUG3" && $::p_debug >= 3){
     	$debug_type = "SQL";
     	$debug_show = 1;
     }
-    if($msg_type eq "DEBUG4" && $main::p_debug >= 4){
+    if($msg_type eq "DEBUG4" && $::p_debug >= 4){
     	$debug_type = "DET4";
     	$debug_show = 1;
     }
-  	if($msg_type eq "DEBUG5" && $main::p_debug >= 5){
+  	if($msg_type eq "DEBUG5" && $::p_debug >= 5){
   		$debug_type = "DET5";
   		$debug_show = 1;
     }
     
     if($debug_show){
-      if($main::DEBUGFILE){
-      	$main::s_debugfile = $0;
-  			$main::s_debugfile =~ /(ob\w*)$/;
-  			$main::s_debugfile = $1;
-    		append_log("$main::LOGPATH${main::s_slash}debug$main::s_slash${main::s_debugfile}.log","=\"PID".$$."\"-$debug_type-$reportdate=>$err_msg");
+      if($::DEBUGFILE){
+      	$::s_debugfile = $0;
+  			$::s_debugfile =~ /(ob\w*)$/;
+  			$::s_debugfile = $1;
+    		append_log("$::LOGPATH${main::s_slash}debug$::s_slash${main::s_debugfile}.log","=\"PID".$$."\"-$debug_type-$reportdate=>$err_msg");
     	}else{
     		print "=DEBUG-$debug_type-$reportdate=>$err_msg\n";
     	}
@@ -82,7 +82,7 @@ sub f_output {
   if($msg_type eq "SCREEN"){
 	  print "$err_msg";
   }
-#  if($msg_type eq "HTML" &&($main::sv_html)){
+#  if($msg_type eq "HTML" &&($::sv_html)){
 #  	printf main::htmlfile "$err_msg\n";
 #  }
 } 
@@ -175,7 +175,7 @@ sub get_env{
 	}
 	
 	if(!-f $CRONFILE){
-		if(!$main::SIMULATEMODE){
+		if(!$::SIMULATEMODE){
     	if(open(my $fh, ">>", "$CRONFILE")){
     		flock $fh,2;
     		truncate $fh,0;

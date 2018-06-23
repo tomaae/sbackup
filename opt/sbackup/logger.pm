@@ -86,7 +86,7 @@ sub get_history{
 	
   my @select_request = parse_select('history',$select);
   my @where_request  = parse_where('history',$where) if $where;
-  if($p_job && -f $main::VARPATH.'history_'.$p_job){
+  if($p_job && -f $::VARPATH.'history_'.$p_job){
   	&f_output("DEBUG","History get, $select, $where");
     if(open(my $fh, "<", $::VARPATH.'history_'.$p_job)){
     	flock $fh,1;
@@ -138,7 +138,7 @@ sub insert_history{
   		@val = split(/=/,$tmp,-1);
   		$columns[$table{'history'}{$val[0]}] = $val[1];
   	}
-  	append_log($main::VARPATH.'history_'.$p_job,join('|',@columns));
+  	append_log($::VARPATH.'history_'.$p_job,join('|',@columns));
   	$returncodes[0] = 1;
 	}
 	return @returncodes;
@@ -155,13 +155,13 @@ sub update_history{
 	my @val;
 	my @returncodes;
 	
-	if( !-f $main::VARPATH.'history_'.$p_job){
+	if( !-f $::VARPATH.'history_'.$p_job){
 		print "Error: History file for $p_job does not exists.\n";
 		return;
 	}
 	
 	if($p_job && $update && $where){
-		&f_output("DEBUG","History update $p_job, $update, $where");# if !$main::SIMULATEMODE && $update =~ /perf=\d+\%, status==0/;
+		&f_output("DEBUG","History update $p_job, $update, $where");# if !$::SIMULATEMODE && $update =~ /perf=\d+\%, status==0/;
 		my @where_request  = parse_where('history',$where);
   	my @entries = split(/,/,$update,-1);
   	for $tmp(@entries){
@@ -169,7 +169,7 @@ sub update_history{
   		$columns{$table{'history'}{$val[0]}} = $val[1];
   	}
   	
-  	if(!$main::SIMULATEMODE){
+  	if(!$::SIMULATEMODE){
     	if(open(my $fh, "+<", $::VARPATH.'history_'.$p_job)){
       	flock $fh,2;
       	while($line = <$fh>){
@@ -213,7 +213,7 @@ sub delete_history{
 	my @val;
 	my @returncodes;
 	
-	if( !-f $main::VARPATH.'history_'.$p_job){
+	if( !-f $::VARPATH.'history_'.$p_job){
 		print "Error: History file for $p_job does not exists.\n";
 		return;
 	}
@@ -222,7 +222,7 @@ sub delete_history{
 		&f_output("DEBUG","History delete $p_job, $where");
 		my @where_request  = parse_where('history',$where);
   	
-  	if(!$main::SIMULATEMODE){
+  	if(!$::SIMULATEMODE){
     	if(open(my $fh, "+<", $::VARPATH.'history_'.$p_job)){
       	flock $fh,2;
       	while($line = <$fh>){
@@ -267,7 +267,7 @@ sub set_runfile{
   		@val = split(/=/,$tmp,-1);
   		$columns[$table{'runfile'}{$val[0]}] = $val[1];
   	}
-  	write_log($main::RUNFILEPATH.'sbackup_'.$p_job,join('|',@columns));
+  	write_log($::RUNFILEPATH.'sbackup_'.$p_job,join('|',@columns));
   	$returncodes[0] = 1;
 	}
 	return @returncodes;
@@ -283,7 +283,7 @@ sub update_runfile{
 	my @val;
 	my @returncodes;
 	
-	if( !-f $main::RUNFILEPATH.'sbackup_'.$p_job){
+	if( !-f $::RUNFILEPATH.'sbackup_'.$p_job){
 		$returncodes[0] = 0;
 		return @returncodes;
 	}
@@ -296,7 +296,7 @@ sub update_runfile{
   		$columns{$table{'runfile'}{$val[0]}} = $val[1];
   	}
   	
-  	if(!$main::SIMULATEMODE){
+  	if(!$::SIMULATEMODE){
     	if(open(my $fh, "+<", $::RUNFILEPATH.'sbackup_'.$p_job)){
       	flock $fh,2;
       	while($line = <$fh>){
@@ -326,9 +326,9 @@ sub update_runfile{
 sub rm_runfile{
 	my ($p_job)=@_;
 	my @returncodes;
-	if($p_job && -e $main::RUNFILEPATH.'sbackup_'.$p_job){
+	if($p_job && -e $::RUNFILEPATH.'sbackup_'.$p_job){
 		&f_output("DEBUG","Removing runfile for $p_job");
-  	system("$::cmd_rm ".$main::RUNFILEPATH.'sbackup_'.$p_job) if !$main::SIMULATEMODE;
+  	system("$::cmd_rm ".$::RUNFILEPATH.'sbackup_'.$p_job) if !$::SIMULATEMODE;
   	$returncodes[0] = 0;
   	$returncodes[0] = 1 if($? != 0);
 	}
@@ -346,7 +346,7 @@ sub get_runfile{
 	my @returncodes;
 	
   my @select_request = parse_select('runfile',$select);
-  if($p_job && -f $main::RUNFILEPATH.'sbackup_'.$p_job){
+  if($p_job && -f $::RUNFILEPATH.'sbackup_'.$p_job){
   	&f_output("DEBUG","Runfile get, $select");
     if(open(my $fh, "<", $::RUNFILEPATH.'sbackup_'.$p_job)){
     	flock $fh,1;
@@ -413,8 +413,8 @@ sub check_runfile{
 ##
 sub append_log{
 	my ($logfile,$logentry)=@_;
-	&f_output("DEBUG","Append log $logfile, $logentry");# if !$main::SIMULATEMODE && $logentry =~ /^[\+\-\*]/;
-	return if $main::SIMULATEMODE;
+	&f_output("DEBUG","Append log $logfile, $logentry");# if !$::SIMULATEMODE && $logentry =~ /^[\+\-\*]/;
+	return if $::SIMULATEMODE;
 	chomp($logentry);
 	if(open(my $fh, ">>", $logfile)){
   	flock $fh,2;
@@ -430,7 +430,7 @@ sub append_log{
 sub write_log{
 	my ($logfile,@logentry)=@_;
 	my $tmp;
-	return if $main::SIMULATEMODE;
+	return if $::SIMULATEMODE;
 	if(open(my $fh, ">>", $logfile)){
   	flock $fh,2;
   	truncate $fh,0;
@@ -488,7 +488,7 @@ sub version_log{
   }
 	
 	&f_output("DEBUG","New version log entry [$severity] From: $process\@$hostname\n$message");
-	return if $main::SIMULATEMODE;
+	return if $::SIMULATEMODE;
 	if(open(my $fh, ">>", $::sessionlogfile)){
   	flock $fh,2;
   	seek $fh,0,2;
