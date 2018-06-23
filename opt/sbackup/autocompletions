@@ -107,7 +107,7 @@ _sbackup_job()
 		fi
 	done
 	
-	if [[ "$commands" != *"catalog"* ]]; then
+	if [[ "$commands" != *"path"* ]]; then
 		commands+=' -type'
 	fi
 	
