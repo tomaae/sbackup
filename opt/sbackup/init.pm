@@ -10,12 +10,13 @@ package init;
 use strict;
 use warnings;
 use Net::Domain qw(hostfqdn);
+use POSIX qw(strftime ceil);
 
 use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
 									f_output get_env f_arguments 
-									epoch2human min2time severity2id bit2oct oct2bit
+									epoch2human size2human perf2human min2time severity2id bit2oct oct2bit
 									$slash $BINPATH $MODULESPATH $ETCPATH $JOBCONFIGPATH $VARPATH $SESSIONLOGPATH $CATALOGPATH $RUNFILEPATH
 									$OS_USERS $OS_GROUPS
 									$cmd_ls $cmd_ln $cmd_rm $cmd_ps $cmd_sleep $cmd_cp $cmd_mv $cmd_mkdir $cmd_chmod $cmd_rsync $cmd_kill $cmd_pkill
@@ -253,6 +254,34 @@ sub oct2bit{
 	}
 	
 	return $bits;
+}
+
+sub size2human{
+	my ($size)=@_;
+
+  return "0" if $size eq "0";
+	return "N/A" if !$size || $size eq "" || $size < 0;
+
+	my $out_size = $size." B";
+	$out_size = ceil($size / 1024)." K" if $size > (100 * 1024);
+	$out_size = ceil($size / 1024 / 1024)." M" if $size > (9 * 1024 * 1024);
+	$out_size = ceil($size / 1024 / 1024 / 1024)." G" if $size > (9 * 1024 * 1024 * 1024);
+	
+	return $out_size;
+}
+
+sub perf2human{
+	my ($perf)=@_;
+
+  return "0" if $perf eq "0";
+	return "N/A" if !$perf || $perf eq "" || $perf < 0;
+
+	my $out_perf = $perf." B";
+	$out_perf = ceil($perf / 1024)." K/s" if $perf > (100 * 1024);
+	$out_perf = ceil($perf / 1024 / 1024)." M/s" if $perf > (9 * 1024 * 1024);
+	$out_perf = ceil($perf / 1024 / 1024 / 1024)." G/s" if $perf > (9 * 1024 * 1024 * 1024);
+	
+	return $out_perf;
 }
 
 ##

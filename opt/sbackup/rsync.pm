@@ -11,7 +11,7 @@ use strict;
 use warnings;
 use init;
 use logger;
-use POSIX qw(strftime mktime ceil);
+use POSIX qw(strftime mktime);
 
 use Exporter qw(import);
 our @ISA = qw(Exporter);
@@ -130,12 +130,8 @@ sub rsync_backup {
   update_history($p_job,"size=".$JOB_SIZE.",perf=0%","status==0,type==backup,start==".$SB_TIMESTART);
   
   ## Backup size
-  my $total_size_human = $total_size." B";
-  $total_size_human = ceil($total_size / 1024)." KiB" if $total_size > (100 * 1024);
-  $total_size_human = ceil($total_size / 1024 / 1024)." MiB" if $total_size > (9 * 1024 * 1024);
-  $total_size_human = ceil($total_size / 1024 / 1024 / 1024)." GiB" if $total_size > (9 * 1024 * 1024 * 1024);
+  version_log('normal','rsync',$::backupserver_fqdn,"Data to transfer: ".size2human($total_size));
   $total_size = 1 if $total_size == 0; ## Never divide by 0;
-  version_log('normal','rsync',$::backupserver_fqdn,"Data to transfer: $total_size_human");
   
   ##
   ## Start backup
