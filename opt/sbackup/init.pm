@@ -176,13 +176,16 @@ sub get_env{
 	
 	if(!-f $CRONFILE){
 		if(!$main::SIMULATEMODE){
-    	open log_file,">>$CRONFILE" or die "Error: Insufficient access rights\n";
-    	flock log_file,2;
-    	truncate log_file,0;
-    	print log_file '# '.$CRONFILE.': crontab entries for sbackup'."\n\n";
-    	print log_file '0,15,30,45 * * * * root '.$BINPATH.'/sbackup -scheduler >/dev/null'."\n";
-    	flock log_file,8;
-    	close log_file;
+    	if(open(my $fh, ">>", "$CRONFILE")){
+    		flock $fh,2;
+    		truncate $fh,0;
+    		print $fh '# '.$CRONFILE.': crontab entries for sbackup'."\n\n";
+    		print $fh '0,15,30,45 * * * * root '.$BINPATH.'/sbackup -scheduler >/dev/null'."\n";
+    		flock $fh,8;
+    		close $fh;
+    	}else{
+    		f_output("ERROR","Error: Insufficient access rights.",1);
+    	}
   	}
   }
 }

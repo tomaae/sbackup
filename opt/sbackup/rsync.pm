@@ -106,27 +106,30 @@ sub rsync_backup {
   version_log('normal','rsync',$::backupserver_fqdn,"Traversing source filesystem...");
   my @val;
   my $rsync_params = " --stats -aEAXvii --out-format='%i|%n|%l|%M|%B|%U|%G' --delete ".$INCR." \"".$source_path.$::slash."\" \"".$target_path.$::slash."data_".$SB_TIMESTART.$::slash."\"";
-  open(my $cmd_out,"-|","$::cmd_rsync --dry-run $rsync_params 2>&1") || ::job_failed("Failed to start rsync.");
-  while (my $line = <$cmd_out>){
-  	chomp($line);
-  	if($line =~ /\|/){
-  		@val = split(/\|/,$line);
-  		$line_flags    = $val[0];
-  		$line_size     = $val[2];
-  		
-  		next if $line_entry eq './'; ## Skip root directory
-  		
-  		if($line_flags =~ /^\>f/){
-  			$total_size += $line_size if $line_size > 0;
-  		}
-  	}else{
-  		if($line =~ /^Total file size: ([0-9,\.]+) bytes/){
-  			$JOB_SIZE = $1;
-  			$JOB_SIZE =~ s/,//g;
-  		}
-  	}
+  if(open(my $fh, "-|", "$::cmd_rsync --dry-run $rsync_params 2>&1")){
+    while (my $line = <$fh>){
+    	chomp($line);
+    	if($line =~ /\|/){
+    		@val = split(/\|/,$line);
+    		$line_flags    = $val[0];
+    		$line_size     = $val[2];
+    		
+    		next if $line_entry eq './'; ## Skip root directory
+    		
+    		if($line_flags =~ /^\>f/){
+    			$total_size += $line_size if $line_size > 0;
+    		}
+    	}else{
+    		if($line =~ /^Total file size: ([0-9,\.]+) bytes/){
+    			$JOB_SIZE = $1;
+    			$JOB_SIZE =~ s/,//g;
+    		}
+    	}
+    }
+    close($fh);
+  }else{
+  	::job_failed("Failed to start rsync.");
   }
-  close($cmd_out);
   update_history($p_job,"size=".$JOB_SIZE.",perf=0%","status==0,type==backup,start==".$SB_TIMESTART);
   
   ## Backup size
@@ -161,10 +164,11 @@ sub rsync_backup {
   	my $cat_last_path = "";
   	
   	## Create file catalog
+  	my $fh_cat;
   	if(!$main::SIMULATEMODE){
-  		open cat_file,">$catalogfile_files" or ::job_failed("Insufficient access rights.");
-  		flock cat_file,2;
-  		truncate cat_file,0;
+  		open($fh_cat, ">>", $catalogfile_files) || ::job_failed("Insufficient access rights.");
+  		flock $fh_cat,2;
+  		truncate $fh_cat,0;
   	}
   	
   	##
@@ -172,7 +176,7 @@ sub rsync_backup {
   	##
     my $rsync_simulate = "";
     $rsync_simulate = ' --dry-run ' if $main::SIMULATEMODE;
-    my $rpid = open(my $cmd_out,"-|","$::cmd_rsync $rsync_simulate $rsync_params 2>&1") || ::job_failed("Failed to start rsync.");
+    my $rpid = open(my $cmd_out, "-|", "$::cmd_rsync $rsync_simulate $rsync_params 2>&1") || ::job_failed("Failed to start rsync.");
     update_runfile($p_job,"rpid=".$rpid) if $rpid && $rpid > 0;
     while (my $line = <$cmd_out>){
     	
@@ -290,7 +294,7 @@ sub rsync_backup {
       				$cat_last_path = $cat_entry;
       			}
       			
-    				print cat_file "$cat_dirid|$cat_file|$line_size|$line_modified|$line_perm|$line_owner|$line_group\n" if !$main::SIMULATEMODE;
+    				print $fh_cat "$cat_dirid|$cat_file|$line_size|$line_modified|$line_perm|$line_owner|$line_group\n" if !$main::SIMULATEMODE;
     			}
     		}
     		
@@ -350,8 +354,8 @@ sub rsync_backup {
     
     ## Close file catalog
     if(!$main::SIMULATEMODE){
-			flock cat_file,8;
-			close cat_file;
+			flock $fh_cat,8;
+			close $fh_cat;
     }
     
     ## Append job summary
@@ -365,9 +369,9 @@ sub rsync_backup {
     ## Save dir catalog
     ##
     if(!$main::SIMULATEMODE){
-  		open log_file,">>$catalogfile_dirs" or ::job_failed("Insufficient access rights.");
-  		flock log_file,2;
-  		truncate log_file,0;
+  		open($fh_cat, ">>", $catalogfile_dirs) || ::job_failed("Insufficient access rights.");
+  		flock $fh_cat,2;
+  		truncate $fh_cat,0;
   	}
     my $i = -1;
     for(@cat_dirs){
@@ -376,48 +380,48 @@ sub rsync_backup {
     	my $e = -1;
     	for(@{$cat_dirs[$i]}){
     		$e++;
-    		print log_file "$i|$cat_dirs[$i][$e][0]|$cat_dirs[$i][$e][1]|$cat_dirs[$i][$e][2]|$cat_dirs[$i][$e][3]|$cat_dirs[$i][$e][4]\n" if !$main::SIMULATEMODE;
+    		print $fh_cat "$i|$cat_dirs[$i][$e][0]|$cat_dirs[$i][$e][1]|$cat_dirs[$i][$e][2]|$cat_dirs[$i][$e][3]|$cat_dirs[$i][$e][4]\n" if !$main::SIMULATEMODE;
     	}
     }
     if(!$main::SIMULATEMODE){
-			flock log_file,8;
-			close log_file;
+			flock $fh_cat,8;
+			close $fh_cat;
     }
     
     ##
     ## Save owner list
     ##
     if(!$main::SIMULATEMODE){
-  		open log_file,">>$catalogfile_owners" or ::job_failed("Insufficient access rights.");
-  		flock log_file,2;
-  		truncate log_file,0;
+  		open($fh_cat, ">>", $catalogfile_owners) || ::job_failed("Insufficient access rights.");
+  		flock $fh_cat,2;
+  		truncate $fh_cat,0;
   	}
     for my $line(read_log($::OS_USERS)){
     	chomp($line);
     	my @val = split(/\:/,$line);
-    	print log_file "$val[2]|$val[0]\n" if defined $os_ownerlist[$val[2]] && !$main::SIMULATEMODE;
+    	print $fh_cat "$val[2]|$val[0]\n" if defined $os_ownerlist[$val[2]] && !$main::SIMULATEMODE;
     }
     if(!$main::SIMULATEMODE){
-			flock log_file,8;
-			close log_file;
+			flock $fh_cat,8;
+			close $fh_cat;
     }
     
     ##
     ## Save group list
     ##
     if(!$main::SIMULATEMODE){
-  		open log_file,">>$catalogfile_groups" or ::job_failed("Insufficient access rights.");
-  		flock log_file,2;
-  		truncate log_file,0;
+    	open($fh_cat, ">>", $catalogfile_groups) || ::job_failed("Insufficient access rights.");
+  		flock $fh_cat,2;
+  		truncate $fh_cat,0;
   	}
     for my $line(read_log($::OS_GROUPS)){
     	chomp($line);
     	my @val = split(/\:/,$line);
-    	print log_file "$val[2]|$val[0]\n" if defined $os_grouplist[$val[2]] && !$main::SIMULATEMODE;
+    	print $fh_cat "$val[2]|$val[0]\n" if defined $os_grouplist[$val[2]] && !$main::SIMULATEMODE;
     }
     if(!$main::SIMULATEMODE){
-			flock log_file,8;
-			close log_file;
+			flock $fh_cat,8;
+			close $fh_cat;
     }
     
     

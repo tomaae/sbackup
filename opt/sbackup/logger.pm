@@ -88,15 +88,18 @@ sub get_history{
   my @where_request  = parse_where('history',$where) if $where;
   if($p_job && -f $main::VARPATH.'history_'.$p_job){
   	&f_output("DEBUG","History get, $select, $where");
-    open log_file,"<${main::VARPATH}history_${p_job}";
-  	flock log_file,1;
-  	while($line = <log_file>){
-    	chomp($line);
-    	@val = split '\|',$line;
-    	push @cache,[@val];
-  	}
-  	flock log_file,8;
-    close log_file;
+    if(open(my $fh, "<", $::VARPATH.'history_'.$p_job)){
+    	flock $fh,1;
+    	while($line = <$fh>){
+      	chomp($line);
+      	@val = split '\|',$line;
+      	push @cache,[@val];
+    	}
+    	flock $fh,8;
+      close $fh;
+    }else{
+    	f_output("ERROR","Error: Insufficient access rights.",1);
+    }
   
   	for my $tmp1(@cache){
   		$display_value = 1;
@@ -167,29 +170,32 @@ sub update_history{
   	}
   	
   	if(!$main::SIMULATEMODE){
-    	open log_file,"+<".$main::VARPATH.'history_'.$p_job;
-    	flock log_file,2;
-    	while($line = <log_file>){
-      	chomp($line);
-      	@val = split '\|',$line;
-      	push @cache,[@val];
-    	}
-    	seek log_file,0,0;
-    	truncate log_file,0;
-    	for my $tmp1(@cache){
-    		$change_value = 1;
-   			for $tmp2(@where_request){
-   				$change_value = 0 if $$tmp1[$$tmp2{'key'}] ne $$tmp2{'value'};
-   			}
-   			if($change_value == 1){
-   				for $tmp2(keys %columns){
-   					$$tmp1[$tmp2] = $columns{$tmp2};
-   				}
-   			}
-   			print log_file join("|",@{$tmp1}),"\n";
-    	}
-    	flock log_file,8;
-      close log_file;
+    	if(open(my $fh, "+<", $::VARPATH.'history_'.$p_job)){
+      	flock $fh,2;
+      	while($line = <$fh>){
+        	chomp($line);
+        	@val = split '\|',$line;
+        	push @cache,[@val];
+      	}
+      	seek $fh,0,0;
+      	truncate $fh,0;
+      	for my $tmp1(@cache){
+      		$change_value = 1;
+     			for $tmp2(@where_request){
+     				$change_value = 0 if $$tmp1[$$tmp2{'key'}] ne $$tmp2{'value'};
+     			}
+     			if($change_value == 1){
+     				for $tmp2(keys %columns){
+     					$$tmp1[$tmp2] = $columns{$tmp2};
+     				}
+     			}
+     			print $fh join("|",@{$tmp1}),"\n";
+      	}
+      	flock $fh,8;
+        close $fh;
+      }else{
+      	f_output("ERROR","Error: Insufficient access rights.",1);
+      }
   	}
   	$returncodes[0] = 1;
 	}
@@ -217,24 +223,27 @@ sub delete_history{
 		my @where_request  = parse_where('history',$where);
   	
   	if(!$main::SIMULATEMODE){
-    	open log_file,"+<".$main::VARPATH.'history_'.$p_job;
-    	flock log_file,2;
-    	while($line = <log_file>){
-      	chomp($line);
-      	@val = split '\|',$line;
-      	push @cache,[@val];
-    	}
-    	seek log_file,0,0;
-    	truncate log_file,0;
-    	for my $tmp1(@cache){
-    		$delete_value = 0;
-   			for $tmp2(@where_request){
-   				$delete_value = 1 if $$tmp1[$$tmp2{'key'}] eq $$tmp2{'value'};
-   			}
-   			print log_file join("|",@{$tmp1}),"\n" if !$delete_value;
-    	}
-    	flock log_file,8;
-      close log_file;
+    	if(open(my $fh, "+<", $::VARPATH.'history_'.$p_job)){
+      	flock $fh,2;
+      	while($line = <$fh>){
+        	chomp($line);
+        	@val = split '\|',$line;
+        	push @cache,[@val];
+      	}
+      	seek $fh,0,0;
+      	truncate $fh,0;
+      	for my $tmp1(@cache){
+      		$delete_value = 0;
+     			for $tmp2(@where_request){
+     				$delete_value = 1 if $$tmp1[$$tmp2{'key'}] eq $$tmp2{'value'};
+     			}
+     			print $fh join("|",@{$tmp1}),"\n" if !$delete_value;
+      	}
+      	flock $fh,8;
+        close $fh;
+      }else{
+      	f_output("ERROR","Error: Insufficient access rights.",1);
+      }
   	}
   	$returncodes[0] = 1;
 	}
@@ -288,23 +297,26 @@ sub update_runfile{
   	}
   	
   	if(!$main::SIMULATEMODE){
-    	open log_file,"+<".$main::RUNFILEPATH.'sbackup_'.$p_job;
-    	flock log_file,2;
-    	while($line = <log_file>){
-      	chomp($line);
-      	@val = split '\|',$line;
-      	push @cache,[@val];
-    	}
-    	seek log_file,0,0;
-    	truncate log_file,0;
-    	for my $tmp1(@cache){
- 				for $tmp2(keys %columns){
- 					$$tmp1[$tmp2] = $columns{$tmp2};
- 				}
-   			print log_file join("|",@{$tmp1}),"\n";
-    	}
-    	flock log_file,8;
-      close log_file;
+    	if(open(my $fh, "+<", $::RUNFILEPATH.'sbackup_'.$p_job)){
+      	flock $fh,2;
+      	while($line = <$fh>){
+        	chomp($line);
+        	@val = split '\|',$line;
+        	push @cache,[@val];
+      	}
+      	seek $fh,0,0;
+      	truncate $fh,0;
+      	for my $tmp1(@cache){
+   				for $tmp2(keys %columns){
+   					$$tmp1[$tmp2] = $columns{$tmp2};
+   				}
+     			print $fh join("|",@{$tmp1}),"\n";
+      	}
+      	flock $fh,8;
+        close $fh;
+      }else{
+      	f_output("ERROR","Error: Insufficient access rights.",1);
+      }
   	}
   	$returncodes[0] = 1;
 	}
@@ -336,15 +348,18 @@ sub get_runfile{
   my @select_request = parse_select('runfile',$select);
   if($p_job && -f $main::RUNFILEPATH.'sbackup_'.$p_job){
   	&f_output("DEBUG","Runfile get, $select");
-    open log_file,"<${main::RUNFILEPATH}sbackup_${p_job}";
-  	flock log_file,1;
-  	while($line = <log_file>){
-    	chomp($line);
-    	@val = split '\|',$line;
-    	push @cache,[@val];
-  	}
-  	flock log_file,8;
-    close log_file;
+    if(open(my $fh, "<", $::RUNFILEPATH.'sbackup_'.$p_job)){
+    	flock $fh,1;
+    	while($line = <$fh>){
+      	chomp($line);
+      	@val = split '\|',$line;
+      	push @cache,[@val];
+    	}
+    	flock $fh,8;
+      close $fh;
+    }else{
+    	f_output("ERROR","Error: Insufficient access rights.",1);
+    }
   
   	for my $tmp1(@cache){
   		$display_value = 1;
@@ -401,41 +416,51 @@ sub append_log{
 	&f_output("DEBUG","Append log $logfile, $logentry");# if !$main::SIMULATEMODE && $logentry =~ /^[\+\-\*]/;
 	return if $main::SIMULATEMODE;
 	chomp($logentry);
-	open log_file,">>$logfile" or die "Error: Insufficient access rights\n";
-	flock log_file,2;
-	seek log_file,0,2;
-	print log_file "$logentry\n";
-	flock log_file,8;
-	close log_file;
+	if(open(my $fh, ">>", $logfile)){
+  	flock $fh,2;
+  	seek $fh,0,2;
+  	print $fh "$logentry\n";
+  	flock $fh,8;
+  	close $fh;
+	}else{
+		f_output("ERROR","Error: Insufficient access rights.",1);
+	}
 }
 
 sub write_log{
 	my ($logfile,@logentry)=@_;
 	my $tmp;
 	return if $main::SIMULATEMODE;
-	open log_file,">>$logfile" or die "Error: Insufficient access rights\n";
-	flock log_file,2;
-	truncate log_file,0;
-	for $tmp(@logentry){
-		chomp($tmp);
-		print log_file "$tmp\n";
-	}
-	flock log_file,8;
-	close log_file;
+	if(open(my $fh, ">>", $logfile)){
+  	flock $fh,2;
+  	truncate $fh,0;
+  	for $tmp(@logentry){
+  		chomp($tmp);
+  		print $fh "$tmp\n";
+  	}
+  	flock $fh,8;
+  	close $fh;
+  }else{
+  	f_output("ERROR","Error: Insufficient access rights.",1);
+  }
 }
 
 sub read_log{
 	my ($logfile)=@_;
+	my @tmp = ();
 	&f_output("DEBUG","Reading log $logfile");
 	if(!-f $logfile){
 		&f_output("DEBUG","File does not exists $logfile");
 		return;
 	}
-	open log_file,"<$logfile";
-	flock log_file,1;
-	my @tmp = <log_file>;
-	flock log_file,8;
-	close log_file;
+	if(open(my $fh, "<", $logfile)){
+  	flock $fh,1;
+  	@tmp = <$fh>;
+  	flock $fh,8;
+  	close $fh;
+  }else{
+  	f_output("ERROR","Error: Insufficient access rights.",1);
+  }
 	return @tmp;
 }
 
@@ -464,13 +489,16 @@ sub version_log{
 	
 	&f_output("DEBUG","New version log entry [$severity] From: $process\@$hostname\n$message");
 	return if $main::SIMULATEMODE;
-	open log_file,">>$::sessionlogfile" or die "Error: Insufficient access rights\n";
-	flock log_file,2;
-	seek log_file,0,2;
-	print log_file "[$severity] From: $process\@$hostname Time: ".strftime("%d/%m/%G %H:%M:%S", localtime(time()))."\n";
-	print log_file "$message\n\n";
-	flock log_file,8;
-	close log_file;
+	if(open(my $fh, ">>", $::sessionlogfile)){
+  	flock $fh,2;
+  	seek $fh,0,2;
+  	print $fh "[$severity] From: $process\@$hostname Time: ".strftime("%d/%m/%G %H:%M:%S", localtime(time()))."\n";
+  	print $fh "$message\n\n";
+  	flock $fh,8;
+  	close $fh;
+	}else{
+		f_output("ERROR","Error: Insufficient access rights.",1);
+	}
 }
 
 1;
