@@ -17,7 +17,7 @@ our @ISA = qw(Exporter);
 our @EXPORT = qw(
 									f_output get_env f_arguments 
 									size2human perf2human min2time severity2id bit2oct oct2bit
-									$slash $BINPATH $MODULESPATH $ETCPATH $JOBCONFIGPATH $VARPATH $SESSIONLOGPATH $CATALOGPATH $RUNFILEPATH
+									$slash $BINPATH $MODULESPATH $ETCPATH $JOBCONFIGPATH $USERSCRIPTSPATH $VARPATH $SESSIONLOGPATH $CATALOGPATH $RUNFILEPATH
 									$OS_USERS $OS_GROUPS
 									$cmd_ls $cmd_ln $cmd_rm $cmd_ps $cmd_sleep $cmd_cp $cmd_mv $cmd_mkdir $cmd_chmod $cmd_rsync $cmd_kill $cmd_pkill $cmd_df $cmd_which $cmd_sync
 									$cmd_lvs $cmd_lvdisplay $cmd_lvcreate $cmd_lvremove $cmd_mount $cmd_umount
@@ -95,6 +95,7 @@ sub get_env{
 	our $MODULESPATH    = "/opt/sbackup/modules".$slash;
 	our $ETCPATH        = "/etc/opt/sbackup".$slash;
 	our $JOBCONFIGPATH  = "/etc/opt/sbackup/jobs".$slash;
+	our $USERSCRIPTSPATH= "/etc/opt/sbackup/userscripts".$slash;
 	our $VARPATH        = "/var/opt/sbackup".$slash;
 	our $SESSIONLOGPATH = "/var/opt/sbackup/sessionlogs".$slash;
 	our $CATALOGPATH    = "/var/opt/sbackup/catalog".$slash;
@@ -138,6 +139,14 @@ sub get_env{
 		system("$cmd_mkdir $JOBCONFIGPATH");
 		if($? != 0){
 			print "Failed to create $JOBCONFIGPATH with exit code $?.\n";
+			exit 1;
+		}
+	}
+	
+	if(!-d $USERSCRIPTSPATH){
+		system("$cmd_mkdir $USERSCRIPTSPATH");
+		if($? != 0){
+			print "Failed to create $USERSCRIPTSPATH with exit code $?.\n";
 			exit 1;
 		}
 	}

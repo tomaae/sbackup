@@ -62,8 +62,10 @@ sub job_failed {
   	lvm_remove_snapshot($p_job, $SB_TIMESTART, $::source_path, $job{$p_job}{'SOURCE'}{'-snapshot'}{'-size'}, $job{$p_job}{'SOURCE'}{'-snapshot'}{'-fallback'});
   }
 	
-	update_history($p_job,"status=5,end=".$SB_TIMEEND.",error=".$msg.",perf=","status==0,type==backup,start==".$SB_TIMESTART);
 	version_log('critical','backup',$backupserver_fqdn,"Backup job failed with error:\n$msg");
+	$msg =~ s/^([^\n]+)//;
+	$msg = $1;
+	update_history($p_job,"status=5,end=".$SB_TIMEEND.",error=".$msg.",perf=","status==0,type==backup,start==".$SB_TIMESTART);
 	rm_runfile($p_job);
 	exit 1;
 }
@@ -78,6 +80,29 @@ f_output("ERROR",$result,1) if $result;
 set_runfile($p_job,"type=backup,status=0,epoch=".$SB_TIMESTART.",pid=".$$);
 insert_history($p_job,"type=backup,status=0,name=".$job{$p_job}{'NAME'}.",start=".$SB_TIMESTART.",perf=(Starting) 0%");
 version_log('normal','backup',$backupserver_fqdn,"Starting backup job \"$job{$p_job}{'NAME'}\"\nJob version: ".strftime("%G/%m/%d-%H%M%S", localtime($SB_TIMESTART)));
+
+##
+## Preexec
+##
+if($job{$p_job}{'POST'}{'-preexec'}){
+	version_log('normal','backup',$backupserver_fqdn,"Starting preexec: \"".$job{$p_job}{'POST'}{'-preexec'}."\"");
+	$job{$p_job}{'POST'}{'-preexec'} =~ /([^\/\\]+)$/;
+	$job{$p_job}{'POST'}{'-preexec'} = $1;
+  if(open(my $fh, "-|", 'cd '.$USERSCRIPTSPATH.';export JOB_NAME='.$job{$p_job}{'NAME'}.';export JOB_TYPE=backup;export STATUS='.$SB_ERRORLEVEL.';export START_TIME='.$SB_TIMESTART.';./'.$job{$p_job}{'POST'}{'-preexec'}.' 2>&1')){
+    while (my $line = <$fh>){
+    	chomp($line);
+    	append_log($sessionlogfile, $line);
+    }
+    close($fh);
+    my $msg = "";
+    $msg = "\nFile is not executable." if ($? / 256) == 126;
+    $msg = "\nFile not found." if ($? / 256) eq 127;
+    ::job_failed("Preexec failed with exit code ".($? / 256).".".$msg) if $? ne "0";
+  }else{
+  	::job_failed("Preexec failed to start.");
+  }
+  version_log('normal','backup',$backupserver_fqdn,"Preexec completed successfully.");
+}
 
 ##
 ## Get integ target
@@ -273,6 +298,29 @@ if($job{$p_job}{'TARGET'}{'-host'} eq "" && ($job{$p_job}{'TARGET'}{'-type'} eq 
   }else{
   	version_log('minor','backup',$backupserver_fqdn,"Failed to flush write cache.");
   }
+}
+
+##
+## Postexec
+##
+if($job{$p_job}{'POST'}{'-postexec'}){
+	version_log('normal','backup',$backupserver_fqdn,"Starting postexec: \"".$job{$p_job}{'POST'}{'-postexec'}."\"");
+	$job{$p_job}{'POST'}{'-postexec'} =~ /([^\/\\]+)$/;
+	$job{$p_job}{'POST'}{'-postexec'} = $1;
+  if(open(my $fh, "-|", 'cd '.$USERSCRIPTSPATH.';export JOB_NAME='.$job{$p_job}{'NAME'}.';export JOB_TYPE=backup;export STATUS='.$SB_ERRORLEVEL.';export START_TIME='.$SB_TIMESTART.';export END_TIME='.$SB_TIMEEND.';./'.$job{$p_job}{'POST'}{'-postexec'}.' 2>&1')){
+    while (my $line = <$fh>){
+    	chomp($line);
+    	append_log($sessionlogfile, $line);
+    }
+    close($fh);
+    my $msg = "";
+    $msg = "\nFile is not executable." if ($? / 256) == 126;
+    $msg = "\nFile not found." if ($? / 256) eq 127;
+    ::job_failed("Postexec failed with exit code ".($? / 256).".".$msg) if $? ne "0";
+  }else{
+  	::job_failed("Postexec failed to start.");
+  }
+  version_log('normal','backup',$backupserver_fqdn,"Postexec completed successfully.");
 }
 
 version_log('normal','backup',$backupserver_fqdn,"Backup job completed successfully.") if $SB_ERRORLEVEL eq "1";

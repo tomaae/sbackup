@@ -73,6 +73,29 @@ insert_history($p_job,"type=purge,status=0,name=".$job{$p_job}{'NAME'}.",start="
 version_log('normal','purge',$backupserver_fqdn,"Starting purge job \"$job{$p_job}{'NAME'}\"\nJob version: ".strftime("%G/%m/%d-%H%M%S", localtime($SB_TIMESTART)));
 
 ##
+## Preexec
+##
+if($job{$p_job}{'POST'}{'-preexec'}){
+	version_log('normal','purge',$backupserver_fqdn,"Starting preexec: \"".$job{$p_job}{'POST'}{'-preexec'}."\"");
+	$job{$p_job}{'POST'}{'-preexec'} =~ /([^\/\\]+)$/;
+	$job{$p_job}{'POST'}{'-preexec'} = $1;
+  if(open(my $fh, "-|", 'cd '.$USERSCRIPTSPATH.';export JOB_NAME='.$job{$p_job}{'NAME'}.';export JOB_TYPE=purge;export STATUS='.$SB_ERRORLEVEL.';export START_TIME='.$SB_TIMESTART.';./'.$job{$p_job}{'POST'}{'-preexec'}.' 2>&1')){
+    while (my $line = <$fh>){
+    	chomp($line);
+    	append_log($sessionlogfile, $line);
+    }
+    close($fh);
+    my $msg = "";
+    $msg = "\nFile is not executable." if ($? / 256) == 126;
+    $msg = "\nFile not found." if ($? / 256) eq 127;
+    ::job_failed("Preexec failed with exit code ".($? / 256).".".$msg) if $? ne "0";
+  }else{
+  	::job_failed("Preexec failed to start.");
+  }
+  version_log('normal','purge',$backupserver_fqdn,"Preexec completed successfully.");
+}
+
+##
 ## Get integ target
 ##
 sub get_integ_path{
@@ -238,6 +261,30 @@ if($data_purged){
 }
 
 $SB_TIMEEND = time();
+
+##
+## Postexec
+##
+if($job{$p_job}{'POST'}{'-postexec'}){
+	version_log('normal','purge',$backupserver_fqdn,"Starting postexec: \"".$job{$p_job}{'POST'}{'-postexec'}."\"");
+	$job{$p_job}{'POST'}{'-postexec'} =~ /([^\/\\]+)$/;
+	$job{$p_job}{'POST'}{'-postexec'} = $1;
+	if(open(my $fh, "-|", 'cd '.$USERSCRIPTSPATH.';export JOB_NAME='.$job{$p_job}{'NAME'}.';export JOB_TYPE=purge;export STATUS='.$SB_ERRORLEVEL.';export START_TIME='.$SB_TIMESTART.';export END_TIME='.$SB_TIMEEND.';./'.$job{$p_job}{'POST'}{'-postexec'}.' 2>&1')){
+    while (my $line = <$fh>){
+    	chomp($line);
+    	append_log($sessionlogfile, $line);
+    }
+    close($fh);
+    my $msg = "";
+    $msg = "\nFile is not executable." if ($? / 256) == 126;
+    $msg = "\nFile not found." if ($? / 256) eq 127;
+    ::job_failed("Postexec failed with exit code ".($? / 256).".".$msg) if $? ne "0";
+  }else{
+  	::job_failed("Postexec failed to start.");
+  }
+  version_log('normal','purge',$backupserver_fqdn,"Postexec completed successfully.");
+}
+
 version_log('normal','purge',$backupserver_fqdn,"Purge job completed successfully.") if $SB_ERRORLEVEL eq "1";
 version_log('normal','purge',$backupserver_fqdn,"Purge job completed with warnings.") if $SB_ERRORLEVEL eq "2";
 version_log('normal','purge',$backupserver_fqdn,"Purge job completed with errors.") if $SB_ERRORLEVEL eq "3";

@@ -52,6 +52,8 @@ my %job_definition = ( ##Default value, Mandatory, Type, Range of type
   	'-bwcompress' => ["0",0,"bool",""],
   },
   'POST' => {
+  	'-preexec' => ["",0,"",""],
+  	'-postexec' => ["",0,"",""],
   	'-job' => {
   		'-type' => ["",0,"list","backup|restore"],
   		'-name' => ["",0,"",""],
