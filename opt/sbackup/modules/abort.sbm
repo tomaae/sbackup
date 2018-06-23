@@ -41,7 +41,7 @@ if($param_ok == 0){
 }
 
 ## Get job pidfile
-my @pid_output = &get_runfile($p_job,'status,type,rpid');
+my @pid_output = &get_runfile($p_job,'status,type,epoch,rpid');
 if($pid_output[0] && $pid_output[2][0]{'rpid'} && $pid_output[2][0]{'rpid'}  =~ /^\d+$/){
 	f_output("ERROR","Abort is available only for backup jobs.",1) if $pid_output[2][0]{'type'} ne 'backup';
 	f_output("ERROR","Job is already aborting.",1) if $pid_output[2][0]{'status'} eq '6';
@@ -50,6 +50,10 @@ if($pid_output[0] && $pid_output[2][0]{'rpid'} && $pid_output[2][0]{'rpid'}  =~ 
 	## Verify rpid, it must belong to rsync
 	system("$cmd_ps $pid_output[2][0]{'rpid'}|grep rsync >/dev/null 2>&1");
 	f_output("ERROR","Unable to abort, job may still be starting or finishing.",1) if $? != 0;
+	
+	## Append abort request message to version log
+	our $sessionlogfile = $SESSIONLOGPATH.$p_job."_".$pid_output[2][0]{'epoch'}.".log";
+	version_log('warning','user',$backupserver_fqdn,"Abort request received from ".$ENV{USERNAME}."@".$backupserver_fqdn);
 	
 	## Send kill request
 	print "Sending abort request to $p_job...\n";

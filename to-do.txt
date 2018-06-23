@@ -4,7 +4,7 @@
 [] - errors to be reported post-backup in custom HTML email
 [] - replace all "die" commands with job_failed where possible
 [?] - catalog files could be compressed after session completes, stream gunzip?
-[?] - session log could be compressed after session completes
+[?] - session log could be compressed after session completes, stream gunzip?
 
 =================================================================
 ==AUTOCOMPLETE===================================================
@@ -39,9 +39,6 @@
 [] - target/copy option -bwlimit
 
 [] - job_failed > check if lvm is enabled and active, remove snapshot
-=================================================================
-==ABORT==========================================================
-[] - add "backup aborted by used XYZ" to session log on sending abort request
 
 =================================================================
 ==REPORT=========================================================
