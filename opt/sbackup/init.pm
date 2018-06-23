@@ -100,6 +100,7 @@ sub get_env{
 	our $CATALOGPATH    = "/var/opt/sbackup/catalog".$slash;
 	our $RUNFILEPATH    = "/var/run/sbackup".$slash;
 	my $CRONFILE        = "/etc/cron.d/sbackup";
+	my $AUTOCOMPLETE    = "/usr/share/bash-completion/completions/sbackup";
 	
 	our $OS_USERS       = "/etc/passwd";
 	our $OS_GROUPS      = "/etc/group";
@@ -161,6 +162,14 @@ sub get_env{
 		system("$cmd_mkdir $RUNFILEPATH");
 		if($? != 0){
 			print "Failed to create $RUNFILEPATH with exit code $?.\n";
+			exit 1;
+		}
+	}
+	
+	if(!-e $AUTOCOMPLETE){
+		system("$cmd_ln \"${BINPATH}autocompletions\" \"$AUTOCOMPLETE\"");
+		if($? != 0){
+			print "Failed to create $AUTOCOMPLETE with exit code $?.\n";
 			exit 1;
 		}
 	}
