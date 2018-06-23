@@ -173,12 +173,13 @@ sub parse_job_config {
 
 sub load_jobs_config {
 	my %job;
-	opendir (DIR, $::ETCPATH."/jobs/") or die $!;
-	while (my $file = readdir(DIR)){
+	opendir(my $dh, $::ETCPATH."/jobs/") || f_output("ERROR","Error: Insufficient access rights.",1);;
+	while (my $file = readdir($dh)){
 		next if $file =~ m/^\./;
 		next if !-f "$::ETCPATH/jobs/$file";
 		%job = (%job, parse_job_config($file));
 	}
+	closedir $dh;
 	return %job;
 }
 
