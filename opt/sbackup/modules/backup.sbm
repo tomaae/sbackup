@@ -187,9 +187,9 @@ if($source_integ eq "" || $source_integ eq "OMV "){
 	require rsync;
   import rsync;
   if($lvm_path eq ""){
-  	@result = rsync_backup($p_job, $SB_TIMESTART, $source_path, $target_path);
+  	@result = rsync_backup($p_job, $SB_TIMESTART, $source_path, $target_path, $job{$p_job}{'TARGET'}{'-bwlimit'}, $job{$p_job}{'TARGET'}{'-bwcompress'});
   }else{
-  	@result = rsync_backup($p_job, $SB_TIMESTART, $lvm_path, $target_path);
+  	@result = rsync_backup($p_job, $SB_TIMESTART, $lvm_path, $target_path, $job{$p_job}{'TARGET'}{'-bwlimit'}, $job{$p_job}{'TARGET'}{'-bwcompress'});
   }
   $JOB_SIZE = $result[1]{'JOB_SIZE'};
   $JOB_PERF = $result[1]{'JOB_PERF'};

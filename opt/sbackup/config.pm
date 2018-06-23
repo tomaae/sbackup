@@ -40,11 +40,15 @@ my %job_definition = ( ##Default value, Mandatory, Type, Range of type
   	'-type' => ["",1,"list","filesystem|omv4"],
   	'-host' => ["",0,"",""],
   	'-path' => ["",1,"",""],
+  	'-bwlimit' => ["0",0,"number",""],
+  	'-bwcompress' => ["0",0,"bool",""],
   },
   'COPY' => {
   	'-type' => ["",0,"list","filesystem|omv4"],
   	'-host' => ["",0,"",""],
   	'-path' => ["",0,"",""],
+  	'-bwlimit' => ["0",0,"number",""],
+  	'-bwcompress' => ["0",0,"bool",""],
   },
   'POST' => {
   	'-job' => {

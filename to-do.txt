@@ -1,6 +1,5 @@
 =================================================================
 ==GENERAL========================================================
-[] - replace all "die" commands with job_failed where possible
 [L] - disable error exit code and message when running jobs from cron
 [L] - errors to be reported post-backup in custom HTML email
 [?] - catalog files could be compressed after session completes, stream gunzip?
@@ -21,9 +20,6 @@
 
 [] - remote backup of another server
 [] - mysql backup local/remote
-
-[] - target/copy option -compress
-[] - target/copy option -bwlimit
 
 =================================================================
 ==MONITOR========================================================
@@ -97,17 +93,8 @@ dpkg -l|awk '{print $2}'|grep "^openmediavault-"
 ==REMOTE TARGET==================================================
 -add support to choose to backup to rsync server
 
-Copy a File from a Remote Server to a Local Server with SSH
-[root@tecmint]# rsync -avzhe ssh root@192.168.0.100:/root/install.log /tmp/
-
-Copy a File from a Local Server to a Remote Server with SSH
-[root@tecmint]# rsync -avzhe ssh backup.tar root@192.168.0.100:/backups/
-
 8. Automatically Delete source Files after successful Transfer (copy session)
 [root@tecmint]# rsync --remove-source-files -zvh backup.tar /tmp/backups/
-
-10. Set Bandwidth Limit and Transfer File
-[root@tecmint]# rsync --bwlimit=100 -avzhe ssh  /var/lib/rpm/  root@192.168.0.100:/root/tmprpm/
 
 =================================================================
 ==Status list====================================================

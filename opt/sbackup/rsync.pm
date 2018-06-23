@@ -16,15 +16,15 @@ use POSIX qw(strftime mktime);
 use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(rsync_backup);
+our %job;
 
 ##
 ## rsync_backup
 ##
 sub rsync_backup {
-	my ($p_job, $SB_TIMESTART, $source_path, $target_path)=@_;
-	
+	my ($p_job, $SB_TIMESTART, $source_path, $target_path, $bwlimit, $bwcompress)=@_;
 	my @returncodes;
-
+	
   ##
   ## Check backup history
   ##
@@ -105,7 +105,10 @@ sub rsync_backup {
   &f_output("DEBUG","Getting change list for backup.");
   version_log('normal','rsync',$::backupserver_fqdn,"Traversing source filesystem...");
   my @val;
-  my $rsync_params = " --stats -aEAXvii --out-format='%i|%n|%l|%M|%B|%U|%G' --delete ".$INCR." \"".$source_path.$::slash."\" \"".$target_path.$::slash."data_".$SB_TIMESTART.$::slash."\"";
+  my $rsync_params = "";
+  $rsync_params .= " --bwlimit=".$bwlimit if $bwlimit > 0;
+  $rsync_params .= " -z" if $bwcompress;
+  $rsync_params .= " --stats -aEAXvii --out-format='%i|%n|%l|%M|%B|%U|%G' --delete ".$INCR." \"".$source_path.$::slash."\" \"".$target_path.$::slash."data_".$SB_TIMESTART.$::slash."\"";
   if(open(my $fh, "-|", "$::cmd_rsync --dry-run $rsync_params 2>&1")){
     while (my $line = <$fh>){
     	chomp($line);
