@@ -14,7 +14,8 @@ use Net::Domain qw(hostfqdn);
 use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
-									f_output get_env f_arguments epoch2human min2time severity2id
+									f_output get_env f_arguments 
+									epoch2human min2time severity2id bit2oct oct2bit
 									$slash $BINPATH $MODULESPATH $ETCPATH $JOBCONFIGPATH $VARPATH $SESSIONLOGPATH $CATALOGPATH $RUNFILEPATH
 									$OS_USERS $OS_GROUPS
 									$cmd_ls $cmd_ln $cmd_rm $cmd_ps $cmd_sleep $cmd_cp $cmd_mv $cmd_mkdir $cmd_chmod $cmd_rsync $cmd_kill $cmd_pkill
@@ -198,6 +199,60 @@ sub severity2id{
 		$filter_id = $i if $severity eq $tmp;
 	}
 	return $filter_id;
+}
+
+sub bit2oct{
+	my ($bits)=@_;
+	return "" if !$bits || $bits eq "";
+	return "" if $bits !~ /^[rwx-]{9}$/;
+	
+	$bits =~ s/\-/0/g;
+	$bits =~ s/r|w|x/1/g;
+	if($bits =~ /^(\d{3})(\d{3})(\d{3})$/){
+		return oct('0b'.$1).oct('0b'.$2).oct('0b'.$3);
+	}else{
+		return "";
+	}
+}
+
+sub oct2bit{
+	my ($octs)=@_;
+	my $bits = "";
+	
+	return "---------" if !$octs || $octs eq "";
+	
+	if($octs =~ /^(\d)(\d)(\d)$/){
+		$bits .= "---" if $1 == 0;
+		$bits .= "--x" if $1 == 1;
+		$bits .= "-w-" if $1 == 2;
+		$bits .= "-wx" if $1 == 3;
+		$bits .= "r--" if $1 == 4;
+		$bits .= "r-x" if $1 == 5;
+		$bits .= "rw-" if $1 == 6;
+		$bits .= "rwx" if $1 == 7;
+
+		$bits .= "---" if $2 == 0;
+		$bits .= "--x" if $2 == 1;
+		$bits .= "-w-" if $2 == 2;
+		$bits .= "-wx" if $2 == 3;
+		$bits .= "r--" if $2 == 4;
+		$bits .= "r-x" if $2 == 5;
+		$bits .= "rw-" if $2 == 6;
+		$bits .= "rwx" if $2 == 7;
+		
+		$bits .= "---" if $3 == 0;
+		$bits .= "--x" if $3 == 1;
+		$bits .= "-w-" if $3 == 2;
+		$bits .= "-wx" if $3 == 3;
+		$bits .= "r--" if $3 == 4;
+		$bits .= "r-x" if $3 == 5;
+		$bits .= "rw-" if $3 == 6;
+		$bits .= "rwx" if $3 == 7;
+	}else{
+		$bits = "---------";
+	}
+	
+	return $bits;
 }
 
 ##

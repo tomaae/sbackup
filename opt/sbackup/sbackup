@@ -50,7 +50,7 @@ my %arguments;
 	"vals_mandatory" => 0,
 	"help_header" => "Jobs informations:",
 	"help_args" => "Status of all jobs:\n\t\t-job
-\tJob history:\n\t\t-job <job name>  [-type (backup|purge|verify)]
+\tJob history:\n\t\t-job <job name> [-type (backup|purge|verify)]
 \tVersion detail:\n\t\t-job <job name> -version <version>
 \tVersion log:\n\t\t-job <job name> -version <version> -log [normal|warning|minor|major|critical]
 \tVersion catalog:\n\t\t-job <job name> -version <version> -path [<directory>]",

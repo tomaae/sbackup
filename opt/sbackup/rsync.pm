@@ -36,17 +36,21 @@ sub rsync_backup {
   	my $LAST_COMPLETED_STAMP = 0;
     my @output = &get_history($p_job,'status,start','type==backup');
     for my $tmp(@{$output[2]}){
+    	## Current job
     	if($$tmp{'start'} eq $SB_TIMESTART){
-    		&f_output("DEBUG","Skipping current backup in history file.");
+    		&f_output("DEBUG","Skipping current job in history file.");
     		next;
     	}
     	if($$tmp{'start'} ne "" && $$tmp{'start'} > 100 && -d $target_path.$::slash."data_".$$tmp{'start'}){
     		if($$tmp{'status'} =~ /^\d+$/ && ($$tmp{'status'} eq "1" || $$tmp{'status'} eq "2" || $$tmp{'status'} eq "3")){
+    			## Completed job
     			$LAST_COMPLETED_STAMP = $$tmp{'start'};
     		}else{
+    			## Failed Job
     			$LAST_FAILED_STAMP = $$tmp{'start'};
     		}
     	}else{
+    		## No job found
     		&f_output("DEBUG","Data not found for job $$tmp{'start'}");
     	}
     }
@@ -74,6 +78,9 @@ sub rsync_backup {
   	&f_output("DEBUG","History log not found, initial backup.");
   }
 
+  ##
+  ## Prepare backup
+  ##
   my $SB_ECODE = "";
   my $JOB_SIZE = "";
   my $JOB_PERF = "";
@@ -121,15 +128,18 @@ sub rsync_backup {
   }
   close($cmd_out);
   update_history($p_job,"size=".$JOB_SIZE.",perf=0%","status==0,type==backup,start==".$SB_TIMESTART);
-
+  
+  ## Backup size
   my $total_size_human = $total_size." B";
   $total_size_human = ceil($total_size / 1024)." KiB" if $total_size > (100 * 1024);
   $total_size_human = ceil($total_size / 1024 / 1024)." MiB" if $total_size > (9 * 1024 * 1024);
   $total_size_human = ceil($total_size / 1024 / 1024 / 1024)." GiB" if $total_size > (9 * 1024 * 1024 * 1024);
-  version_log('normal','rsync',$::backupserver_fqdn,"Data to transfer: $total_size_human");
-
   $total_size = 1 if $total_size == 0; ## Never divide by 0;
-
+  version_log('normal','rsync',$::backupserver_fqdn,"Data to transfer: $total_size_human");
+  
+  ##
+  ## Start backup
+  ##
   &f_output("DEBUG","Starting backup.");
   &f_output("DEBUG3","Execute: \"$::cmd_rsync $rsync_params\"");
   
@@ -142,6 +152,7 @@ sub rsync_backup {
   my $catalogfile_owners = $CATALOGPATH.$p_job."_".$SB_TIMESTART.".owners";
   my $catalogfile_groups = $CATALOGPATH.$p_job."_".$SB_TIMESTART.".groups";
   
+  ## Check for abort flag
   my @pid_output = &get_runfile($p_job,'status,type,pid');
   $aborting = 1 if $pid_output[0] && $pid_output[2][0]{'pid'}  =~ /^\d+$/ && $pid_output[2][0]{'status'} eq '6';
   if(!$aborting){
@@ -150,18 +161,26 @@ sub rsync_backup {
   	my $cat_dirid = 0;
   	my @cat_dirs = ();
   	@{$cat_dirs[0]} = ();
+  	my $cat_last_dirid = 0;
+  	my $cat_last_path = "";
   	
+  	## Create file catalog
   	if(!$main::SIMULATEMODE){
-  		open cat_file,">>$catalogfile_files" or ::job_failed("Insufficient access rights.");
+  		open cat_file,">$catalogfile_files" or ::job_failed("Insufficient access rights.");
   		flock cat_file,2;
   		truncate cat_file,0;
   	}
   	
+  	##
+  	## Start rsync
+  	##
     my $rsync_simulate = "";
     $rsync_simulate = ' --dry-run ' if $main::SIMULATEMODE;
     my $rpid = open(my $cmd_out,"-|","$::cmd_rsync $rsync_simulate $rsync_params 2>&1") || ::job_failed("Failed to start rsync.");
     update_runfile($p_job,"rpid=".$rpid) if $rpid && $rpid > 0;
     while (my $line = <$cmd_out>){
+    	
+    	## Updating progress %
     	if($copied_last_size > 0){
     		$copied_size += $copied_last_size;
     		$copied_size = $total_size if $copied_size > $total_size;
@@ -174,8 +193,12 @@ sub rsync_backup {
       	$progress_percent_old = $progress_percent;
       	$copied_last_size = 0;
     	}
+    	
     	chomp($line);
+    	## Parse itemized output
     	if($line =~ /\|/){
+    		
+    		## Split itemized output
     		@val = split(/\|/,$line);
     		$line_flags    = $val[0];
     		$line_entry    = $val[1];
@@ -188,7 +211,7 @@ sub rsync_backup {
     		## Skip root directory
     		next if $line_entry eq './';
     		
-    		## Convert time to epoch
+    		## Convert last_modified time to epoch
     		if($line_modified =~ /^(\d{4})\/(\d{2})\/(\d{2})\-(\d{2}):(\d{2}):(\d{2})$/){
     			$line_modified = mktime($6,$5,$4,$3,$2 - 1,$1 - 1900);
     		}else{
@@ -201,18 +224,11 @@ sub rsync_backup {
     		if($line_flags =~ /^[^*](f|d|L|D|S)/){#f for a file, a d for a directory, an L for a symlink, a D for a device, and a S for a special file
     			$cat_type = $1;
     			$cat_entry = $line_entry;
-    			
-    			## Parse permission bits
-    			if($line_perm ne ""){
-    				$line_perm =~ s/\-/0/g;
-    				$line_perm =~ s/r|w|x/1/g;
-    				if($line_perm =~ /^(\d{3})(\d{3})(\d{3})$/){
-    					$line_perm = oct('0b'.$1).oct('0b'.$2).oct('0b'.$3);
-    				}else{
-    					$line_perm = "";
-    				}
-    			}
 
+    			## Parse permission bits
+    			$line_perm = bit2oct($line_perm);
+    			
+    			## Invalid owner/group
     			$os_ownerlist[$line_owner] = "" if $line_owner =~ /^\d+$/;
     			$os_grouplist[$line_group] = "" if $line_group =~ /^\d+$/;
     			
@@ -225,6 +241,7 @@ sub rsync_backup {
     				my @cat_split = split(/\//,$cat_entry);
     				for my $cat_tmp(@cat_split){
     					if(defined $cat_dirs[$cat_dirid]){
+    						
     						## Check if present under current dirid
     						my $cat_cid = 0;
     						my $i = -1;
@@ -236,7 +253,8 @@ sub rsync_backup {
     								last;
     							}
     						}
-    						## Not present
+    						
+    						## Not present under current dirid
     						if($cat_cid == 0){
     							$cat_cid = scalar(@cat_dirs);
     							my @cat_dirs_tmp = ($cat_cid, $cat_tmp, $line_perm, $line_owner, $line_group);
@@ -250,23 +268,32 @@ sub rsync_backup {
     				## Parse files
     				version_log('warning','rsync',$::backupserver_fqdn,"Cannot parse to catalog:\nNot a file: \"$cat_entry\"") if $cat_entry !~ s/\/([^\/]+)$// && $cat_entry !~ s/^([^\/]+)$//;
     				my $cat_file = $1;
+    				
     				## Find parent dirid
-    				$cat_dirid = 0;
-    				my @cat_split = split(/\//,$cat_entry);
-    				for my $cat_tmp(@cat_split){
-    					if(defined $cat_dirs[$cat_dirid]){
-    						## Check if present under current dirid
-    						my $i = -1;
-    						for(@{$cat_dirs[$cat_dirid]}){
-    							$i++;
-    							next if ! defined $cat_dirs[$cat_dirid][$i];
-    							if($cat_dirs[$cat_dirid][$i][1] eq $cat_tmp){
-    								$cat_dirid = $cat_dirs[$cat_dirid][$i][0];
-    								last;
-    							}
-    						}
-    					}
-    				}
+      			if($cat_last_path eq $cat_entry){ ## Parent dir didnt changed
+      				$cat_dirid = $cat_last_dirid;
+      			}else{ ## Parent dir changed
+      				$cat_dirid = 0;
+      				my @cat_split = split(/\//,$cat_entry);
+      				for my $cat_tmp(@cat_split){
+      					if(defined $cat_dirs[$cat_dirid]){
+      						
+      						## Check if present under current dirid
+      						my $i = -1;
+      						for(@{$cat_dirs[$cat_dirid]}){
+      							$i++;
+      							next if ! defined $cat_dirs[$cat_dirid][$i];
+      							if($cat_dirs[$cat_dirid][$i][1] eq $cat_tmp){
+      								$cat_dirid = $cat_dirs[$cat_dirid][$i][0];
+      								last;
+      							}
+      						}
+      					}
+      				}
+      				$cat_last_dirid = $cat_dirid;
+      				$cat_last_path = $cat_entry;
+      			}
+      			
     				print cat_file "$cat_dirid|$cat_file|$line_size|$line_modified|$line_perm|$line_owner|$line_group\n" if !$main::SIMULATEMODE;
     			}
     		}
@@ -274,12 +301,11 @@ sub rsync_backup {
     		##
     		## Parsing for version log
     		##
-    		if($line_flags =~ /^\>f/){ ## New file
-    			
+    		if($line_flags =~ /^\>f/){ ## File change
     			$copied_last_size = $line_size if $line_size > 0;
-      		if($line_flags =~ /^\>f\+/){
+      		if($line_flags =~ /^\>f\+/){ ## New file
       			append_log($::sessionlogfile,'+'.$line_entry);
-      		}else{
+      		}else{ ## Modified file
       			append_log($::sessionlogfile,'*'.$line_entry);
       		}
       		$data_changed = 1;
@@ -302,9 +328,12 @@ sub rsync_backup {
       		version_log('warning','rsync',$::backupserver_fqdn,$line);
       	}
     	}else{
+    		## Parse non-itemized output
     		if($line =~ /sending incremental file list/){
+    			## Rsync starting
     			version_log('normal','rsync',$::backupserver_fqdn,"Starting data transfer...");
     		}elsif($line =~ /^Number of files: / || $rsync_summary ne ""){
+    			## Job summary
     			$rsync_summary .= $line."\n";
     			if($line =~ /^total size is/){
     				append_log($::sessionlogfile,"\n") if $data_changed;
@@ -314,6 +343,7 @@ sub rsync_backup {
     		}elsif($line =~ /^\s*$/){
     			next;
     		}else{
+    			## Other
     			my $severity = "warning";
     			$severity = "major" if $line =~ /^rsync.*error/;
       		version_log($severity,'rsync',$::backupserver_fqdn,$line);
@@ -322,19 +352,23 @@ sub rsync_backup {
     }
     close($cmd_out);
     
+    ## Close file catalog
     if(!$main::SIMULATEMODE){
 			flock cat_file,8;
 			close cat_file;
     }
     
+    ## Append job summary
     if($rsync_summary ne ""){
     	append_log($::sessionlogfile,"\n") if $data_changed;
     	version_log('normal','rsync',$::backupserver_fqdn,"Backup job summary:\n\n$rsync_summary");
     	$rsync_summary = "";
     }
     
+    ##
     ## Save dir catalog
-     if(!$main::SIMULATEMODE){
+    ##
+    if(!$main::SIMULATEMODE){
   		open log_file,">>$catalogfile_dirs" or ::job_failed("Insufficient access rights.");
   		flock log_file,2;
   		truncate log_file,0;
@@ -354,7 +388,9 @@ sub rsync_backup {
 			close log_file;
     }
     
+    ##
     ## Save owner list
+    ##
     if(!$main::SIMULATEMODE){
   		open log_file,">>$catalogfile_owners" or ::job_failed("Insufficient access rights.");
   		flock log_file,2;
@@ -370,7 +406,9 @@ sub rsync_backup {
 			close log_file;
     }
     
+    ##
     ## Save group list
+    ##
     if(!$main::SIMULATEMODE){
   		open log_file,">>$catalogfile_groups" or ::job_failed("Insufficient access rights.");
   		flock log_file,2;
@@ -390,8 +428,10 @@ sub rsync_backup {
     $SB_ECODE = $?;
     version_log('normal','rsync',$::backupserver_fqdn,"Nothing backed up, no changed data found.") if $SB_ECODE eq "0" && !$data_changed;
   }
-
+  
+  ##
   ## Update backup size and performance
+  ##
   if($SB_ECODE eq "0"){
     for(read_log($::sessionlogfile)){
     	chomp;
@@ -405,8 +445,10 @@ sub rsync_backup {
     	}
     }
   }
-
+  
+  ##
   ## Check abort status
+  ##
   if($SB_ECODE ne "" && $SB_ECODE != 0){
   	if(!$aborting){
   		my @pid_output = &get_runfile($p_job,'status,type,pid');
@@ -417,12 +459,16 @@ sub rsync_backup {
   		version_log('minor','rsync',$::backupserver_fqdn,"Job aborted by user.");
   	}
   }
+  
+  ## Set job to failed if rsync failed
   $::SB_ERRORLEVEL = 5 if $SB_ECODE ne "0" && $::SB_ERRORLEVEL < 5;
   
+  ##
+  ## Set return values
+  ##
   $returncodes[0] = 1;
   $returncodes[1]{'JOB_SIZE'} = $JOB_SIZE;
   $returncodes[1]{'JOB_PERF'} = $JOB_PERF;
-  
   return @returncodes;
 }
 

@@ -1,6 +1,6 @@
 =================================================================
 ==GENERAL========================================================
-[] - disable error exit code and message when running from cron
+[] - disable error exit code and message when running jobs from cron
 [] - errors to be reported post-backup in custom HTML email
 [] - define full paths for all executable in set_env
 [] - replace all "die" commands with job_failed where possible
@@ -9,7 +9,6 @@
 [] - few functions
  - size2human
  - epoch2human $date = strftime("%d/%m/%G %H:%M", localtime($epoch));
- - bit2oct, oct2bit
 
 =================================================================
 ==AUTOCOMPLETE===================================================
