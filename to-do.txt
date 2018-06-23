@@ -12,14 +12,6 @@
  - bit2oct, oct2bit
 
 =================================================================
-==LOG============================================================
-[] - add filter for -log [normal|warning|minor|major|critical]
-
-=================================================================
-==JOB VER================================================
-[] - show minor and higher messages
-
-=================================================================
 ==AUTOCOMPLETE===================================================
 [] - work with shortened variables (-job XXX -ver XXX -log)
 [] - disable type if ver is already specified

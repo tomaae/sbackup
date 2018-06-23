@@ -1,0 +1,66 @@
+###########################################################################################
+#
+#                                         sbackup
+#                                        log module
+#
+###########################################################################################
+use strict;
+use warnings;
+our $p_job;
+our $p_log;
+our $p_version;
+
+##
+## Check parameters
+##
+my $filter_id = 0;
+if($p_log){
+	f_output("ERROR","Error: Log message type \"$p_log\" is not valid.\n\nValid message types: normal, warning, minor, major, critical.",1) if $p_log !~ /^(normal|warning|minor|major|critical)$/;
+	$p_log =~ s/^(\w)(.*)$/\u$1\L$2\E/;
+	$filter_id = severity2id($p_log);
+}
+
+##
+## Get version log
+##
+require Term::ANSIColor;
+import Term::ANSIColor;
+f_output("ERROR","Missing job version.",1) if !$p_version;
+f_output("ERROR","Job log is not available.",1) if !-f $::SESSIONLOGPATH.$p_job."_".$p_version.".log";
+my $highlight = "";
+my $severity = "";
+my $filter_inmsg = 0;
+for my $tmp(&read_log($::SESSIONLOGPATH.$p_job."_".$p_version.".log")){
+	## Filter messages
+	if($p_log){
+		## End of message
+		if($filter_inmsg){
+			if($tmp !~ /^\[(Normal|Warning|Minor|Major|Critical)\] / && $tmp !~ /^        / ){
+				$filter_inmsg = 0;
+				print "\n";
+			}
+		}
+		## Start of message
+		if($tmp =~ /^\[(Normal|Warning|Minor|Major|Critical)\] /){
+			$filter_inmsg = 1 if severity2id($1) >= $filter_id;
+		}
+		next if !$filter_inmsg;
+	}
+	
+	## Severity colors
+	if($tmp =~ /^\[(\w+)\] /){
+		$severity = $1;
+		$highlight = "green";
+		$highlight = "yellow" if $severity eq "Warning";
+		$highlight = "cyan" if $severity eq "Minor";
+		$highlight = "bright_red" if $severity eq "Major";
+		$highlight = "red" if $severity eq "Critical";
+		$tmp =~ s/^\[$severity\]//;
+		$tmp = color($highlight)."[$severity]".color("reset").$tmp;
+	}
+	print $tmp;
+}
+
+
+
+return 1;

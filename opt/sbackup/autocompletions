@@ -72,6 +72,13 @@ _sbackup_job()
 			;;
 	esac
 	
+	if [[ "$prev" == "-log" ]]; then
+		if [[ "$cur" != -* ]]; then
+			COMPREPLY=( $( compgen -W "normal warning minor major critical" -- "$cur" ) )
+			return 0
+		fi
+	fi
+	
 	commands='-type -version'
 	
 	for e in ${!words[@]}; do

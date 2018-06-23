@@ -24,7 +24,7 @@ our %job = load_jobs_config;
 ## Parameters
 ##
 our ($DEBUGMODE, $sv_history, $sv_job, $sv_log, $sv_backup, $sv_purge, $sv_verify, $sv_restore, $sv_copy, $sv_abort, $sv_export, $sv_import, $sv_version, $sv_days, $sv_type, $sv_path, $sv_into, $sv_background, $sv_scheduler, $sv_api, $sv_all);
-our ($p_debug, $p_job, $p_version, $p_days, $p_type, $p_path, $p_into, $p_api);
+our ($p_debug, $p_job, $p_version, $p_days, $p_type, $p_path, $p_into, $p_log, $p_api);
 $p_debug = 1;
 my %arguments;
 %{$arguments{"debug"}} = (
@@ -52,7 +52,7 @@ my %arguments;
 	"help_args" => "Status of all jobs:\n\t\t-job
 \tJob history:\n\t\t-job <job name>  [-type (backup|purge|verify)]
 \tVersion detail:\n\t\t-job <job name> -version <version>
-\tVersion log:\n\t\t-job <job name> -version <version> -log
+\tVersion log:\n\t\t-job <job name> -version <version> -log [normal|warning|minor|major|critical]
 \tVersion catalog:\n\t\t-job <job name> -version <version> -path [<directory>]",
 	"help_display" => 1,
 );
@@ -134,10 +134,11 @@ my %arguments;
 
 %{$arguments{"log"}} = (
 	"var" => \$sv_log,
+	"val1" => \$p_log,
 	"vals_mandatory" => 0,
 	"dependency" => "job",
 	"help_header" => "Job log:",
-	"help_args" => "-job <job name> -version <version> -log",
+	"help_args" => "-job <job name> -version <version> -log [normal|warning|minor|major|critical]",
 	"help_display" => 0,
 );
 

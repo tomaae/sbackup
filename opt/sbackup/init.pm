@@ -14,7 +14,7 @@ use Net::Domain qw(hostfqdn);
 use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
-									f_output get_env f_arguments epoch2human min2time
+									f_output get_env f_arguments epoch2human min2time severity2id
 									$slash $BINPATH $MODULESPATH $ETCPATH $JOBCONFIGPATH $VARPATH $SESSIONLOGPATH $CATALOGPATH $RUNFILEPATH
 									$OS_USERS $OS_GROUPS
 									$cmd_ls $cmd_ln $cmd_rm $cmd_ps $cmd_sleep $cmd_cp $cmd_mv $cmd_mkdir $cmd_chmod $cmd_rsync $cmd_kill $cmd_pkill
@@ -181,6 +181,23 @@ sub min2time {
 	if(length($hours) == 1){$hours = "0".$hours;}
 	if(length($minutes) == 1){$minutes = "0".$minutes;}
 	return "$hours\:$minutes";
+}
+
+
+##
+##Severity convert
+##
+sub severity2id{
+	my ($severity)=@_;
+	my @severity_list = ("Normal", "Warning", "Minor", "Major", "Critical");
+	my $filter_id = 0;
+	
+	my $i = -1;
+	for my $tmp(@severity_list){
+		$i++;
+		$filter_id = $i if $severity eq $tmp;
+	}
+	return $filter_id;
 }
 
 ##

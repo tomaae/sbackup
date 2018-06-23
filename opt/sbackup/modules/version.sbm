@@ -36,26 +36,7 @@ if($sv_path){
 ## Get version log
 ##
 if($sv_log){
-	require Term::ANSIColor;
-  import Term::ANSIColor;
-	f_output("ERROR","Missing job version.",1) if !$p_version;
-	f_output("ERROR","Job log is not available.",1) if !-f $::SESSIONLOGPATH.$p_job."_".$p_version.".log";
-	my $highlight = "";
-	my $severity = "";
-	for my $tmp(&read_log($::SESSIONLOGPATH.$p_job."_".$p_version.".log")){
-		## Severity colors
-		if($tmp =~ /^\[(\w+)\] /){
-			$severity = $1;
-			$highlight = "green";
-			$highlight = "yellow" if $severity eq "Warning";
-			$highlight = "cyan" if $severity eq "Minor";
-			$highlight = "bright_red" if $severity eq "Major";
-			$highlight = "red" if $severity eq "Critical";
-			$tmp =~ s/^\[$severity\]//;
-			$tmp = color($highlight)."[$severity]".color("reset").$tmp;
-		}
-		print $tmp;
-	}
+	require "modules/log.sbm";
 	return 1;
 }
 
@@ -134,5 +115,54 @@ printf "%20.20s : %s\n", "End time", $out_end;
 printf "%20.20s : %s\n", "Size", $out_size;
 printf "%20.20s : %s\n", "Performance", $out_perf;
 printf "%20.20s : %s\n", "Version log", $out_log;
+
+print "\nMessages higher than Warning:\n";
+
+##
+## Get version log
+##
+if(-f $::SESSIONLOGPATH.$p_job."_".$p_version.".log"){
+  require Term::ANSIColor;
+  import Term::ANSIColor;
+  my $highlight = "";
+  my $severity = "";
+  my $filter_inmsg = 0;
+  my $filter_id = 2;
+  my $msg_found = 0;
+  for my $tmp(&read_log($::SESSIONLOGPATH.$p_job."_".$p_version.".log")){
+  	## Filter messages
+  	## End of message
+  	if($filter_inmsg){
+  		if($tmp !~ /^\[(Normal|Warning|Minor|Major|Critical)\] / && $tmp !~ /^        / ){
+  			$filter_inmsg = 0;
+  			print "\n";
+  		}
+  	}
+  	## Start of message
+  	if($tmp =~ /^\[(Normal|Warning|Minor|Major|Critical)\] /){
+  		if(severity2id($1) >= $filter_id){
+  			$filter_inmsg = 1;
+  			$msg_found = 1;
+  		}
+  	}
+  	next if !$filter_inmsg;
+  	
+  	## Severity colors
+  	if($tmp =~ /^\[(\w+)\] /){
+  		$severity = $1;
+  		$highlight = "green";
+  		$highlight = "yellow" if $severity eq "Warning";
+  		$highlight = "cyan" if $severity eq "Minor";
+  		$highlight = "bright_red" if $severity eq "Major";
+  		$highlight = "red" if $severity eq "Critical";
+  		$tmp =~ s/^\[$severity\]//;
+  		$tmp = color($highlight)."[$severity]".color("reset").$tmp;
+  	}
+  	print $tmp;
+  }
+  print "No messages to display.\n" if !$msg_found;
+}else{
+	print "Job log is not available.\n";
+}
 
 return 1;
