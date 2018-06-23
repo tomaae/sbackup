@@ -61,6 +61,8 @@ my $out_size  = "";
 my $out_time  = "";
 my $out_path  = "";
 
+my $catalog_found = 0;
+
 sub traverse_cat {
 	my ($cat_dirid, $append_path,$last_file) = @_;
   ## Get files in this directory
@@ -92,6 +94,8 @@ sub traverse_cat {
     	}else{
     		$out_group = "N/A";
     	}
+    	
+    	$catalog_found = 1;
     	printf "%-10.10s  %-9.9s  %-9.9s  %10.10s  %16.16s  %s\n",
       	$out_perm, 
       	$out_owner,
@@ -126,6 +130,7 @@ sub traverse_cat {
     		$out_group = "N/A";
     	}
   		
+  		$catalog_found = 1;
     	printf "%-10.10s  %-9.9s  %-9.9s  %10.10s  %16.16s  %s\n",
       	$out_perm, 
       	$out_owner,
@@ -204,5 +209,6 @@ printf "%-10.10s  %-9.9s  %-9.9s  %10.10s  %16.16s  %s\n",
 print "====================================================================================================================\n";
 
 traverse_cat($cat_start_dirid,$cat_start_dirpath,$last_file);
+f_output("ERROR","No data.",1) if !$catalog_found;
 
 return 1;
