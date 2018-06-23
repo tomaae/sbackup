@@ -53,6 +53,15 @@ sub job_failed {
 	my $msg = shift;
 	$SB_TIMEEND = time();
 	print STDERR "Error: $msg\n";
+	
+  ## LVM remove snapshot if present
+  if($::job{$p_job}{'SOURCE'}{'-snapshot'}{'-enabled'} eq 1 && $::job{$p_job}{'SOURCE'}{'-snapshot'}{'-type'} eq "lvm" && $::lvm_path ne "" && $msg !~ /Snapshot/i){
+    &f_output("DEBUG","Integration: LVM");
+    require lvm;
+    import lvm;
+  	lvm_remove_snapshot($p_job, $SB_TIMESTART, $::source_path, $job{$p_job}{'SOURCE'}{'-snapshot'}{'-size'}, $job{$p_job}{'SOURCE'}{'-snapshot'}{'-fallback'});
+  }
+	
 	update_history($p_job,"status=5,end=".$SB_TIMEEND.",error=".$msg.",perf=","status==0,type==backup,start==".$SB_TIMESTART);
 	version_log('critical','backup',$backupserver_fqdn,"Backup job failed with error:\n$msg");
 	rm_runfile($p_job);

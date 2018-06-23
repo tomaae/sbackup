@@ -1,8 +1,8 @@
 =================================================================
 ==GENERAL========================================================
-[] - disable error exit code and message when running jobs from cron
-[] - errors to be reported post-backup in custom HTML email
 [] - replace all "die" commands with job_failed where possible
+[L] - disable error exit code and message when running jobs from cron
+[L] - errors to be reported post-backup in custom HTML email
 [?] - catalog files could be compressed after session completes, stream gunzip?
 [?] - session log could be compressed after session completes, stream gunzip?
 
@@ -13,24 +13,13 @@
 [] - path catalog (job and version must be filled and valid)
 
 =================================================================
-==MONITOR========================================================
-[] - monitor running job
-- backup info and progress at top
-- rotating backup log at bottom
-
-=================================================================
 ==BACKUP=========================================================
-[GUI]
-- warning on changing backup source (same as for changing filesystem in shared folders)
-- warning on changing backup target (same as for changing filesystem in shared folders)
-
 [?] - multiple paths in source
 [?] - target concurrency
 [] - excludes?: --exclude=PATTERN       exclude files matching PATTERN
 
 [] - pre/postexec (export shell variables JOB_NAME, JOB_TYPE, STATUS, START_TIME)
 [] - create global error log
-[] - rsync: improve and simplify backup statistics
 
 [] - remote backup of another server
 [] - mysql backup local/remote
@@ -38,11 +27,15 @@
 [] - target/copy option -compress
 [] - target/copy option -bwlimit
 
-[] - job_failed > check if lvm is enabled and active, remove snapshot
+=================================================================
+==MONITOR========================================================
+[] - monitor running job
+- backup info and progress at top
+- rotating backup log at bottom
 
 =================================================================
 ==REPORT=========================================================
-[] - generate 24 hour/7 day report
+[?] - generate 24 hour/7 day report
 
 =================================================================
 ==VERIFY=========================================================
