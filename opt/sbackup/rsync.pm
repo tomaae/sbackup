@@ -104,9 +104,9 @@ sub rsync_backup {
     
   &f_output("DEBUG","Getting change list for backup.");
   version_log('normal','rsync',$::backupserver_fqdn,"Traversing source filesystem...");
+  my @val;
   my $rsync_params = " --stats -aEAXvii --out-format='%i|%n|%l|%M|%B|%U|%G' --delete ".$INCR." \"".$source_path.$::slash."\" \"".$target_path.$::slash."data_".$SB_TIMESTART.$::slash."\"";
   open(my $cmd_out,"-|","$::cmd_rsync --dry-run $rsync_params 2>&1") || ::job_failed("Failed to start rsync.");
-  my @val;
   while (my $line = <$cmd_out>){
   	chomp($line);
   	if($line =~ /\|/){
