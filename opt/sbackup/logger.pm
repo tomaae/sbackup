@@ -98,7 +98,11 @@ sub get_history{
     	flock $fh,8;
       close $fh;
     }else{
-    	f_output("ERROR","Error: Insufficient access rights.",1);
+    	if(defined &::job_failed){
+    		::job_failed("Error: Insufficient access rights.");
+    	}else{
+    		f_output("ERROR","Error: Insufficient access rights.",1);
+    	}
     }
   
   	for my $tmp1(@cache){
@@ -194,7 +198,11 @@ sub update_history{
       	flock $fh,8;
         close $fh;
       }else{
-      	f_output("ERROR","Error: Insufficient access rights.",1);
+      	if(defined &::job_failed){
+      		::job_failed("Error: Insufficient access rights.");
+      	}else{
+      		f_output("ERROR","Error: Insufficient access rights.",1);
+      	}
       }
   	}
   	$returncodes[0] = 1;
@@ -315,7 +323,11 @@ sub update_runfile{
       	flock $fh,8;
         close $fh;
       }else{
-      	f_output("ERROR","Error: Insufficient access rights.",1);
+      	if(defined &::job_failed){
+      		::job_failed("Error: Insufficient access rights.");
+      	}else{
+      		f_output("ERROR","Error: Insufficient access rights.",1);
+      	}
       }
   	}
   	$returncodes[0] = 1;
@@ -358,7 +370,11 @@ sub get_runfile{
     	flock $fh,8;
       close $fh;
     }else{
-    	f_output("ERROR","Error: Insufficient access rights.",1);
+    	if(defined &::job_failed){
+    		::job_failed("Error: Insufficient access rights.");
+    	}else{
+    		f_output("ERROR","Error: Insufficient access rights.",1);
+    	}
     }
   
   	for my $tmp1(@cache){
@@ -423,7 +439,11 @@ sub append_log{
   	flock $fh,8;
   	close $fh;
 	}else{
-		f_output("ERROR","Error: Insufficient access rights.",1);
+  	if(defined &::job_failed){
+  		::job_failed("Error: Insufficient access rights.");
+  	}else{
+  		f_output("ERROR","Error: Insufficient access rights.",1);
+  	}
 	}
 }
 
@@ -441,7 +461,11 @@ sub write_log{
   	flock $fh,8;
   	close $fh;
   }else{
-  	f_output("ERROR","Error: Insufficient access rights.",1);
+  	if(defined &::job_failed){
+  		::job_failed("Error: Insufficient access rights.");
+  	}else{
+  		f_output("ERROR","Error: Insufficient access rights.",1);
+  	}
   }
 }
 
@@ -459,7 +483,11 @@ sub read_log{
   	flock $fh,8;
   	close $fh;
   }else{
-  	f_output("ERROR","Error: Insufficient access rights.",1);
+  	if(defined &::job_failed){
+  		::job_failed("Error: Insufficient access rights.");
+  	}else{
+  		f_output("ERROR","Error: Insufficient access rights.",1);
+  	}
   }
 	return @tmp;
 }
@@ -497,7 +525,11 @@ sub version_log{
   	flock $fh,8;
   	close $fh;
 	}else{
-		f_output("ERROR","Error: Insufficient access rights.",1);
+  	if(defined &::job_failed){
+  		::job_failed("Error: Insufficient access rights.");
+  	}else{
+  		f_output("ERROR","Error: Insufficient access rights.",1);
+  	}
 	}
 }
 
