@@ -136,6 +136,42 @@ _sbackup_backup()
 	esac
 }
 
+_sbackup_verify()
+{
+	local cur prev words cword
+	_init_completion || return
+	
+	local p_job
+	
+	case $prev in
+		-veri*)
+			_sbackup_available_jobs
+			return 0
+			;;
+		-vers*)
+    	for e in ${!words[@]}; do
+    		if [[ "${words[e]}" == -veri* ]]; then
+    			p_job=${words[e + 1]}
+    		fi
+    	done
+			_sbackup_available_versions $p_job
+			return 0
+			;;
+	esac
+	
+	commands='-version'
+	
+	unset 'words[${#words[@]}-1]'
+	COMPREPLY=( $( compgen -W "$commands" -- "$cur" ) )
+	for i in ${!COMPREPLY[@]}; do
+		for e in ${!words[@]}; do
+			if [[ "${COMPREPLY[i]}" == "${words[e]}"* ]]; then
+				unset COMPREPLY[i]
+			fi
+		done
+	done
+}
+
 _sbackup_purge()
 {
 	local cur prev words cword
@@ -191,8 +227,8 @@ _sbackup()
 
 	local command options
 	
-	commands='-backup -purge -abort -job -export -import'
-
+	commands='-backup -purge -verify -abort -job -export -import'
+	
 	if [[ $cword -eq 1 ]]; then
 		COMPREPLY=( $( compgen -W "$commands" -- "$cur" ) )
 	else
@@ -200,15 +236,23 @@ _sbackup()
 		case $command in
 			-job)
 				_sbackup_job
+				return 0
 				;;
 			-backup|-export)
 				_sbackup_backup
+				return 0
+				;;
+			-verify)
+				_sbackup_verify
+				return 0
 				;;
 			-purge)
 				_sbackup_purge
+				return 0
 				;;
 			-abort)
 				_sbackup_abort
+				return 0
 				;;
 		esac
 	fi

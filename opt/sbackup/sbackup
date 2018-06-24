@@ -75,15 +75,15 @@ my %arguments;
 	"help_args" => "-purge <job name> [-days <n>]",# [-version <versionid>]",
 	"help_display" => 12,
 );
-#%{$arguments{"verify"}} = (
-#	"var" => \$sv_verify,
-#	"val1" => \$p_job,
-#	"vals_mandatory" => 1,
-#	"primary" => 1,
-#	"help_header" => "Start verify job:",
-#	"help_args" => "-verify <job name>",
-#	"help_display" => 3,
-#);
+%{$arguments{"verify"}} = (
+	"var" => \$sv_verify,
+	"val1" => \$p_job,
+	"vals_mandatory" => 1,
+	"primary" => 1,
+	"help_header" => "Start verify job:",
+	"help_args" => "-verify <job name> -version <version>",
+	"help_display" => 13,
+);
 #%{$arguments{"copy"}} = (
 #	"var" => \$sv_copy,
 #	"val1" => \$p_job,
@@ -91,7 +91,7 @@ my %arguments;
 #	"primary" => 1,
 #	"help_header" => "Start copy job:",
 #	"help_args" => "-copy <job name>",
-#	"help_display" => 4,
+#	"help_display" => 14,
 #);
 #%{$arguments{"restore"}} = (
 #	"var" => \$sv_restore,
@@ -100,7 +100,7 @@ my %arguments;
 #	"primary" => 1,
 #	"help_header" => "Start restore job:",
 #	"help_args" => "-restore <job name> [-version <versionid>] [-path <path>] [-into <path>]",
-#	"help_display" => 5,
+#	"help_display" => 15,
 #);
 %{$arguments{"abort"}} = (
 	"var" => \$sv_abort,
@@ -155,7 +155,7 @@ my %arguments;
 	"var" => \$sv_version,
 	"val1" => \$p_version,
 	"vals_mandatory" => 1,
-	"dependency" => "restore;purge;job",
+	"dependency" => "restore;purge;verify;job",
 	"help_header" => "Job version:",
 	"help_args" => "-version <version>",
 	"help_display" => 0,
@@ -191,7 +191,7 @@ my %arguments;
 %{$arguments{"background"}} = (
 	"var" => \$sv_background,
 	"vals_mandatory" => 0,
-	"dependency" => "backup;purge;restore",
+	"dependency" => "backup;purge;verify;restore",
 	"help_header" => "Run in background",
 	"help_args" => "[-background]",
 	"help_display" => 0,
@@ -238,9 +238,9 @@ if($sv_backup){
 	require "modules/backup.sbm";
 }
 
-#if($sv_verify){
-#	require "modules/verify.sbm";
-#}
+if($sv_verify){
+	require "modules/verify.sbm";
+}
 
 #if($sv_restore){
 #	require "modules/restore.sbm";
