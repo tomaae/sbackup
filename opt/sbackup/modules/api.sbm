@@ -172,10 +172,10 @@ if($p_api eq "ac_catalog_path"){
     if($p_path ne $cat_start_dirpath && !$found){
     	
   		#print "/uac3/";
-  		exit 0;
+  		#exit 0;
   	}
   }
-
+  
   traverse_cat($cat_start_dirid,$cat_start_dirpath,$last_file);	
 	
 	exit 0;

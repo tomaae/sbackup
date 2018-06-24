@@ -14,7 +14,7 @@ _sbackup_running_jobs()
 
 _sbackup_catalog_path()
 {
-  COMPREPLY=( $(compgen -W "$( /opt/sbackup/sbackup -api ac_catalog_path -job $1 -ver $2 -path $3 2>/dev/null | \
+  COMPREPLY=( $(compgen -W "$( /opt/sbackup/sbackup -api ac_catalog_path -job $1 -version $2 -path $3 2>/dev/null | \
       sed -n -e 's|^\(.*\)$|\1|p' )" -- "$cur" ) )
 }
 
