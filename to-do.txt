@@ -1,10 +1,20 @@
 =================================================================
+==NOTIFIER=======================================================
+[] - create text part of email
+[] - load only when needed (add check if it is already loaded ?function exists?)
+[] - create central notifier function which will branch to mail
+
+=================================================================
 ==GENERAL========================================================
-[!] - errors to be reported post-backup in custom HTML email
-[!] - disable error exit code and message when running jobs from cron
+[!] - disable error exit code and message when running jobs
 
 [?] - catalog files could be compressed after session completes, stream gunzip?
 [?] - session log could be compressed after session completes, stream gunzip?
+
+[?] - create own function for strftime
+[?] - create own function for mktime
+[?] - create own function for strftime
+[?] - create own function for ceil, floor, round
 
 =================================================================
 ==AUTOCOMPLETE===================================================
