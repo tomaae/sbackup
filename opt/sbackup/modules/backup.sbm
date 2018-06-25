@@ -362,4 +362,8 @@ if($SB_ERRORLEVEL <= 3 && $job{$p_job}{'POST'}{'-job'}{'-name'} ne ""){
 	}
 }
 
+if($SB_ERRORLEVEL >= 3){
+	#notify_email("test subject","testbkp","1529759270","This is some\nlong\ndescription.");
+}
+
 return 1;

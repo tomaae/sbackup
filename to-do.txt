@@ -1,7 +1,8 @@
 =================================================================
 ==GENERAL========================================================
-[L] - disable error exit code and message when running jobs from cron
-[L] - errors to be reported post-backup in custom HTML email
+[!] - errors to be reported post-backup in custom HTML email
+[!] - disable error exit code and message when running jobs from cron
+
 [?] - catalog files could be compressed after session completes, stream gunzip?
 [?] - session log could be compressed after session completes, stream gunzip?
 
@@ -139,3 +140,11 @@ POST {
                 -name asdf
         }
 }
+
+=================================================================
+==Required modules===============================================
+libemail-sender-perl
+libemail-mime-perl
+libemail-mime-createhtml-perl
+at
+rsync

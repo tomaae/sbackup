@@ -18,6 +18,7 @@ use init;
 get_env;
 use logger;
 use config;
+use notifications;
 our %job = load_jobs_config;
 
 ##
