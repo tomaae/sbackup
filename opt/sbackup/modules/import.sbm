@@ -50,41 +50,42 @@ if($? == 0){
 }
 
 ## Import job version logs
-print "Importing job catalog...";
+print "Importing job catalog...\n";
 my @output = &get_history($p_job,'status,start,type');
 for my $tmp(@{$output[2]}){
-	print "Importing $$tmp{'type'} version ".strftime("%G/%m/%d-%H%M%S", localtime($$tmp{'start'}))."\n";
+	print "\tImporting $$tmp{'type'} version ".strftime("%G/%m/%d-%H%M%S", localtime($$tmp{'start'}))."...";
 	if(-d "${p_path}meta_$$tmp{'start'}/"){
   	if(-f "${p_path}meta_$$tmp{'start'}/${p_job}_$$tmp{'start'}.log"){
   		system("$cmd_cp ${p_path}meta_$$tmp{'start'}/${p_job}_$$tmp{'start'}.log ${SESSIONLOGPATH}");
-  		print $? == 0 ? "\t+log\n" : "\t*log\n";
+  		print $? == 0 ? "\t+log" : "\t*log";
   	}else{
-  		print "\t-log\n";
+  		print "\t-log";
   	}
   	if(-f "${p_path}meta_$$tmp{'start'}/${p_job}_$$tmp{'start'}.dirs"){
   		system("$cmd_cp ${p_path}meta_$$tmp{'start'}/${p_job}_$$tmp{'start'}.dirs ${CATALOGPATH}");
-  		print $? == 0 ? "\t+dirs\n" : "\t*dirs\n";
+  		print $? == 0 ? "\t+dirs" : "\t*dirs";
   	}else{
-  		print "\t-dirs\n";
+  		print "\t-dirs";
   	}
   	if(-f "${p_path}meta_$$tmp{'start'}/${p_job}_$$tmp{'start'}.files"){
   		system("$cmd_cp ${p_path}meta_$$tmp{'start'}/${p_job}_$$tmp{'start'}.files ${CATALOGPATH}");
-  		print $? == 0 ? "\t+files\n" : "\t*files\n";
+  		print $? == 0 ? "\t+files" : "\t*files";
   	}else{
-  		print "\t-files\n";
+  		print "\t-files";
   	}
   	if(-f "${p_path}meta_$$tmp{'start'}/${p_job}_$$tmp{'start'}.owners"){
   		system("$cmd_cp ${p_path}meta_$$tmp{'start'}/${p_job}_$$tmp{'start'}.owners ${CATALOGPATH}");
-  		print $? == 0 ? "\t+owners\n" : "\t*owners\n";
+  		print $? == 0 ? "\t+owners" : "\t*owners";
   	}else{
-  		print "\t-owners\n";
+  		print "\t-owners";
   	}
   	if(-f "${p_path}meta_$$tmp{'start'}/${p_job}_$$tmp{'start'}.groups"){
   		system("$cmd_cp ${p_path}meta_$$tmp{'start'}/${p_job}_$$tmp{'start'}.groups ${CATALOGPATH}");
-  		print $? == 0 ? "\t+groups\n" : "\t*groups\n";
+  		print $? == 0 ? "\t+groups" : "\t*groups";
   	}else{
-  		print "\t-groups\n";
+  		print "\t-groups";
   	}
+  	print "\n";
   }else{
   	print "\tno metadata found for this version.\n";
   }
