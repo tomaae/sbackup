@@ -6,6 +6,7 @@
 ###########################################################################################
 use strict;
 use warnings;
+use POSIX qw(strftime);
 our ($p_path);
 our %job;
 
@@ -49,28 +50,45 @@ if($? == 0){
 }
 
 ## Import job version logs
-print "Importing job version logs...";
-my $success = 0;
-for my $tmp(`$cmd_ls ${p_path}meta_latest/`){
-	chomp($tmp);
-	next if $tmp !~ /^${p_job}_(\d+)\.log+$/;
-	system("$cmd_cp ${p_path}meta_latest/${p_job}_${1}.log ${SESSIONLOGPATH}");
-	print $? == 0 ? "done\n" : "failed\n";
-	$success = 1;
+print "Importing job catalog...";
+my @output = &get_history($p_job,'status,start,type');
+for my $tmp(@{$output[2]}){
+	print "Importing $$tmp{'type'} version ".strftime("%G/%m/%d-%H%M%S", localtime($$tmp{'start'}))."\n";
+	if(-d "${p_path}meta_$$tmp{'start'}/"){
+  	if(-f "${p_path}meta_$$tmp{'start'}/${p_job}_$$tmp{'start'}.log"){
+  		system("$cmd_cp ${p_path}meta_$$tmp{'start'}/${p_job}_$$tmp{'start'}.log ${SESSIONLOGPATH}");
+  		print $? == 0 ? "\t+log\n" : "\t*log\n";
+  	}else{
+  		print "\t-log\n";
+  	}
+  	if(-f "${p_path}meta_$$tmp{'start'}/${p_job}_$$tmp{'start'}.dirs"){
+  		system("$cmd_cp ${p_path}meta_$$tmp{'start'}/${p_job}_$$tmp{'start'}.dirs ${CATALOGPATH}");
+  		print $? == 0 ? "\t+dirs\n" : "\t*dirs\n";
+  	}else{
+  		print "\t-dirs\n";
+  	}
+  	if(-f "${p_path}meta_$$tmp{'start'}/${p_job}_$$tmp{'start'}.files"){
+  		system("$cmd_cp ${p_path}meta_$$tmp{'start'}/${p_job}_$$tmp{'start'}.files ${CATALOGPATH}");
+  		print $? == 0 ? "\t+files\n" : "\t*files\n";
+  	}else{
+  		print "\t-files\n";
+  	}
+  	if(-f "${p_path}meta_$$tmp{'start'}/${p_job}_$$tmp{'start'}.owners"){
+  		system("$cmd_cp ${p_path}meta_$$tmp{'start'}/${p_job}_$$tmp{'start'}.owners ${CATALOGPATH}");
+  		print $? == 0 ? "\t+owners\n" : "\t*owners\n";
+  	}else{
+  		print "\t-owners\n";
+  	}
+  	if(-f "${p_path}meta_$$tmp{'start'}/${p_job}_$$tmp{'start'}.groups"){
+  		system("$cmd_cp ${p_path}meta_$$tmp{'start'}/${p_job}_$$tmp{'start'}.groups ${CATALOGPATH}");
+  		print $? == 0 ? "\t+groups\n" : "\t*groups\n";
+  	}else{
+  		print "\t-groups\n";
+  	}
+  }else{
+  	print "\tno metadata found for this version.\n";
+  }
 }
-print "not found\n" if !$success;
-
-## Import job version catalog
-print "Importing job version logs...";
-my $success = 0;
-for my $tmp(`$cmd_ls ${p_path}meta_latest/`){
-	chomp($tmp);
-	next if $tmp !~ /^${p_job}_(\d+)\.(dirs|files|owners|groups)+$/;
-	system("$cmd_cp ${p_path}meta_latest/${p_job}_${1}.$2 ${CATALOGPATH}");
-	print $? == 0 ? "done\n" : "failed\n";
-	$success = 1;
-}
-print "not found\n" if !$success;
 
 ## Import job configuration
 print "Importing job configuration...";

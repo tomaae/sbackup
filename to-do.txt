@@ -1,8 +1,4 @@
 =================================================================
-==IMPORT=========================================================
-[] - import catalog and version log from all versions, not just recent
-
-=================================================================
 ==GENERAL========================================================
 [L] - disable error exit code and message when running jobs from cron
 [L] - errors to be reported post-backup in custom HTML email
