@@ -410,14 +410,12 @@ sub check_runfile{
   			## Close job if PID is no longer running
   			&f_output("DEBUG","Job is no longer running, possible crash or kill.");
   			update_history($p_job,"status=5,error=killed,perf=", "status==0");
-  			#version_log('critical','unknown',$::backupserver_fqdn,"Post-purge failed to start.");
   			rm_runfile($p_job);
   		}
   	}else{
   		## Close job if pidfile does not contain valid PID
   		&f_output("DEBUG","Runfile is faulty, removing.");
   		update_history($p_job,"status=5,error=killed,perf=", "status==0");
-  		#version_log('critical','unknown',$::backupserver_fqdn,"Post-purge failed to start.");
   		rm_runfile($p_job);
   	}
   }
