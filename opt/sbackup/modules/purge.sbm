@@ -54,13 +54,21 @@ our $sessionlogfile = $SESSIONLOGPATH.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".l
 sub job_failed {
 	my $msg = shift;
 	$SB_TIMEEND = time();
-	print STDERR "Error: $msg\n";
 	version_log('critical','purge',$backupserver_fqdn,"Purge job failed with error:\n$msg");
 	$msg =~ s/^([^\n]+)//;
 	$msg = $1;
 	update_history($p_job,"status=5,end=".$SB_TIMEEND.",error=".$msg.",perf=","status==0,type==purge,start==".$SB_TIMESTART);
 	rm_runfile($p_job);
-	exit 1;
+	
+  if($SB_ERRORLEVEL >= 3){
+  	if(!defined &::notification){
+    	require notifications;
+    	import notifications;
+    	notification("Purge job failed", $p_job, $SB_TIMESTART,"");
+  	}
+  }
+	
+	exit 0;
 }
 
 ##
@@ -68,7 +76,8 @@ sub job_failed {
 ##
 &f_output("DEBUG","Starting purge $job{$p_job}{'NAME'}");
 my $result = check_runfile($p_job,$RUNFILEPATH."sbackup_".$job{$p_job}{'NAME'});
-f_output("ERROR",$result,1) if $result;
+#f_output("ERROR",$result,1) if $result;
+exit 0 if $result;
 
 set_runfile($p_job,"type=purge,status=0,epoch=".$SB_TIMESTART.",pid=".$$);
 insert_history($p_job,"type=purge,status=0,name=".$job{$p_job}{'NAME'}.",start=".$SB_TIMESTART);
@@ -299,5 +308,13 @@ version_log('normal','purge',$backupserver_fqdn,"Purge job failed.") if $SB_ERRO
 version_log('normal','purge',$backupserver_fqdn,"Purge job was aborted.") if $SB_ERRORLEVEL eq "6";
 update_history($p_job,"status=".$SB_ERRORLEVEL.",error=".$SB_ECODE.",end=".$SB_TIMEEND,"status==0,type==purge,start==".$SB_TIMESTART);
 rm_runfile($p_job);
+
+if($SB_ERRORLEVEL >= 3){
+	if(!defined &::notification){
+  	require notifications;
+  	import notifications;
+  	notification("Purge job failed", $p_job, $SB_TIMESTART,"");
+	}
+}
 
 return 1;

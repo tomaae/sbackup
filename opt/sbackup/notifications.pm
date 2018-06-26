@@ -69,7 +69,7 @@ sub notify_email{
   }
   
   ## List version detail
-  if($version){
+  if($job && $version){
   	$html .= '<table width="100%" border="0" cellspacing="0" cellpadding="3">';
   	my $tmp = email_version($job,$version);
   	$html .= $tmp;

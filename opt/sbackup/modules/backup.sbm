@@ -52,7 +52,6 @@ our $sessionlogfile = $SESSIONLOGPATH.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".l
 sub job_failed {
 	my $msg = shift;
 	$SB_TIMEEND = time();
-	print STDERR "Error: $msg\n";
 	
   ## LVM remove snapshot if present
   if($::job{$p_job}{'SOURCE'}{'-snapshot'}{'-enabled'} eq 1 && $::job{$p_job}{'SOURCE'}{'-snapshot'}{'-type'} eq "lvm" && $::lvm_path ne "" && $msg !~ /Snapshot/i){
@@ -67,7 +66,16 @@ sub job_failed {
 	$msg = $1;
 	update_history($p_job,"status=5,end=".$SB_TIMEEND.",error=".$msg.",perf=","status==0,type==backup,start==".$SB_TIMESTART);
 	rm_runfile($p_job);
-	exit 1;
+	
+  if($SB_ERRORLEVEL >= 3){
+  	if(!defined &::notification){
+    	require notifications;
+    	import notifications;
+    	notification("Backup job failed", $p_job, $SB_TIMESTART,"");
+  	}
+  }
+	
+	exit 0;
 }
 
 ##
@@ -75,7 +83,8 @@ sub job_failed {
 ##
 &f_output("DEBUG","Starting backup $job{$p_job}{'NAME'}");
 my $result = check_runfile($p_job,$RUNFILEPATH."sbackup_".$job{$p_job}{'NAME'});
-f_output("ERROR",$result,1) if $result;
+#f_output("ERROR",$result,1) if $result;
+exit 0 if $result;
 
 set_runfile($p_job,"type=backup,status=0,epoch=".$SB_TIMESTART.",pid=".$$);
 insert_history($p_job,"type=backup,status=0,name=".$job{$p_job}{'NAME'}.",start=".$SB_TIMESTART.",perf=(Starting) 0%");
@@ -340,7 +349,7 @@ if($SB_ERRORLEVEL <= 3){
 	&f_output("DEBUG","Starting post-purge.");
 	system("${BINPATH}/sbackup -purge ".$p_job." >/dev/null") if !$::SIMULATEMODE;
 	if($? != 0){
-		print STDERR "Post-purge failed to start.\n";
+		#print STDERR "Post-purge failed to start.\n";
 		version_log('minor','backup',$backupserver_fqdn,"Post-purge failed to start.");
 		&f_output("DEBUG","Post-purge failed to start.");
 	}else{
@@ -353,7 +362,7 @@ if($SB_ERRORLEVEL <= 3 && $job{$p_job}{'POST'}{'-job'}{'-name'} ne ""){
 	&f_output("DEBUG","Starting ".$job{$p_job}{'POST'}{'-job'}{'-type'}." post-job ".$job{$p_job}{'POST'}{'-job'}{'-name'});
 	system("${BINPATH}/sbackup -".$job{$p_job}{'POST'}{'-job'}{'-type'}." ".$job{$p_job}{'POST'}{'-job'}{'-name'}." >/dev/null") if !$::SIMULATEMODE;
 	if($? != 0){
-		print STDERR "Post-job failed to start.\n";
+		#print STDERR "Post-job failed to start.\n";
 		version_log('minor','backup',$backupserver_fqdn,"Post-job failed to start.");
 		&f_output("DEBUG","Post-job failed to start.");
 	}else{
@@ -363,7 +372,11 @@ if($SB_ERRORLEVEL <= 3 && $job{$p_job}{'POST'}{'-job'}{'-name'} ne ""){
 }
 
 if($SB_ERRORLEVEL >= 3){
-	#notify_email("test subject","testbkp","1529759270","This is some\nlong\ndescription.");
+	if(!defined &::notification){
+  	require notifications;
+  	import notifications;
+  	notification("Backup job failed", $p_job, $SB_TIMESTART,"");
+	}
 }
 
 return 1;
