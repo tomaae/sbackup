@@ -230,13 +230,14 @@ sub severity2id{
 sub bit2oct{
 	my ($bits)=@_;
 	return "" if !$bits || $bits eq "";
-	return "" if $bits !~ /^[rwx-]{9}$/;
-	
+	return "" if $bits !~ /^[rwxs-]{9}$/;
 	$bits =~ s/\-/0/g;
-	$bits =~ s/r|w|x/1/g;
+	$bits =~ s/r|w|x|s/1/g;
+	
 	if($bits =~ /^(\d{3})(\d{3})(\d{3})$/){
 		return oct('0b'.$1).oct('0b'.$2).oct('0b'.$3);
 	}else{
+
 		return "";
 	}
 }

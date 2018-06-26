@@ -4,11 +4,6 @@
 [?] - catalog files could be compressed after session completes, stream gunzip?
 [?] - session log could be compressed after session completes, stream gunzip?
 
-[?] - create own function for strftime
-[?] - create own function for mktime
-[?] - create own function for strftime
-[?] - create own function for ceil, floor, round
-
 =================================================================
 ==AUTOCOMPLETE===================================================
 [] - improve path catalog
@@ -30,22 +25,9 @@
 
 =================================================================
 ==VERIFY=========================================================
-[] - Check if data directories exists for all backups in history log
 [] - Check if there are data directories not present in history log
-[] - When session log is present, check if all data exists in data directory according to log, check hardlinks(?)
-[] - walk catalog and verify against file stat
-
-#stat /srv/dev-disk-by-label-backup/backup/System_full_b16_s1_v1.tib
-  File: /srv/dev-disk-by-label-backup/backup/System_full_b16_s1_v1.tib
-  Size: 23148268544     Blocks: 45211472   IO Block: 4096   regular file
-Device: fe03h/65027d    Inode: 46          Links: 1
-Access: (0674/-rw-rwxr--)  Uid: ( 1000/    shii)   Gid: (  100/   users)
-Access: 2018-06-18 23:22:20.497870729 +0200
-Modify: 2018-06-02 16:05:45.763894364 +0200
-Change: 2018-06-02 16:05:45.760004185 +0200
- Birth: -
-
-my $file_mode = ( stat( $file ) )[2];
+[] - Manual schedule?
+[] - Automatic schedule
 
 =================================================================
 ==RESTORE========================================================
