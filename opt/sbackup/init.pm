@@ -9,7 +9,6 @@ package init;
 
 use strict;
 use warnings;
-use Net::Domain qw(hostfqdn);
 use POSIX qw(strftime ceil);
 
 use Exporter qw(import);
@@ -121,6 +120,7 @@ sub get_env{
 	our $cmd_kill       = "kill";
 	our $cmd_pkill      = "pkill";
 	our $cmd_sync       = "sync";
+	my $cmd_hostname    = "/bin/hostname";
 	
 	
 	our $cmd_lvs        = "/sbin/lvs";
@@ -133,8 +133,10 @@ sub get_env{
 	our $cmd_umount     = "/bin/umount";
 	
 	
-	our $backupserver_fqdn = hostfqdn;
+	our $backupserver_fqdn = `$cmd_hostname -f`;
+	chomp $backupserver_fqdn;
 	
+
 	if(!-d $JOBCONFIGPATH){
 		system("$cmd_mkdir $JOBCONFIGPATH");
 		if($? != 0){
