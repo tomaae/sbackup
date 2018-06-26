@@ -20,48 +20,91 @@ use logger;
 
 use Exporter qw(import);
 our @ISA = qw(Exporter);
-our @EXPORT = qw(notify_email);
+our @EXPORT = qw(notification);
+
+##
+## notification
+##
+sub notification{
+	my ($subj,$job,$version,$body)=@_;
+	notify_email($subj,$job,$version,$body);
+}
 
 ##
 ## notify_email
 ##
 sub notify_email{
 	my ($subj,$job,$version,$body)=@_;
+
   my $subject   = "Sync Backup - $subj";
   my $sender    = 'sbackup.notifications@'.$::backupserver_fqdn;
-  my $recipient = 'tomas.ebringer@me.com';
+  my $recipient = '';
   my $html = "";
   my $plain_text = "";
 
+	if(-f "/etc/postfix/recipient_canonical"){
+		for my $tmp(read_log("/etc/postfix/recipient_canonical")){
+			chomp($tmp);
+			next if $tmp !~ /^root\s+/;
+			$tmp =~ s/^root\s+//;
+			$recipient = $tmp ;
+		}
+	}
+	
+	return 1 if !$recipient || $recipient !~ /^.+\@.+..+$/;
+	
+	
   $html .= "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\"><html xmlns=\"http://www.w3.org/1999/xhtml\"><head><META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=UTF-8\"><META http-equiv=\"X-UA-Compatible\" content=\"IE=edge\" /><style type=\"text/css\">";
   $html .= "table tr td {border:1px solid #B0B0B0;background-color:#F5F5F5;}\ntable tr th {border:1px solid #B0B0B0;background-color:#DCDCDC;}\n";
   $html .= ".coml {color:#00FF00;}\n.warn {color:#FFD700;}\n.mino {color:#00CED1;}\n.majo {color:#FF0000;}\n.crit {color:#8B0000;}\n.prog {color:#CCCCCC;}\n.que {color:#CCCCCC;}\n";
   $html .= "</style></head><body bgcolor=\"white\" width=\"100%\"><h1 align=center>$subj</h1>\n";
+  $plain_text .= $subj."\n";
   
   if($body && $body ne ""){
   	$body =~ s/\n/\<br\/\>/g;
   	$html .= $body;
+  	$plain_text .= $body;
   	$html .= "<br/><br/>";
+  	$plain_text .= "\n\n";
   }
   
   ## List version detail
   if($version){
   	$html .= '<table width="100%" border="0" cellspacing="0" cellpadding="3">';
-  	$html .= email_version($job,$version);
+  	my $tmp = email_version($job,$version);
+  	$html .= $tmp;
+  	$plain_text .= $tmp;
   	$html .= '</table><br/><br/>';
+  	$plain_text .= "\n\n";
   }
   
   ## List job history
   if($job){
   	$html .= '<table width="100%" border="0" cellspacing="0" cellpadding="3">';
-  	$html .= email_history($job);
+  	my $tmp = email_history($job);
+  	$html .= $tmp;
+  	$tmp =~ s/\<\/tr\>/\n/g;
+  	$tmp =~ s/\<t[dh]\>([^<]+)\<\/t[dh]\>/$1\t/g;
+  	$tmp =~ s/\<[^>]+\>//g;
+  	for my $rows(split(/\n/,$tmp)){
+  		for my $column(split(/\t/,$rows)){
+  			$plain_text .= sprintf("%-22.22s", $column);
+  		}
+  		$plain_text .= "\n";
+  	}
   	$html .= '</table>';
   }
-
+  
   $html .= "</body></html>\n";
-
-
-
+  
+  ## Convert plain_text
+  $plain_text =~ s/\<br[^>]*\>/\n/g;
+  $plain_text =~ s/\&nbsp;/ /g;
+  $plain_text =~ s/\<\/th\>\<td\>/\: /g;
+  $plain_text =~ s/\<\/tr\>\<tr\>/\n/g;
+  $plain_text =~ s/\<[^>]+\>//g;
+  
+  
 	my $email = Email::MIME->create_html(
     header => [
       To      => $recipient,

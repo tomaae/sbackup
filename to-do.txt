@@ -1,8 +1,6 @@
 =================================================================
 ==NOTIFIER=======================================================
-[] - create text part of email
 [] - load only when needed (add check if it is already loaded ?function exists?)
-[] - create central notifier function which will branch to mail
 
 =================================================================
 ==GENERAL========================================================
