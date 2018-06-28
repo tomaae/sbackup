@@ -4,6 +4,12 @@
 [?] - session log could be compressed after session completes, stream gunzip?
 
 [] LVM - check if all binaries exists before initiating snapshots, or show minor message (lvm not installed)
+
+=================================================================
+==SCHEDULER======================================================
+[] - hourly
+[?] - realtime
+
 =================================================================
 ==AUTOCOMPLETE===================================================
 [] - improve path catalog
