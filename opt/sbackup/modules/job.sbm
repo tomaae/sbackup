@@ -16,11 +16,12 @@ if($p_job || (!$p_job && $sv_all)){
 	return 1;
 }
 
-printf "%-1.1s %-20.20s %-18.18s %-16.16s %-16.16s %-30.30s %-30.30s %-14.14s %-3.3s\n",
+printf "%-1.1s %-20.20s %-18.18s %-14.14s %-1.1s %-16.16s %-30.30s %-30.30s %-14.14s %-3.3s\n",
 	"Enabled",
 	"Name",
 	"Schedule",
 	"Status",
+	"!",
 	"Last backup",
 	"Source",
 	"Target",
@@ -88,6 +89,10 @@ for my $tmp_job(sort keys %job){
 	my $out_lastbackup = "N/A";
 	my $out_type = "";
 	my $out_error = "";
+	my $alert_backup = "0";
+	my $alert_purge = "0";
+	my $alert_copy = "0";
+	my $alert_verify = "0";
 	my @tmp_history = &get_history($job{$tmp_job}{'NAME'},'status,start,name,type,perf,error');
 	for my $tmp(@{$tmp_history[2]}){
 		$out_versions++ if $$tmp{'type'} eq "backup" && ($$tmp{'status'} eq "1" || $$tmp{'status'} eq "2" || $$tmp{'status'} eq "3");
@@ -98,6 +103,10 @@ for my $tmp_job(sort keys %job){
 		}
 		$out_type = $$tmp{'type'} if $$tmp{'status'} eq "0";
 		$out_lastbackup = $$tmp{'perf'} if $$tmp{'status'} eq "0" && $$tmp{'perf'} =~ /%$/;
+		$alert_backup = $$tmp{'status'} if $$tmp{'type'} eq "backup";
+		$alert_purge = $$tmp{'status'} if $$tmp{'type'} eq "purge";
+		$alert_copy = $$tmp{'status'} if $$tmp{'type'} eq "copy";
+		$alert_verify = $$tmp{'status'} if $$tmp{'type'} eq "verify";
 	}
 	#$out_status = "Error:".$out_status if $out_status ne "0" && $out_status ne "N/A";
 	$out_status = "Backing up" if $out_status eq "0" && $out_type eq "backup";
@@ -112,6 +121,15 @@ for my $tmp_job(sort keys %job){
   $out_status = "Completed/Failures" if $out_status eq "4";
   $out_status = "Failed"  if $out_status eq "5";
   $out_status = "Aborted" if $out_status eq "6";
+  
+ 	##
+	## Alert
+	##
+  my $out_alert = "";
+  $out_alert = "!" if $alert_backup ne "0" && $alert_backup ne "1";
+  $out_alert = "!" if $alert_purge ne "0" && $alert_purge ne "1";
+  $out_alert = "!" if $alert_copy ne "0" && $alert_copy ne "1";
+  $out_alert = "!" if $alert_verify ne "0" && $alert_verify ne "1";
   
 	##
 	## Parse retention
@@ -148,11 +166,12 @@ for my $tmp_job(sort keys %job){
 	##
 	## Output
 	##
-	printf "%-1.1s %-20.20s %-18.18s %-16.16s %-16.16s %-30.30s %-30.30s %-14.14s %-3.3s\n",
+	printf "%-1.1s %-20.20s %-18.18s %-14.14s %-1.1s %-16.16s %-30.30s %-30.30s %-14.14s %-3.3s\n",
 		$out_enabled,
 		$job{$tmp_job}{'NAME'},
 		$out_schedule,
 		$out_status,
+		$out_alert,
 		$out_lastbackup,
 		$source_integ.$source_name,
 		$target_integ.$target_name,
