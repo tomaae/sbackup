@@ -16,7 +16,7 @@ our @ISA = qw(Exporter);
 our @EXPORT = qw(
 									f_output get_env f_arguments 
 									size2human perf2human min2time severity2id bit2oct oct2bit
-									$slash $BINPATH $MODULESPATH $ETCPATH $JOBCONFIGPATH $USERSCRIPTSPATH $VARPATH $SESSIONLOGPATH $CATALOGPATH $RUNFILEPATH
+									$slash $BINPATH $MODULESPATH $ETCPATH $JOBCONFIGPATH $USERSCRIPTSPATH $VARPATH $VERSIONLOGPATH $CATALOGPATH $RUNFILEPATH
 									$OS_USERS $OS_GROUPS
 									$cmd_ls $cmd_ln $cmd_rm $cmd_ps $cmd_sleep $cmd_cp $cmd_mv $cmd_mkdir $cmd_chmod $cmd_rsync $cmd_kill $cmd_pkill $cmd_df $cmd_which $cmd_sync $cmd_dpkg
 									$cmd_lvs $cmd_lvdisplay $cmd_lvcreate $cmd_lvremove $cmd_mount $cmd_umount
@@ -96,7 +96,7 @@ sub get_env{
 	our $JOBCONFIGPATH  = "/etc/opt/sbackup/jobs".$slash;
 	our $USERSCRIPTSPATH= "/etc/opt/sbackup/userscripts".$slash;
 	our $VARPATH        = "/var/opt/sbackup".$slash;
-	our $SESSIONLOGPATH = "/var/opt/sbackup/sessionlogs".$slash;
+	our $VERSIONLOGPATH = "/var/opt/sbackup/versionlogs".$slash;
 	our $CATALOGPATH    = "/var/opt/sbackup/catalog".$slash;
 	our $RUNFILEPATH    = "/var/run/sbackup".$slash;
 	my $CRONFILE        = "/etc/cron.d/sbackup";
@@ -154,10 +154,10 @@ sub get_env{
 		}
 	}
 	
-	if(!-d $SESSIONLOGPATH){
-		system("$cmd_mkdir $SESSIONLOGPATH");
+	if(!-d $VERSIONLOGPATH){
+		system("$cmd_mkdir $VERSIONLOGPATH");
 		if($? != 0){
-			print "Failed to create $SESSIONLOGPATH with exit code $?.\n";
+			print "Failed to create $VERSIONLOGPATH with exit code $?.\n";
 			exit 1;
 		}
 	}

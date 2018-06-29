@@ -55,7 +55,7 @@ our $SB_TIMESTART = time();
 my $SB_TIMEEND;
 my $SB_ECODE = "";
 our $SB_ERRORLEVEL = 1;
-our $sessionlogfile = $SESSIONLOGPATH.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".log";
+our $versionlogfile = $VERSIONLOGPATH.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".log";
 
 ##
 ## job_failed
@@ -102,7 +102,7 @@ if($job{$p_job}{'POST'}{'-preexec'}){
   if(open(my $fh, "-|", 'cd '.$USERSCRIPTSPATH.';export JOB_NAME='.$job{$p_job}{'NAME'}.';export JOB_TYPE=verify;export STATUS='.$SB_ERRORLEVEL.';export START_TIME='.$SB_TIMESTART.';./'.$job{$p_job}{'POST'}{'-preexec'}.' 2>&1')){
     while (my $line = <$fh>){
     	chomp($line);
-    	append_log($sessionlogfile, $line);
+    	append_log($versionlogfile, $line);
     	print $line."\n" if $::PREVIEWMODE;
     }
     close($fh);
@@ -351,7 +351,7 @@ if($job{$p_job}{'POST'}{'-postexec'}){
 	if(open(my $fh, "-|", 'cd '.$USERSCRIPTSPATH.';export JOB_NAME='.$job{$p_job}{'NAME'}.';export JOB_TYPE=verify;export STATUS='.$SB_ERRORLEVEL.';export START_TIME='.$SB_TIMESTART.';export END_TIME='.$SB_TIMEEND.';./'.$job{$p_job}{'POST'}{'-postexec'}.' 2>&1')){
     while (my $line = <$fh>){
     	chomp($line);
-    	append_log($sessionlogfile, $line);
+    	append_log($versionlogfile, $line);
     	print $line."\n" if $::PREVIEWMODE;
     }
     close($fh);

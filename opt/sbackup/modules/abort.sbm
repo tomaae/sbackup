@@ -52,7 +52,7 @@ if($pid_output[0] && $pid_output[2][0]{'rpid'} && $pid_output[2][0]{'rpid'}  =~ 
 	f_output("ERROR","Unable to abort, job may still be starting or finishing.",1) if $? != 0;
 	
 	## Append abort request message to version log
-	our $sessionlogfile = $SESSIONLOGPATH.$p_job."_".$pid_output[2][0]{'epoch'}.".log";
+	our $versionlogfile = $VERSIONLOGPATH.$p_job."_".$pid_output[2][0]{'epoch'}.".log";
 	version_log('warning','user',$backupserver_fqdn,"Abort request received from ".$ENV{USERNAME}."@".$backupserver_fqdn);
 	
 	## Send kill request

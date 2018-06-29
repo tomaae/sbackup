@@ -56,7 +56,7 @@ for my $tmp(@{$output[2]}){
 	print "\tImporting $$tmp{'type'} version ".strftime("%G/%m/%d-%H%M%S", localtime($$tmp{'start'}))."...";
 	if(-d "${p_path}meta_$$tmp{'start'}/"){
   	if(-f "${p_path}meta_$$tmp{'start'}/${p_job}_$$tmp{'start'}.log"){
-  		system("$cmd_cp ${p_path}meta_$$tmp{'start'}/${p_job}_$$tmp{'start'}.log ${SESSIONLOGPATH}");
+  		system("$cmd_cp ${p_path}meta_$$tmp{'start'}/${p_job}_$$tmp{'start'}.log ${VERSIONLOGPATH}");
   		print $? == 0 ? "\t+log" : "\t*log";
   	}else{
   		print "\t-log";

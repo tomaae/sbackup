@@ -44,9 +44,9 @@ if($param_ok == 0){
 ## Get job pidfile
 my @pid_output = &get_runfile($p_job,'status,type,epoch,pid,rpid');
 if($pid_output[0] && $pid_output[2][0]{'epoch'} && $pid_output[2][0]{'pid'} && $pid_output[2][0]{'pid'}  =~ /^\d+$/){
-	my $sessionlogfile = $::SESSIONLOGPATH.$p_job."_".$pid_output[2][0]{'epoch'}.".log";
-	if(-f $sessionlogfile){
-    open(my $fh, '<', $sessionlogfile);
+	my $versionlogfile = $::VERSIONLOGPATH.$p_job."_".$pid_output[2][0]{'epoch'}.".log";
+	if(-f $versionlogfile){
+    open(my $fh, '<', $versionlogfile);
     for(;;){
     	system($::cmd_ps.' '.$pid_output[2][0]{'pid'}.' >/dev/null 2>&1');
     	last if $? != 0;

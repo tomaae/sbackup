@@ -56,7 +56,7 @@ if($tmp[2][0]{'type'} eq "backup" || $tmp[2][0]{'type'} eq "copy"){
 
 ## Log
 my $out_log = "Not available";
-$out_log = "Available" if -f $::SESSIONLOGPATH.$tmp[2][0]{'name'}."_".$tmp[2][0]{'start'}.".log";
+$out_log = "Available" if -f $::VERSIONLOGPATH.$tmp[2][0]{'name'}."_".$tmp[2][0]{'start'}.".log";
 
 ## Version
 my $out_version;
@@ -113,7 +113,7 @@ print "\nMessages higher than Warning:\n";
 ##
 ## Get version log
 ##
-if(-f $::SESSIONLOGPATH.$p_job."_".$p_version.".log"){
+if(-f $::VERSIONLOGPATH.$p_job."_".$p_version.".log"){
   require Term::ANSIColor;
   import Term::ANSIColor;
   my $highlight = "";
@@ -121,7 +121,7 @@ if(-f $::SESSIONLOGPATH.$p_job."_".$p_version.".log"){
   my $filter_inmsg = 0;
   my $filter_id = 2;
   my $msg_found = 0;
-  for my $tmp(&read_log($::SESSIONLOGPATH.$p_job."_".$p_version.".log")){
+  for my $tmp(&read_log($::VERSIONLOGPATH.$p_job."_".$p_version.".log")){
   	## Filter messages
   	## End of message
   	if($filter_inmsg){

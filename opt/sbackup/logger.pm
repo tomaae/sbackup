@@ -516,7 +516,7 @@ sub version_log{
 	
 	&f_output("DEBUG","New version log entry [$severity] From: $process\@$hostname\n$message");
 	if(!$::PREVIEWMODE){
-  	if(open(my $fh, ">>", $::sessionlogfile)){
+  	if(open(my $fh, ">>", $::versionlogfile)){
     	flock $fh,2;
     	seek $fh,0,2;
     	print $fh "[$severity] From: $process\@$hostname Time: ".strftime("%d/%m/%G %H:%M:%S", localtime(time()))."\n";

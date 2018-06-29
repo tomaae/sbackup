@@ -111,7 +111,7 @@ for my $key(sort keys %history){
 	
 	##Log
 	my $out_log = "N";
-	$out_log = "Y" if -f $::SESSIONLOGPATH.$tmp{'name'}."_".$tmp{'start'}.".log";
+	$out_log = "Y" if -f $::VERSIONLOGPATH.$tmp{'name'}."_".$tmp{'start'}.".log";
 
 	printf "%-17.17s %-9.9s %-30.30s %-16.16s %-22.22s %-6.6s %-9.9s %-8.8s %-3.3s\n",
   	$out_version,

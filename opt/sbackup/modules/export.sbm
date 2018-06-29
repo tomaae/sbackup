@@ -45,10 +45,10 @@ for my $tmp(`$cmd_ls $CATALOGPATH`){
 print "done\n";
 
 print "Exporting job version logs...";
-for my $tmp(`$cmd_ls $SESSIONLOGPATH`){
+for my $tmp(`$cmd_ls $VERSIONLOGPATH`){
 	chomp($tmp);
 	next if $tmp !~ /^$job{$p_job}{'NAME'}_\d+\.log+$/;
-	system("$cmd_rm $SESSIONLOGPATH$tmp");
+	system("$cmd_rm $VERSIONLOGPATH$tmp");
 }
 print "done\n";
 

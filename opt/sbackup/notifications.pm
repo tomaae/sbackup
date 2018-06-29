@@ -205,13 +205,13 @@ sub email_version{
   ##
   ## Get version log
   ##
-  if(-f $::SESSIONLOGPATH.$p_job."_".$p_version.".log"){
+  if(-f $::VERSIONLOGPATH.$p_job."_".$p_version.".log"){
     my $highlight = "";
     my $severity = "";
     my $filter_inmsg = 0;
     my $filter_id = 2;
     my $msg_found = 0;
-    for my $tmp(&read_log($::SESSIONLOGPATH.$p_job."_".$p_version.".log")){
+    for my $tmp(&read_log($::VERSIONLOGPATH.$p_job."_".$p_version.".log")){
     	## Filter messages
     	## End of message
     	if($filter_inmsg){

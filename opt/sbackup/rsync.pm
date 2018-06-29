@@ -313,23 +313,23 @@ sub rsync_backup {
     		if($line_flags =~ /^\>f/){ ## File change
     			$copied_last_size = $line_size if $line_size > 0;
       		if($line_flags =~ /^\>f\+/){ ## New file
-      			append_log($::sessionlogfile,'+'.$line_entry);
+      			append_log($::versionlogfile,'+'.$line_entry);
       			print '+'.$line_entry."\n" if $::PREVIEWMODE;
       		}else{ ## Modified file
-      			append_log($::sessionlogfile,'*'.$line_entry);
+      			append_log($::versionlogfile,'*'.$line_entry);
       			print '*'.$line_entry."\n" if $::PREVIEWMODE;
       		}
       		$data_changed = 1;
       	}elsif($line_flags =~ /^\*deleting/){ ## Deleted
-      		append_log($::sessionlogfile,'-'.$line_entry);
+      		append_log($::versionlogfile,'-'.$line_entry);
       		print '-'.$line_entry."\n" if $::PREVIEWMODE;
       		$data_changed = 1;
       	}elsif($line_flags =~ /^cd\+/){ ## New directory
-      		append_log($::sessionlogfile,'+'.$line_entry);
+      		append_log($::versionlogfile,'+'.$line_entry);
       		print '+'.$line_entry."\n" if $::PREVIEWMODE;
       		$data_changed = 1;
       	}elsif($line_flags =~ /\+/){ ## New other
-      		append_log($::sessionlogfile,'+'.$line_entry);
+      		append_log($::versionlogfile,'+'.$line_entry);
       		print '+'.$line_entry."\n" if $::PREVIEWMODE;
       		$data_changed = 1;
       	}elsif($line_flags =~ /^c/){ ## Local change other
@@ -350,7 +350,7 @@ sub rsync_backup {
     			## Job summary
     			$rsync_summary .= $line."\n";
     			if($line =~ /^total size is/){
-    				append_log($::sessionlogfile,"\n") if $data_changed;
+    				append_log($::versionlogfile,"\n") if $data_changed;
     				version_log('normal','rsync',$::backupserver_fqdn,"Backup job summary:\n\n$rsync_summary");
     				$rsync_summary = "";
     			}
@@ -374,7 +374,7 @@ sub rsync_backup {
     
     ## Append job summary
     if($rsync_summary ne ""){
-    	append_log($::sessionlogfile,"\n") if $data_changed;
+    	append_log($::versionlogfile,"\n") if $data_changed;
     	version_log('normal','rsync',$::backupserver_fqdn,"Backup job summary:\n\n$rsync_summary");
     	$rsync_summary = "";
     }
@@ -447,7 +447,7 @@ sub rsync_backup {
   ## Update backup size and performance
   ##
   if($SB_ECODE eq "0"){
-    for(read_log($::sessionlogfile)){
+    for(read_log($::versionlogfile)){
     	chomp;
     	if(/^Total file size: ([0-9,\.]+) bytes/){
     		$JOB_SIZE = $1;

@@ -46,7 +46,7 @@ our $SB_TIMESTART = time();
 my $SB_TIMEEND;
 my $SB_ECODE = "";
 our $SB_ERRORLEVEL = 1;
-our $sessionlogfile = $SESSIONLOGPATH.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".log";
+our $versionlogfile = $VERSIONLOGPATH.$job{$p_job}{'NAME'}."_".$SB_TIMESTART.".log";
 
 ##
 ## job_failed
@@ -93,7 +93,7 @@ if($job{$p_job}{'POST'}{'-preexec'}){
   if(open(my $fh, "-|", 'cd '.$USERSCRIPTSPATH.';export JOB_NAME='.$job{$p_job}{'NAME'}.';export JOB_TYPE=purge;export STATUS='.$SB_ERRORLEVEL.';export START_TIME='.$SB_TIMESTART.';./'.$job{$p_job}{'POST'}{'-preexec'}.' 2>&1')){
     while (my $line = <$fh>){
     	chomp($line);
-    	append_log($sessionlogfile, $line);
+    	append_log($versionlogfile, $line);
     	print $line."\n" if $::PREVIEWMODE;
     }
     close($fh);
@@ -203,30 +203,30 @@ if(-f $VARPATH.'history_'.$p_job){
   	}
   	##Purge versions
   	if($$tmp{'type'} eq "purge" && ($$tmp{'start'} < ($SB_TIMESTART - ($ADMIN_PROTECTION * 86400)))){
-  		&f_output("DEBUG","Purge session for removal.");
+  		&f_output("DEBUG","Purge version for removal.");
   		$obsolete = 1;
   	}
   	##Failed backup versions
   	if($$tmp{'type'} eq "backup" && ($$tmp{'status'} eq "4" || $$tmp{'status'} eq "5" || $$tmp{'status'} eq "6") && ($$tmp{'start'} < ( $SB_TIMESTART - ($ADMIN_PROTECTION * 86400)))){
-  		&f_output("DEBUG","Failed backup session for removal.");
+  		&f_output("DEBUG","Failed backup version for removal.");
   		$obsolete = 1;
   	}
   	##Completed backup versions
   	if($$tmp{'type'} eq "backup" && ($$tmp{'status'} eq "1" || $$tmp{'status'} eq "2" || $$tmp{'status'} eq "3") && ($$tmp{'start'} < ( $SB_TIMESTART - ($DATA_PROTECTION * 86400)))){
-  		&f_output("DEBUG","Obsolete backup session for removal.");
+  		&f_output("DEBUG","Obsolete backup version for removal.");
   		$obsolete = 1;
   	}
   	
   	##Completed backup versions with 0 protection (keep last version)
   	if($$tmp{'type'} eq "backup" && $DATA_PROTECTION eq "0" && $$tmp{'start'} < $LAST_COMPLETED_STAMP){
-  		&f_output("DEBUG","Obsolete backup session for removal.");
+  		&f_output("DEBUG","Obsolete backup version for removal.");
   		$obsolete = 1;
   	}
   	
   	##Remove version
   	if($obsolete == 1){
   		&f_output("DEBUG","Removing version $$tmp{'start'}.");
-  		append_log($sessionlogfile,"Removing version $$tmp{'start'}\n");
+  		append_log($versionlogfile,"Removing version $$tmp{'start'}\n");
   		print "Removing version $$tmp{'start'}\n" if $::PREVIEWMODE;
   		
   		if(-d $target_path.$slash."data_".$$tmp{'start'}){
@@ -237,9 +237,9 @@ if(-f $VARPATH.'history_'.$p_job){
   			&f_output("DEBUG","Found meta.");
   			system("$cmd_rm \"".$target_path.$slash."meta_".$$tmp{'start'}."\"") if !$::PREVIEWMODE;
   		}
-  		if(-f $SESSIONLOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".log"){
+  		if(-f $VERSIONLOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".log"){
   			&f_output("DEBUG","Found log.");
-  			system("$cmd_rm \"".$SESSIONLOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".log\"") if !$::PREVIEWMODE;
+  			system("$cmd_rm \"".$VERSIONLOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".log\"") if !$::PREVIEWMODE;
   		}
   		if(-f $CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".dirs"){
   			&f_output("DEBUG","Found dir catalog.");
@@ -271,7 +271,7 @@ if(-f $VARPATH.'history_'.$p_job){
 }
 
 if($data_purged){
-	append_log($sessionlogfile,"\n");
+	append_log($versionlogfile,"\n");
 }else{
 	version_log('normal','purge',$backupserver_fqdn,"Nothing purged, no expired data found.");
 }
@@ -288,7 +288,7 @@ if($job{$p_job}{'POST'}{'-postexec'}){
 	if(open(my $fh, "-|", 'cd '.$USERSCRIPTSPATH.';export JOB_NAME='.$job{$p_job}{'NAME'}.';export JOB_TYPE=purge;export STATUS='.$SB_ERRORLEVEL.';export START_TIME='.$SB_TIMESTART.';export END_TIME='.$SB_TIMEEND.';./'.$job{$p_job}{'POST'}{'-postexec'}.' 2>&1')){
     while (my $line = <$fh>){
     	chomp($line);
-    	append_log($sessionlogfile, $line);
+    	append_log($versionlogfile, $line);
     	print $line."\n" if $::PREVIEWMODE;
     }
     close($fh);
