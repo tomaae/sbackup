@@ -403,8 +403,9 @@ sub check_runfile{
   		## Runfile data contain PID
   		&f_output("DEBUG","Runfile pid ".$output[2][0]{'pid'});
   		## Check if PID is still running
-  		system('$::cmd_ps '.$output[2][0]{'pid'}.' >/dev/null 2>&1');
+  		system($::cmd_ps.' '.$output[2][0]{'pid'}.' >/dev/null 2>&1');
   		if($? == 0){
+  			&f_output("DEBUG","Job is already running.");
   			return "Job (".$output[2][0]{'type'}.") is already running.";
   		}else{
   			## Close job if PID is no longer running
