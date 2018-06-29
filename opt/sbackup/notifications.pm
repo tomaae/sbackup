@@ -117,7 +117,8 @@ sub notify_email{
   
   # Debugging; this should be controlled by a "verbose" flag
 	print STDERR $email->as_string if $::DEBUGMODE;
-
+	return if $::SIMULATEMODE;
+	
   my $response = sendmail($email);
   if(!$response){
      print STDERR "An error occurred, got $response as response from 'sendmail: $Mail::Sendmail::error'\n";
