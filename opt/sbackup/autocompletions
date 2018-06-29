@@ -212,7 +212,7 @@ _sbackup_abort()
 	_init_completion || return
 
 	case $prev in
-		-abort)
+		-abort|-mon*)
 			_sbackup_running_jobs
 			return 0
 			;;
@@ -227,7 +227,7 @@ _sbackup()
 
 	local command options
 	
-	commands='-backup -purge -verify -abort -job -export -import'
+	commands='-backup -purge -verify -abort -job -monitor -export -import'
 	
 	if [[ $cword -eq 1 ]]; then
 		COMPREPLY=( $( compgen -W "$commands" -- "$cur" ) )
@@ -250,7 +250,7 @@ _sbackup()
 				_sbackup_purge
 				return 0
 				;;
-			-abort)
+			-abort|-mon*)
 				_sbackup_abort
 				return 0
 				;;

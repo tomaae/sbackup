@@ -1,0 +1,80 @@
+###########################################################################################
+#
+#                                         sbackup
+#                                      monitor module
+#
+###########################################################################################
+use strict;
+use warnings;
+use Term::ANSIColor;
+our ($p_job);
+our %job;
+
+##
+## Check parameters
+##
+my $param_ok = 0;
+if($p_job){
+	$param_ok = job_exists($p_job);
+	if($param_ok == 1){
+		if(!-f $RUNFILEPATH."sbackup_".$job{$p_job}{'NAME'}){
+			print STDERR "Error: Job \"$p_job\" is not running.\n\n";
+			$param_ok = 0;
+		}
+	}else{
+		print STDERR "Error: Job \"$p_job\" does not exists.\n\n";
+	}
+}
+
+## List running jobs
+if($param_ok == 0){
+	my $runningno = 0;
+	print STDERR "Running jobs:\n";
+	for my $tmp(sort keys %job){
+		if(-f $RUNFILEPATH."sbackup_".$job{$tmp}{'NAME'}){
+			print STDERR $job{$tmp}{'NAME'}."\n";
+			$runningno++;
+		}
+	}
+	print STDERR "There are no running jobs\n" if !$runningno;
+	print STDERR "\n";
+	exit 1;
+}
+
+## Get job pidfile
+my @pid_output = &get_runfile($p_job,'status,type,epoch,pid,rpid');
+if($pid_output[0] && $pid_output[2][0]{'epoch'} && $pid_output[2][0]{'pid'} && $pid_output[2][0]{'pid'}  =~ /^\d+$/){
+	my $sessionlogfile = $::SESSIONLOGPATH.$p_job."_".$pid_output[2][0]{'epoch'}.".log";
+	if(-f $sessionlogfile){
+    open(my $fh, '<', $sessionlogfile);
+    for(;;){
+    	system($::cmd_ps.' '.$pid_output[2][0]{'pid'}.' >/dev/null 2>&1');
+    	last if $? != 0;
+      while(my $line = <$fh>){
+      	chomp($line);
+      	
+      	## Severity colors
+      	if($line =~ /^\[(\w+)\] /){
+      		my $severity = $1;
+      		my $highlight = "green";
+      		$highlight = "yellow" if $severity eq "Warning";
+      		$highlight = "cyan" if $severity eq "Minor";
+      		$highlight = "bright_red" if $severity eq "Major";
+      		$highlight = "red" if $severity eq "Critical";
+      		$line =~ s/^\[$severity\]//;
+      		$line = color($highlight)."[$severity]".color("reset").$line;
+      	}
+      	
+      	print $line,"\n";
+      }
+      sleep 1;
+      seek $fh, 0, 1; ## Clear the eof flag on $fh
+    }
+  }else{
+  	f_output("ERROR","Job \"$p_job\" is not running.",1)
+  }
+}else{
+	f_output("ERROR","Job \"$p_job\" is not running.",1)
+}
+
+return 1;
