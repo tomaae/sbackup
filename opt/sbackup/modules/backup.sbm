@@ -101,6 +101,7 @@ if($job{$p_job}{'POST'}{'-preexec'}){
     while (my $line = <$fh>){
     	chomp($line);
     	append_log($sessionlogfile, $line);
+    	print $line."\n" if $::PREVIEWMODE;
     }
     close($fh);
     if($? != 0){
@@ -322,6 +323,7 @@ if($job{$p_job}{'POST'}{'-postexec'}){
     while (my $line = <$fh>){
     	chomp($line);
     	append_log($sessionlogfile, $line);
+    	print $line."\n" if $::PREVIEWMODE;
     }
     close($fh);
     if($? != 0){

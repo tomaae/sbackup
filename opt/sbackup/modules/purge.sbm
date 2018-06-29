@@ -94,6 +94,7 @@ if($job{$p_job}{'POST'}{'-preexec'}){
     while (my $line = <$fh>){
     	chomp($line);
     	append_log($sessionlogfile, $line);
+    	print $line."\n" if $::PREVIEWMODE;
     }
     close($fh);
     if($? != 0){
@@ -226,6 +227,8 @@ if(-f $VARPATH.'history_'.$p_job){
   	if($obsolete == 1){
   		&f_output("DEBUG","Removing version $$tmp{'start'}.");
   		append_log($sessionlogfile,"Removing version $$tmp{'start'}\n");
+  		print "Removing version $$tmp{'start'}\n" if $::PREVIEWMODE;
+  		
   		if(-d $target_path.$slash."data_".$$tmp{'start'}){
   			&f_output("DEBUG","Found data.");
   			system("$cmd_rm \"".$target_path.$slash."data_".$$tmp{'start'}."\"") if !$::PREVIEWMODE;
@@ -286,6 +289,7 @@ if($job{$p_job}{'POST'}{'-postexec'}){
     while (my $line = <$fh>){
     	chomp($line);
     	append_log($sessionlogfile, $line);
+    	print $line."\n" if $::PREVIEWMODE;
     }
     close($fh);
     if($? != 0){

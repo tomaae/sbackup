@@ -314,18 +314,23 @@ sub rsync_backup {
     			$copied_last_size = $line_size if $line_size > 0;
       		if($line_flags =~ /^\>f\+/){ ## New file
       			append_log($::sessionlogfile,'+'.$line_entry);
+      			print '+'.$line_entry."\n" if $::PREVIEWMODE;
       		}else{ ## Modified file
       			append_log($::sessionlogfile,'*'.$line_entry);
+      			print '*'.$line_entry."\n" if $::PREVIEWMODE;
       		}
       		$data_changed = 1;
       	}elsif($line_flags =~ /^\*deleting/){ ## Deleted
       		append_log($::sessionlogfile,'-'.$line_entry);
+      		print '-'.$line_entry."\n" if $::PREVIEWMODE;
       		$data_changed = 1;
       	}elsif($line_flags =~ /^cd\+/){ ## New directory
       		append_log($::sessionlogfile,'+'.$line_entry);
+      		print '+'.$line_entry."\n" if $::PREVIEWMODE;
       		$data_changed = 1;
       	}elsif($line_flags =~ /\+/){ ## New other
       		append_log($::sessionlogfile,'+'.$line_entry);
+      		print '+'.$line_entry."\n" if $::PREVIEWMODE;
       		$data_changed = 1;
       	}elsif($line_flags =~ /^c/){ ## Local change other
       		next;
