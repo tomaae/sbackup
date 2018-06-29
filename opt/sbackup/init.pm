@@ -18,7 +18,7 @@ our @EXPORT = qw(
 									size2human perf2human min2time severity2id bit2oct oct2bit
 									$slash $BINPATH $MODULESPATH $ETCPATH $JOBCONFIGPATH $USERSCRIPTSPATH $VARPATH $SESSIONLOGPATH $CATALOGPATH $RUNFILEPATH
 									$OS_USERS $OS_GROUPS
-									$cmd_ls $cmd_ln $cmd_rm $cmd_ps $cmd_sleep $cmd_cp $cmd_mv $cmd_mkdir $cmd_chmod $cmd_rsync $cmd_kill $cmd_pkill $cmd_df $cmd_which $cmd_sync
+									$cmd_ls $cmd_ln $cmd_rm $cmd_ps $cmd_sleep $cmd_cp $cmd_mv $cmd_mkdir $cmd_chmod $cmd_rsync $cmd_kill $cmd_pkill $cmd_df $cmd_which $cmd_sync $cmd_dpkg
 									$cmd_lvs $cmd_lvdisplay $cmd_lvcreate $cmd_lvremove $cmd_mount $cmd_umount
 									$backupserver_fqdn
 							  );
@@ -120,6 +120,7 @@ sub get_env{
 	our $cmd_kill       = "kill";
 	our $cmd_pkill      = "pkill";
 	our $cmd_sync       = "sync";
+	our $cmd_dpkg       = "dpkg";
 	my $cmd_hostname    = "/bin/hostname";
 	
 	

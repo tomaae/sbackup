@@ -21,6 +21,13 @@ our @EXPORT = qw(lvm_create_snapshot lvm_remove_snapshot);
 ##
 sub lvm_create_snapshot {
 	my ($p_job, $SB_TIMESTART, $source_path, $lvm_size, $lvm_fallback)=@_;
+	
+	## Check if lvm is available
+	system($cmd_dpkg.' -l lvm2 >/dev/null 2>&1');
+	if($? != 0){
+		version_log('minor','lvm',$::backupserver_fqdn,"LVM is not installed.");
+		return 1;
+	}
 
 	&f_output("DEBUG","Attempting to create LVM snapshot for path: \"$source_path\"");
 	version_log('normal','lvm',$::backupserver_fqdn,"Attempting to create LVM snapshot....");
