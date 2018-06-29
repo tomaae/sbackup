@@ -187,7 +187,7 @@ sub get_env{
 	}
 	
 	if(!-f $CRONFILE){
-		if(!$::SIMULATEMODE){
+		if(!$::PREVIEWMODE){
     	if(open(my $fh, ">>", "$CRONFILE")){
     		flock $fh,2;
     		truncate $fh,0;

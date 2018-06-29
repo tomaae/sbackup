@@ -28,7 +28,7 @@ if($param_ok == 0){
 	f_output("ERROR","",1);
 }
 
-if(!$sv_background && !$::DEBUGMODE){
+if(!$sv_background && !$::PREVIEWMODE){
 	my $result = check_runfile($p_job,$RUNFILEPATH."sbackup_".$job{$p_job}{'NAME'});
 	f_output("ERROR",$result,1) if $result;
 	system('echo "'.$BINPATH.'/sbackup -backup '.$p_job.' -background >/dev/null"|at now >/dev/null 2>&1');
@@ -205,7 +205,7 @@ if(!-d $target_path){
 ##
 ## Create version directories
 ##
-if(!$::SIMULATEMODE){
+if(!$::PREVIEWMODE){
 	&f_output("DEBUG","Creating data directory for $SB_TIMESTART");
   system("$cmd_mkdir     ".$target_path.$slash."data_".$SB_TIMESTART);
   system("$cmd_chmod 777 ".$target_path.$slash."data_".$SB_TIMESTART) if $? != 0;
@@ -215,7 +215,7 @@ if(!$::SIMULATEMODE){
 ##
 ## Run backup
 ##
-system("$cmd_sleep 1") if !$::SIMULATEMODE;
+system("$cmd_sleep 1") if !$::PREVIEWMODE;
 my $JOB_SIZE = "";
 my $JOB_PERF = "";
 if($source_integ eq "" || $source_integ eq "OMV "){
@@ -248,7 +248,7 @@ if($SB_ERRORLEVEL <= 3){
 	update_history($p_job,"perf=(Meta) 100%","status==0,type==backup,start==".$SB_TIMESTART);
 	my $meta_ecode = 0;
 	
-	if(!$::SIMULATEMODE){
+	if(!$::PREVIEWMODE){
   	##Create meta directory
   	system("$cmd_mkdir ".$target_path.$slash."meta_".$SB_TIMESTART.$slash);
   	$meta_ecode = $? if $? ne "0";
@@ -303,8 +303,8 @@ if($SB_ERRORLEVEL <= 3){
 if($job{$p_job}{'TARGET'}{'-host'} eq "" && ($job{$p_job}{'TARGET'}{'-type'} eq "filesystem" || $job{$p_job}{'TARGET'}{'-type'} eq "omv4")){
 	update_history($p_job,"perf=(Flushing) 100%","status==0,type==backup,start==".$SB_TIMESTART);
 	version_log('normal','sync',$backupserver_fqdn,"Flushing write cache...");
-  system("$cmd_sync -f \"$target_path\"") if !$::SIMULATEMODE;
-  if($? == 0 || $::SIMULATEMODE){
+  system("$cmd_sync -f \"$target_path\"") if !$::PREVIEWMODE;
+  if($? == 0 || $::PREVIEWMODE){
   	version_log('normal','sync',$backupserver_fqdn,"Write cache successfully flushed.");
   }else{
   	version_log('minor','backup',$backupserver_fqdn,"Failed to flush write cache.");
@@ -347,7 +347,7 @@ rm_runfile($p_job);
 
 if($SB_ERRORLEVEL <= 3){
 	&f_output("DEBUG","Starting post-purge.");
-	system("${BINPATH}/sbackup -purge ".$p_job." >/dev/null") if !$::SIMULATEMODE;
+	system("${BINPATH}/sbackup -purge ".$p_job." >/dev/null") if !$::PREVIEWMODE;
 	if($? != 0){
 		#print STDERR "Post-purge failed to start.\n";
 		version_log('minor','backup',$backupserver_fqdn,"Post-purge failed to start.");
@@ -360,7 +360,7 @@ if($SB_ERRORLEVEL <= 3){
 
 if($SB_ERRORLEVEL <= 3 && $job{$p_job}{'POST'}{'-job'}{'-name'} ne ""){
 	&f_output("DEBUG","Starting ".$job{$p_job}{'POST'}{'-job'}{'-type'}." post-job ".$job{$p_job}{'POST'}{'-job'}{'-name'});
-	system("${BINPATH}/sbackup -".$job{$p_job}{'POST'}{'-job'}{'-type'}." ".$job{$p_job}{'POST'}{'-job'}{'-name'}." >/dev/null") if !$::SIMULATEMODE;
+	system("${BINPATH}/sbackup -".$job{$p_job}{'POST'}{'-job'}{'-type'}." ".$job{$p_job}{'POST'}{'-job'}{'-name'}." >/dev/null") if !$::PREVIEWMODE;
 	if($? != 0){
 		#print STDERR "Post-job failed to start.\n";
 		version_log('minor','backup',$backupserver_fqdn,"Post-job failed to start.");

@@ -37,7 +37,7 @@ if($p_version){
   f_output("ERROR","Invalid version.",1) if !$tmp[0];
 }
 
-if(!$sv_background && !$::DEBUGMODE){
+if(!$sv_background && !$::PREVIEWMODE){
 	my $result = check_runfile($p_job,$RUNFILEPATH."sbackup_".$job{$p_job}{'NAME'});
 	f_output("ERROR",$result,1) if $result;
 	my $tmp = "";

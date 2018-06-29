@@ -23,8 +23,10 @@ if($p_log){
 ##
 ## Get version log
 ##
-require Term::ANSIColor;
-import Term::ANSIColor;
+if(!defined &::color){
+	require Term::ANSIColor;
+	import Term::ANSIColor;
+}
 f_output("ERROR","Missing job version.",1) if !$p_version;
 f_output("ERROR","Job log is not available.",1) if !-f $::SESSIONLOGPATH.$p_job."_".$p_version.".log";
 my $highlight = "";

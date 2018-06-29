@@ -23,7 +23,7 @@ our %job = load_jobs_config;
 ##
 ## Parameters
 ##
-our ($DEBUGMODE, $sv_history, $sv_job, $sv_log, $sv_backup, $sv_purge, $sv_verify, $sv_restore, $sv_copy, $sv_abort, $sv_export, $sv_import, $sv_version, $sv_days, $sv_type, $sv_path, $sv_into, $sv_background, $sv_scheduler, $sv_api, $sv_all);
+our ($DEBUGMODE, $PREVIEWMODE, $sv_history, $sv_job, $sv_log, $sv_backup, $sv_purge, $sv_verify, $sv_restore, $sv_copy, $sv_abort, $sv_export, $sv_import, $sv_version, $sv_days, $sv_type, $sv_path, $sv_into, $sv_background, $sv_scheduler, $sv_api, $sv_all);
 our ($p_debug, $p_job, $p_version, $p_days, $p_type, $p_path, $p_into, $p_log, $p_api);
 $p_debug = 1;
 my %arguments;
@@ -35,11 +35,11 @@ my %arguments;
 	"help_args" => "-debug [1-5]",
 	"help_display" => 0,
 );
-%{$arguments{"simulate"}} = (
-	"var" => \$::SIMULATEMODE,
+%{$arguments{"preview"}} = (
+	"var" => \$::PREVIEWMODE,
 	"vals_mandatory" => 0,
 	"help_header" => "Simulated run:",
-	"help_args" => "-simulate",
+	"help_args" => "-preview",
 	"help_display" => 0,
 );
 
@@ -63,7 +63,7 @@ my %arguments;
 	"vals_mandatory" => 2,
 	"primary" => 1,
 	"help_header" => "Start backup job:",
-	"help_args" => "-backup <job name>",
+	"help_args" => "-backup <job name> [-preview]",
 	"help_display" => 11,
 );
 %{$arguments{"purge"}} = (
@@ -72,7 +72,7 @@ my %arguments;
 	"vals_mandatory" => 1,
 	"primary" => 1,
 	"help_header" => "Start purge job:",
-	"help_args" => "-purge <job name> [-days <n>]",# [-version <versionid>]",
+	"help_args" => "-purge <job name> [-days <n>] [-preview]",# [-version <versionid>]",
 	"help_display" => 12,
 );
 %{$arguments{"verify"}} = (
@@ -81,7 +81,7 @@ my %arguments;
 	"vals_mandatory" => 1,
 	"primary" => 1,
 	"help_header" => "Start verify job:",
-	"help_args" => "-verify <job name> -version <version>",
+	"help_args" => "-verify <job name> -version <version> [-preview]",
 	"help_display" => 13,
 );
 #%{$arguments{"copy"}} = (

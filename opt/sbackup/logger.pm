@@ -165,7 +165,7 @@ sub update_history{
 	}
 	
 	if($p_job && $update && $where){
-		&f_output("DEBUG","History update $p_job, $update, $where");# if !$::SIMULATEMODE && $update =~ /perf=\d+\%, status==0/;
+		&f_output("DEBUG","History update $p_job, $update, $where");# if !$::PREVIEWMODE && $update =~ /perf=\d+\%, status==0/;
 		my @where_request  = parse_where('history',$where);
   	my @entries = split(/,/,$update,-1);
   	for $tmp(@entries){
@@ -173,7 +173,7 @@ sub update_history{
   		$columns{$table{'history'}{$val[0]}} = $val[1];
   	}
   	
-  	if(!$::SIMULATEMODE){
+  	if(!$::PREVIEWMODE){
     	if(open(my $fh, "+<", $::VARPATH.'history_'.$p_job)){
       	flock $fh,2;
       	while($line = <$fh>){
@@ -230,7 +230,7 @@ sub delete_history{
 		&f_output("DEBUG","History delete $p_job, $where");
 		my @where_request  = parse_where('history',$where);
   	
-  	if(!$::SIMULATEMODE){
+  	if(!$::PREVIEWMODE){
     	if(open(my $fh, "+<", $::VARPATH.'history_'.$p_job)){
       	flock $fh,2;
       	while($line = <$fh>){
@@ -304,7 +304,7 @@ sub update_runfile{
   		$columns{$table{'runfile'}{$val[0]}} = $val[1];
   	}
   	
-  	if(!$::SIMULATEMODE){
+  	if(!$::PREVIEWMODE){
     	if(open(my $fh, "+<", $::RUNFILEPATH.'sbackup_'.$p_job)){
       	flock $fh,2;
       	while($line = <$fh>){
@@ -340,7 +340,7 @@ sub rm_runfile{
 	my @returncodes;
 	if($p_job && -e $::RUNFILEPATH.'sbackup_'.$p_job){
 		&f_output("DEBUG","Removing runfile for $p_job");
-  	system("$::cmd_rm ".$::RUNFILEPATH.'sbackup_'.$p_job) if !$::SIMULATEMODE;
+  	system("$::cmd_rm ".$::RUNFILEPATH.'sbackup_'.$p_job) if !$::PREVIEWMODE;
   	$returncodes[0] = 0;
   	$returncodes[0] = 1 if($? != 0);
 	}
@@ -427,8 +427,8 @@ sub check_runfile{
 ##
 sub append_log{
 	my ($logfile,$logentry)=@_;
-	&f_output("DEBUG","Append log $logfile, $logentry");# if !$::SIMULATEMODE && $logentry =~ /^[\+\-\*]/;
-	return if $::SIMULATEMODE;
+	&f_output("DEBUG","Append log $logfile, $logentry");# if !$::PREVIEWMODE && $logentry =~ /^[\+\-\*]/;
+	return if $::PREVIEWMODE;
 	chomp($logentry);
 	if(open(my $fh, ">>", $logfile)){
   	flock $fh,2;
@@ -448,7 +448,7 @@ sub append_log{
 sub write_log{
 	my ($logfile,@logentry)=@_;
 	my $tmp;
-	return if $::SIMULATEMODE;
+	return if $::PREVIEWMODE;
 	if(open(my $fh, ">>", $logfile)){
   	flock $fh,2;
   	truncate $fh,0;
@@ -514,21 +514,35 @@ sub version_log{
   }
 	
 	&f_output("DEBUG","New version log entry [$severity] From: $process\@$hostname\n$message");
-	return if $::SIMULATEMODE;
-	if(open(my $fh, ">>", $::sessionlogfile)){
-  	flock $fh,2;
-  	seek $fh,0,2;
-  	print $fh "[$severity] From: $process\@$hostname Time: ".strftime("%d/%m/%G %H:%M:%S", localtime(time()))."\n";
-  	print $fh "$message\n\n";
-  	flock $fh,8;
-  	close $fh;
-	}else{
-  	if(defined &::job_failed){
-  		::job_failed("Error: Insufficient access rights.");
+	if(!$::PREVIEWMODE){
+  	if(open(my $fh, ">>", $::sessionlogfile)){
+    	flock $fh,2;
+    	seek $fh,0,2;
+    	print $fh "[$severity] From: $process\@$hostname Time: ".strftime("%d/%m/%G %H:%M:%S", localtime(time()))."\n";
+    	print $fh "$message\n\n";
+    	flock $fh,8;
+    	close $fh;
   	}else{
-  		f_output("ERROR","Error: Insufficient access rights.",1);
+    	if(defined &::job_failed){
+    		::job_failed("Error: Insufficient access rights.");
+    	}else{
+    		f_output("ERROR","Error: Insufficient access rights.",1);
+    	}
   	}
-	}
+  }else{
+  	if(!defined &::color){
+			require Term::ANSIColor;
+			import Term::ANSIColor;
+		}
+		my $highlight = "green";
+		$highlight = "yellow" if $severity eq "Warning";
+		$highlight = "cyan" if $severity eq "Minor";
+		$highlight = "bright_red" if $severity eq "Major";
+		$highlight = "red" if $severity eq "Critical";
+  	print color($highlight)."[$severity]".color("reset")." From: $process\@$hostname Time: ".strftime("%d/%m/%G %H:%M:%S", localtime(time()))."\n";
+  	print "$message\n\n";
+		return;
+  }
 }
 
 1;

@@ -117,7 +117,7 @@ sub notify_email{
   
   # Debugging; this should be controlled by a "verbose" flag
 	print STDERR $email->as_string if $::DEBUGMODE;
-	return if $::SIMULATEMODE;
+	return if $::PREVIEWMODE;
 	
   my $response = sendmail($email);
   if(!$response){

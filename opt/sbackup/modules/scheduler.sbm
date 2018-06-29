@@ -53,13 +53,13 @@ for my $tmp_job(sort keys %job){
 		
 		## Run backup
 		&f_output("DEBUG","Starting job.");
-		system('echo "'.$BINPATH.'/sbackup -backup '.$tmp_job.' -background >/dev/null"|at now >/dev/null 2>&1') if !$::SIMULATEMODE;
+		system('echo "'.$BINPATH.'/sbackup -backup '.$tmp_job.' -background >/dev/null"|at now >/dev/null 2>&1') if !$::PREVIEWMODE;
   	if($? == 0){
   		print "Backup started successfully.\n";
   	}else{
   		print STDERR "Backup failed to start.\n";
   	}
-  	system("$cmd_sleep 1") if !$::SIMULATEMODE;
+  	system("$cmd_sleep 1") if !$::PREVIEWMODE;
 	}
 }
 
@@ -152,13 +152,13 @@ for my $tmp_job(sort keys %job){
 	## Start backup job
 	if($start_backup == 1){
 		&f_output("DEBUG","Starting job.");
-		system('echo "'.$BINPATH.'/sbackup -backup '.$tmp_job.' -background >/dev/null"|at now >/dev/null 2>&1') if !$::SIMULATEMODE;
+		system('echo "'.$BINPATH.'/sbackup -backup '.$tmp_job.' -background >/dev/null"|at now >/dev/null 2>&1') if !$::PREVIEWMODE;
   	if($? == 0){
   		print "Backup started successfully.\n";
   	}else{
   		print STDERR "Backup failed to start.\n";
   	}
-  	system("$cmd_sleep 2") if !$::SIMULATEMODE;
+  	system("$cmd_sleep 2") if !$::PREVIEWMODE;
 	}	
 }
 

@@ -28,7 +28,7 @@ if($param_ok == 0){
 	f_output("ERROR","",1);
 }
 
-if(!$sv_background && !$::DEBUGMODE){
+if(!$sv_background && !$::PREVIEWMODE){
 	my $result = check_runfile($p_job,$RUNFILEPATH."sbackup_".$job{$p_job}{'NAME'});
 	f_output("ERROR",$result,1) if $result;
 	my $tmp = "";
@@ -228,31 +228,31 @@ if(-f $VARPATH.'history_'.$p_job){
   		append_log($sessionlogfile,"Removing version $$tmp{'start'}\n");
   		if(-d $target_path.$slash."data_".$$tmp{'start'}){
   			&f_output("DEBUG","Found data.");
-  			system("$cmd_rm \"".$target_path.$slash."data_".$$tmp{'start'}."\"") if !$::SIMULATEMODE;
+  			system("$cmd_rm \"".$target_path.$slash."data_".$$tmp{'start'}."\"") if !$::PREVIEWMODE;
   		}
   		if(-d $target_path.$slash."meta_".$$tmp{'start'}){
   			&f_output("DEBUG","Found meta.");
-  			system("$cmd_rm \"".$target_path.$slash."meta_".$$tmp{'start'}."\"") if !$::SIMULATEMODE;
+  			system("$cmd_rm \"".$target_path.$slash."meta_".$$tmp{'start'}."\"") if !$::PREVIEWMODE;
   		}
   		if(-f $SESSIONLOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".log"){
   			&f_output("DEBUG","Found log.");
-  			system("$cmd_rm \"".$SESSIONLOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".log\"") if !$::SIMULATEMODE;
+  			system("$cmd_rm \"".$SESSIONLOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".log\"") if !$::PREVIEWMODE;
   		}
   		if(-f $CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".dirs"){
   			&f_output("DEBUG","Found dir catalog.");
-  			system("$cmd_rm \"".$CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".dirs\"") if !$::SIMULATEMODE;
+  			system("$cmd_rm \"".$CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".dirs\"") if !$::PREVIEWMODE;
   		}
   		if(-f $CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".files"){
   			&f_output("DEBUG","Found file catalog.");
-  			system("$cmd_rm \"".$CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".files\"") if !$::SIMULATEMODE;
+  			system("$cmd_rm \"".$CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".files\"") if !$::PREVIEWMODE;
   		}
   		if(-f $CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".owners"){
   			&f_output("DEBUG","Found file catalog.");
-  			system("$cmd_rm \"".$CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".owners\"") if !$::SIMULATEMODE;
+  			system("$cmd_rm \"".$CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".owners\"") if !$::PREVIEWMODE;
   		}
   		if(-f $CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".groups"){
   			&f_output("DEBUG","Found file catalog.");
-  			system("$cmd_rm \"".$CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".groups\"") if !$::SIMULATEMODE;
+  			system("$cmd_rm \"".$CATALOGPATH.$slash.$job{$p_job}{'NAME'}."_".$$tmp{'start'}.".groups\"") if !$::PREVIEWMODE;
   		}
   		
   		delete_history($p_job,"start==".$$tmp{'start'});
