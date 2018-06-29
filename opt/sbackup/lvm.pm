@@ -165,7 +165,6 @@ sub lvm_create_snapshot {
 ##
 sub lvm_remove_snapshot {
 	my ($p_job, $SB_TIMESTART, $source_path, $lvm_size, $lvm_fallback)=@_;
-	my $sessionlogfile = $::SESSIONLOGPATH.$p_job."_".$SB_TIMESTART.".log";
 
 	&f_output("DEBUG","Attempting to remove LVM snapshot for path: \"$source_path\"");
 	version_log('normal','lvm',$::backupserver_fqdn,"Removing LVM snapshot....");
