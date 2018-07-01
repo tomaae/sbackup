@@ -195,6 +195,8 @@ _sbackup_purge()
 			;;
 	esac
 	
+	commands='-days'
+	
 	unset 'words[${#words[@]}-1]'
 	COMPREPLY=( $( compgen -W "$commands" -- "$cur" ) )
 	for i in ${!COMPREPLY[@]}; do
