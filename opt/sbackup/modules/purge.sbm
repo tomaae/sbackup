@@ -225,9 +225,9 @@ if(-f $VARPATH.'history_'.$p_job){
   	
   	##Remove version
   	if($obsolete == 1){
-  		&f_output("DEBUG","Removing version $$tmp{'start'}.");
-  		append_log($versionlogfile,"Removing version $$tmp{'start'}\n");
-  		print "Removing version $$tmp{'start'}\n" if $::PREVIEWMODE;
+  		&f_output("DEBUG","Removing version ".strftime("%G/%m/%d-%H%M%S", localtime($$tmp{'start'})).".");
+  		append_log($versionlogfile,"Removing version ".strftime("%G/%m/%d-%H%M%S", localtime($$tmp{'start'}))."\n");
+  		print "Removing version ".strftime("%G/%m/%d-%H%M%S", localtime($$tmp{'start'}))."\n" if $::PREVIEWMODE;
   		
   		if(-d $target_path.$slash."data_".$$tmp{'start'}){
   			&f_output("DEBUG","Found data.");
@@ -261,7 +261,7 @@ if(-f $VARPATH.'history_'.$p_job){
   		delete_history($p_job,"start==".$$tmp{'start'});
   		$data_purged = 1;
   	}else{
-  		&f_output("DEBUG","Keeping version $$tmp{'start'}.");
+  		&f_output("DEBUG","Keeping version ".strftime("%G/%m/%d-%H%M%S", localtime($$tmp{'start'})).".");
   	}
   }
 }else{
